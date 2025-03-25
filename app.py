@@ -56,9 +56,17 @@ def admin():
         if geslo and opis:
             conn = get_db()
             cur = conn.cursor()
-            cur.execute("INSERT INTO slovar (GESLO, OPIS) VALUES (?, ?)", (geslo, opis))
-            conn.commit()
-            sporocilo = f"Geslo '{geslo}' uspešno dodano!"
+
+            # Preveri, ali geslo že obstaja (ne glede na velike/male črke)
+            cur.execute("SELECT COUNT(*) FROM slovar WHERE UPPER(GESLO) = UPPER(?)", (geslo,))
+            obstaja = cur.fetchone()[0]
+
+            if obstaja:
+                sporocilo = f"Geslo '{geslo}' že obstaja v bazi!"
+            else:
+                cur.execute("INSERT INTO slovar (GESLO, OPIS) VALUES (?, ?)", (geslo, opis))
+                conn.commit()
+                sporocilo = f"Geslo '{geslo}' uspešno dodano!"
 
     conn = get_db()
     cur = conn.cursor()
