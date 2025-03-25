@@ -7,6 +7,23 @@ logging.basicConfig(level=logging.INFO)
 
 app = Flask(__name__)
 
+def init_db():
+    conn = sqlite3.connect(DATABASE)
+    cur = conn.cursor()
+    cur.execute('''
+        CREATE TABLE IF NOT EXISTS slovar (
+            ID INTEGER PRIMARY KEY AUTOINCREMENT,
+            GESLO TEXT NOT NULL,
+            OPIS TEXT NOT NULL
+        )
+    ''')
+    conn.commit()
+    conn.close()
+
+# Ustvari tabelo ob zagonu aplikacije
+init_db()
+
+
 # --- Povezava z bazo ---
 DATABASE = 'VUS.db'
 
