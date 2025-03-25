@@ -5,6 +5,38 @@
 </head>
 <body>
     <h1>Administracija slovarja</h1>
-    <p>Sem boš lahko dodajal, urejal in brisal gesla.</p>
+
+    <form method="post" action="/admin">
+        <label for="geslo">Geslo:</label><br>
+        <input type="text" name="geslo" id="geslo" required><br><br>
+
+        <label for="opis">Opis:</label><br>
+        <textarea name="opis" id="opis" rows="4" cols="40" required></textarea><br><br>
+
+        <button type="submit">Dodaj</button>
+    </form>
+
+    {% if sporocilo %}
+        <p><strong>{{ sporocilo }}</strong></p>
+    {% endif %}
+
+    <hr>
+
+    <h2>Obstoječa gesla:</h2>
+    <table border="1" cellpadding="5">
+        <tr>
+            <th>ID</th>
+            <th>GESLO</th>
+            <th>OPIS</th>
+        </tr>
+        {% for vrstica in gesla %}
+        <tr>
+            <td>{{ vrstica.ID }}</td>
+            <td>{{ vrstica.GESLO }}</td>
+            <td>{{ vrstica.OPIS }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
 </body>
 </html>
