@@ -1,12 +1,11 @@
 from flask import Flask, render_template, request, g
 import sqlite3
 import os
-import logging
-logging.basicConfig(level=logging.INFO)
-
 
 app = Flask(__name__)
+DATABASE = 'VUS.db'
 
+# --- Inicializacija baze ---
 def init_db():
     conn = sqlite3.connect(DATABASE)
     cur = conn.cursor()
@@ -20,16 +19,9 @@ def init_db():
     conn.commit()
     conn.close()
 
-# Ustvari tabelo ob zagonu aplikacije
 init_db()
 
-
 # --- Povezava z bazo ---
-DATABASE = 'VUS.db'
-
-# TEST: prisiljen deploy po init_db
-
-
 def get_db():
     if 'db' not in g:
         g.db = sqlite3.connect(DATABASE)
@@ -52,12 +44,9 @@ def index():
 def home():
     return render_template('home.html')
 
-# --- /admin stran z obrazcem ---
-
+# --- /admin stran ---
 @app.route('/admin', methods=['GET', 'POST'])
 def admin():
-    logging.info(f"Zahteva na /admin: {request.method}")
-
     sporocilo = ""
 
     if request.method == 'POST':
@@ -71,14 +60,12 @@ def admin():
             conn.commit()
             sporocilo = f"Geslo '{geslo}' uspešno dodano!"
 
-    # Prikaz vseh vnosov
     conn = get_db()
     cur = conn.cursor()
     cur.execute("SELECT * FROM slovar ORDER BY ID DESC")
     gesla = cur.fetchall()
 
     return render_template('admin.html', sporocilo=sporocilo, gesla=gesla)
-
 
 # --- Zagon aplikacije ---
 if __name__ == '__main__':
