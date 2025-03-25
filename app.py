@@ -1,6 +1,9 @@
 from flask import Flask, render_template, request, g
 import sqlite3
 import os
+import logging
+logging.basicConfig(level=logging.INFO)
+
 
 app = Flask(__name__)
 
@@ -33,7 +36,8 @@ def home():
 
 @app.route('/admin', methods=['GET', 'POST'])
 def admin():
-    print("Zahteva na /admin:", request.method)
+    logging.info(f"Zahteva na /admin: {request.method}")
+
     sporocilo = ""
 
     if request.method == 'POST':
