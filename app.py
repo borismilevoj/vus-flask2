@@ -13,7 +13,8 @@ def home():
 
 @app.route('/admin')
 def admin():
-    return '<h1>Admin testna stran deluje!</h1>'
+    return render_template('admin.html')
+
 
 if __name__ == '__main__':
     import os
