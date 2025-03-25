@@ -54,6 +54,32 @@ def admin():
 
     return render_template("admin.html", gesla=gesla, sporocilo=sporocilo, rezultat_preverjanja=rezultat_preverjanja, stevilo=stevilo)
 
+@app.route('/preveri', methods=['POST'])
+def preveri():
+    rezultat = ""
+    geslo = request.form['preveri_geslo'].strip()
+
+    if geslo:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("SELECT COUNT(*) FROM slovar WHERE UPPER(GESLO) = UPPER(?)", (geslo,))
+        obstaja = cur.fetchone()[0]
+
+        if obstaja:
+            rezultat = f"Geslo '{geslo}' že obstaja v bazi."
+        else:
+            rezultat = f"Geslo '{geslo}' še ne obstaja."
+
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM slovar ORDER BY ID DESC")
+    gesla = cur.fetchall()
+    cur.execute("SELECT COUNT(*) FROM slovar")
+    stevilo = cur.fetchone()[0]
+
+    return render_template("admin.html", gesla=gesla, sporocilo="", rezultat_preverjanja=rezultat, stevilo=stevilo)
+
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 10000))
     app.run(host='0.0.0.0', port=port)
