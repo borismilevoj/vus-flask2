@@ -5,7 +5,6 @@ import os
 app = Flask(__name__)
 DATABASE = 'VUS.db'
 
-# --- Inicializacija baze ---
 def init_db():
     conn = sqlite3.connect(DATABASE)
     cur = conn.cursor()
@@ -21,7 +20,6 @@ def init_db():
 
 init_db()
 
-# --- Povezava z bazo ---
 def get_db():
     if 'db' not in g:
         g.db = sqlite3.connect(DATABASE)
@@ -34,17 +32,14 @@ def close_db(exception=None):
     if db is not None:
         db.close()
 
-# --- Domača stran ---
 @app.route('/')
 def index():
     return render_template('index.html')
 
-# --- /home stran ---
 @app.route('/home')
 def home():
     return render_template('home.html')
 
-# --- /admin stran ---
 @app.route('/admin', methods=['GET', 'POST'])
 def admin():
     sporocilo = ""
@@ -65,10 +60,11 @@ def admin():
     cur = conn.cursor()
     cur.execute("SELECT * FROM slovar ORDER BY ID DESC")
     gesla = cur.fetchall()
+    cur.execute("SELECT COUNT(*) FROM slovar")
+    stevilo = cur.fetchone()[0]
 
-    return render_template('admin.html', sporocilo=sporocilo, gesla=gesla, rezultat_preverjanja=rezultat_preverjanja)
+    return render_template('admin.html', sporocilo=sporocilo, gesla=gesla, rezultat_preverjanja=rezultat_preverjanja, stevilo=stevilo)
 
-# --- preverjanje gesla ---
 @app.route('/preveri', methods=['POST'])
 def preveri():
     rezultat = ""
@@ -89,10 +85,50 @@ def preveri():
     cur = conn.cursor()
     cur.execute("SELECT * FROM slovar ORDER BY ID DESC")
     gesla = cur.fetchall()
+    cur.execute("SELECT COUNT(*) FROM slovar")
+    stevilo = cur.fetchone()[0]
 
-    return render_template("admin.html", gesla=gesla, sporocilo="", rezultat_preverjanja=rezultat)
+    return render_template("admin.html", gesla=gesla, sporocilo="", rezultat_preverjanja=rezultat, stevilo=stevilo)
 
-# --- Zagon aplikacije ---
+@app.route('/uredi_geslo', methods=['POST'])
+def uredi_geslo():
+    podatki = request.form
+    geslo_id = podatki.get('id')
+    novi_opis = podatki.get('novi_opis')
+
+    if geslo_id and novi_opis:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("UPDATE slovar SET OPIS=? WHERE ID=?", (novi_opis, geslo_id))
+        conn.commit()
+
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM slovar ORDER BY ID DESC")
+    gesla = cur.fetchall()
+    cur.execute("SELECT COUNT(*) FROM slovar")
+    stevilo = cur.fetchone()[0]
+
+    return render_template('admin.html', sporocilo="Opis posodobljen!", gesla=gesla, rezultat_preverjanja="", stevilo=stevilo)
+
+@app.route('/izbrisi_geslo', methods=['POST'])
+def izbrisi_geslo():
+    geslo_id = request.form.get('id')
+    if geslo_id:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("DELETE FROM slovar WHERE ID=?", (geslo_id,))
+        conn.commit()
+
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM slovar ORDER BY ID DESC")
+    gesla = cur.fetchall()
+    cur.execute("SELECT COUNT(*) FROM slovar")
+    stevilo = cur.fetchone()[0]
+
+    return render_template('admin.html', sporocilo="Geslo izbrisano!", gesla=gesla, rezultat_preverjanja="", stevilo=stevilo)
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 10000))
     app.run(host='0.0.0.0', port=port)

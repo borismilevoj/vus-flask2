@@ -116,17 +116,24 @@
         <th>ID</th>
         <th>GESLO</th>
         <th>OPIS</th>
+        <th>UREDI</th>
     </tr>
     {% for vrstica in gesla %}
     <tr>
         <td>{{ vrstica.ID }}</td>
         <td>{{ vrstica.GESLO }}</td>
         <td>{{ vrstica.OPIS }}</td>
+        <td>
+            <form method="post" action="/uredi_geslo">
+                <input type="hidden" name="id" value="{{ vrstica.ID }}">
+                <input type="text" name="novi_opis" value="{{ vrstica.OPIS }}" required>
+                <button type="submit">Shrani</button>
+            </form>
+        </td>
     </tr>
     {% endfor %}
 </table>
 
-<!-- JavaScript -->
 <script>
 function kopirajGeslo() {
     const vnos = document.getElementById("geslo").value;
