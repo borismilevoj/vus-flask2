@@ -58,13 +58,13 @@
             background-color: #eeeeee;
         }
 
-        p {
-            margin-top: 20px;
-        }
-
         .inline-form {
             display: inline-block;
             margin-right: 10px;
+        }
+
+        .delete-form {
+            margin-top: 5px;
         }
     </style>
 </head>
@@ -108,6 +108,8 @@
     <p><strong>{{ sporocilo }}</strong></p>
 {% endif %}
 
+<p>V bazi je trenutno <strong>{{ stevilo }}</strong> gesel.</p>
+
 <hr>
 
 <h2>Obstoječa gesla:</h2>
@@ -117,6 +119,7 @@
         <th>GESLO</th>
         <th>OPIS</th>
         <th>UREDI</th>
+        <th>IZBRIŠI</th>
     </tr>
     {% for vrstica in gesla %}
     <tr>
@@ -128,6 +131,12 @@
                 <input type="hidden" name="id" value="{{ vrstica.ID }}">
                 <input type="text" name="novi_opis" value="{{ vrstica.OPIS }}" required>
                 <button type="submit">Shrani</button>
+            </form>
+        </td>
+        <td>
+            <form method="post" action="/izbrisi_geslo" class="delete-form">
+                <input type="hidden" name="id" value="{{ vrstica.ID }}">
+                <button type="submit" onclick="return confirm('Res želiš izbrisati to geslo?')">Izbriši</button>
             </form>
         </td>
     </tr>
