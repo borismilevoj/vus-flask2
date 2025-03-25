@@ -5,6 +5,7 @@ import os
 app = Flask(__name__)
 DATABASE = 'VUS.db'
 
+
 # --- Inicializacija baze ---
 def init_db():
     conn = sqlite3.connect(DATABASE)
@@ -19,7 +20,9 @@ def init_db():
     conn.commit()
     conn.close()
 
+
 init_db()
+
 
 # --- Povezava z bazo ---
 def get_db():
@@ -28,26 +31,31 @@ def get_db():
         g.db.row_factory = sqlite3.Row
     return g.db
 
+
 @app.teardown_appcontext
 def close_db(exception=None):
     db = g.pop('db', None)
     if db is not None:
         db.close()
 
+
 # --- Domača stran ---
 @app.route('/')
 def index():
     return render_template('index.html')
+
 
 # --- /home stran ---
 @app.route('/home')
 def home():
     return render_template('home.html')
 
+
 # --- /admin stran ---
 @app.route('/admin', methods=['GET', 'POST'])
 def admin():
     sporocilo = ""
+    rezultat_preverjanja = ""
 
     if request.method == 'POST':
         geslo = request.form['geslo'].strip()
@@ -56,24 +64,42 @@ def admin():
         if geslo and opis:
             conn = get_db()
             cur = conn.cursor()
-
-            # Preveri, ali geslo že obstaja (ne glede na velike/male črke)
-            cur.execute("SELECT COUNT(*) FROM slovar WHERE UPPER(GESLO) = UPPER(?)", (geslo,))
-            obstaja = cur.fetchone()[0]
-
-            if obstaja:
-                sporocilo = f"Geslo '{geslo}' že obstaja v bazi!"
-            else:
-                cur.execute("INSERT INTO slovar (GESLO, OPIS) VALUES (?, ?)", (geslo, opis))
-                conn.commit()
-                sporocilo = f"Geslo '{geslo}' uspešno dodano!"
+            cur.execute("INSERT INTO slovar (GESLO, OPIS) VALUES (?, ?)", (geslo, opis))
+            conn.commit()
+            sporocilo = f"Geslo '{geslo}' uspešno dodano!"
 
     conn = get_db()
     cur = conn.cursor()
     cur.execute("SELECT * FROM slovar ORDER BY ID DESC")
     gesla = cur.fetchall()
 
-    return render_template('admin.html', sporocilo=sporocilo, gesla=gesla)
+    return render_template('admin.html', sporocilo=sporocilo, gesla=gesla, rezultat_preverjanja=rezultat_preverjanja)
+
+
+# --- preverjanje gesla ---
+@app.route('/preveri', methods=['POST'])
+def preveri():
+    rezultat = ""
+    geslo = request.form['preveri_geslo'].strip()
+
+    if geslo:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("SELECT COUNT(*) FROM slovar WHERE UPPER(GESLO) = UPPER(?)", (geslo,))
+        obstaja = cur.fetchone()[0]
+
+        if obstaja:
+            rezultat = f"Geslo '{geslo}' že obstaja v bazi."
+        else:
+            rezultat = f"Geslo '{geslo}' še ne obstaja."
+
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM slovar ORDER BY ID DESC")
+    gesla = cur.fetchall()
+
+    return render_template("admin.html", gesla=gesla, sporocilo="", rezultat_preverjanja=rezultat)
+
 
 # --- Zagon aplikacije ---
 if __name__ == '__main__':
