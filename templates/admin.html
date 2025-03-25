@@ -1,103 +1,98 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Administracija VUS</title>
-    <style>
-        body {
-            font-family: sans-serif;
-            max-width: 800px;
-            margin: 40px auto;
-            background-color: #f5f5f5;
-            padding: 20px;
-            border-radius: 10px;
-        }
+from flask import Flask, render_template, request, g
+import sqlite3
+import os
 
-        h1, h2 {
-            color: #333;
-        }
+app = Flask(__name__)
+DATABASE = 'VUS.db'
 
-        label {
-            font-weight: bold;
-        }
+# --- Inicializacija baze ---
+def init_db():
+    conn = sqlite3.connect(DATABASE)
+    cur = conn.cursor()
+    cur.execute('''
+        CREATE TABLE IF NOT EXISTS slovar (
+            ID INTEGER PRIMARY KEY AUTOINCREMENT,
+            GESLO TEXT NOT NULL,
+            OPIS TEXT NOT NULL
+        )
+    ''')
+    conn.commit()
+    conn.close()
 
-        input[type="text"], textarea {
-            width: 100%;
-            padding: 8px;
-            margin-bottom: 12px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
+init_db()
 
-        button {
-            background-color: #4CAF50;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
+# --- Povezava z bazo ---
+def get_db():
+    if 'db' not in g:
+        g.db = sqlite3.connect(DATABASE)
+        g.db.row_factory = sqlite3.Row
+    return g.db
 
-        button:hover {
-            background-color: #45a049;
-        }
+@app.teardown_appcontext
+def close_db(exception=None):
+    db = g.pop('db', None)
+    if db is not None:
+        db.close()
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-            background-color: white;
-        }
+# --- Domača stran ---
+@app.route('/')
+def index():
+    return render_template('index.html')
 
-        th, td {
-            border: 1px solid #ccc;
-            padding: 8px;
-            text-align: left;
-        }
+# --- /home stran ---
+@app.route('/home')
+def home():
+    return render_template('home.html')
 
-        th {
-            background-color: #eeeeee;
-        }
+# --- /admin stran ---
+@app.route('/admin', methods=['GET', 'POST'])
+def admin():
+    sporocilo = ""
+    rezultat_preverjanja = ""
 
-        p {
-            margin-top: 20px;
-        }
-    </style>
-</head>
+    if request.method == 'POST':
+        geslo = request.form['geslo'].strip()
+        opis = request.form['opis'].strip()
 
-<body>
-    <h1>Administracija slovarja</h1>
+        if geslo and opis:
+            conn = get_db()
+            cur = conn.cursor()
+            cur.execute("INSERT INTO slovar (GESLO, OPIS) VALUES (?, ?)", (geslo, opis))
+            conn.commit()
+            sporocilo = f"Geslo '{geslo}' uspešno dodano!"
 
-    <form method="post" action="/admin">
-        <label for="geslo">Geslo:</label><br>
-        <input type="text" name="geslo" id="geslo" required><br><br>
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM slovar ORDER BY ID DESC")
+    gesla = cur.fetchall()
 
-        <label for="opis">Opis:</label><br>
-        <textarea name="opis" id="opis" rows="4" cols="40" required></textarea><br><br>
+    return render_template('admin.html', sporocilo=sporocilo, gesla=gesla, rezultat_preverjanja=rezultat_preverjanja)
 
-        <button type="submit">Dodaj</button>
-    </form>
+# --- preverjanje gesla ---
+@app.route('/preveri', methods=['POST'])
+def preveri():
+    rezultat = ""
+    geslo = request.form['preveri_geslo'].strip()
 
-    {% if sporocilo %}
-        <p><strong>{{ sporocilo }}</strong></p>
-    {% endif %}
+    if geslo:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("SELECT COUNT(*) FROM slovar WHERE UPPER(GESLO) = UPPER(?)", (geslo,))
+        obstaja = cur.fetchone()[0]
 
-    <hr>
+        if obstaja:
+            rezultat = f"Geslo '{geslo}' že obstaja v bazi."
+        else:
+            rezultat = f"Geslo '{geslo}' še ne obstaja."
 
-    <h2>Obstoječa gesla:</h2>
-    <table border="1" cellpadding="5">
-        <tr>
-            <th>ID</th>
-            <th>GESLO</th>
-            <th>OPIS</th>
-        </tr>
-        {% for vrstica in gesla %}
-        <tr>
-            <td>{{ vrstica.ID }}</td>
-            <td>{{ vrstica.GESLO }}</td>
-            <td>{{ vrstica.OPIS }}</td>
-        </tr>
-        {% endfor %}
-    </table>
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM slovar ORDER BY ID DESC")
+    gesla = cur.fetchall()
 
-</body>
-</html>
+    return render_template("admin.html", gesla=gesla, sporocilo="", rezultat_preverjanja=rezultat)
+
+# --- Zagon aplikacije ---
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 10000))
+    app.run(host='0.0.0.0', port=port)
