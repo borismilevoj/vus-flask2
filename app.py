@@ -27,6 +27,9 @@ init_db()
 # --- Povezava z bazo ---
 DATABASE = 'VUS.db'
 
+# TEST: prisiljen deploy po init_db
+
+
 def get_db():
     if 'db' not in g:
         g.db = sqlite3.connect(DATABASE)
