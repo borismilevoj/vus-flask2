@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, g, jsonify
+from flask import Flask, render_template, request, jsonify,g
 from flask import session, redirect, url_for
 import sqlite3
 import os
@@ -176,7 +176,8 @@ def izbrisi_geslo():
 
     return render_template('admin.html', sporocilo="Geslo izbrisano!", gesla=gesla, rezultat_preverjanja="", stevilo=stevilo)
 
-app.route('/isci_po_vzorcu', methods=['POST'])
+
+@app.route('/isci_po_vzorcu', methods=['POST'])
 def isci_po_vzorcu():
     vzorec = request.form['vzorec'].strip().upper()
     dolzina = int(request.form['dolzina'])
@@ -191,6 +192,7 @@ def isci_po_vzorcu():
     gesla = [{'geslo': g, 'opis': o} for g, o in rezultati]
 
     return jsonify(gesla)
+
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
