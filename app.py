@@ -63,7 +63,12 @@ def admin():
     cur.execute("SELECT COUNT(*) FROM slovar")
     stevilo = cur.fetchone()[0]
 
-    return render_template('admin.html', gesla=gesla, sporocilo=sporocilo, rezultat_preverjanja=rezultat_preverjanja, stevilo=stevilo)
+    return render_template('admin.html',
+                           gesla=gesla,
+                           sporocilo=sporocilo,
+                           rezultat_preverjanja=rezultat_preverjanja,
+                           stevilo=stevilo)
+
 
 
 
