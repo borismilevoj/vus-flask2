@@ -143,18 +143,15 @@
     </tr>
     {% endfor %}
 </table>
-</script>
+<script>
 function kopirajGeslo() {
     const vnos = document.getElementById("geslo").value;
     document.getElementById("preveri_geslo_hidden").value = vnos;
 }
-
-
 function kopirajZaDodajanje() {
     document.getElementById("geslo_hidden").value = document.getElementById("geslo").value;
     document.getElementById("opis_hidden").value = document.getElementById("opis").value;
 }
 </script>
-
 </body>
 </html>
