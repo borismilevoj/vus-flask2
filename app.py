@@ -42,8 +42,22 @@ def home():
 
 @app.route('/admin', methods=['GET', 'POST'])
 def admin():
+
     sporocilo = ""
     rezultat_preverjanja = ""
+    if request.method == 'GET':
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM slovar ORDER BY ID DESC")
+        gesla = cur.fetchall()
+        cur.execute("SELECT COUNT(*) FROM slovar")
+        stevilo = cur.fetchone()[0]
+
+        return render_template('admin.html',
+                               gesla=gesla,
+                               sporocilo="",
+                               rezultat_preverjanja="",
+                               stevilo=stevilo)
 
     if request.method == 'POST':
         geslo = request.form['geslo'].strip()
