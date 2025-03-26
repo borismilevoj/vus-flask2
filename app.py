@@ -95,7 +95,12 @@ def preveri():
     cur.execute("SELECT COUNT(*) FROM slovar")
     stevilo = cur.fetchone()[0]
 
-    return render_template("admin.html", gesla=gesla, sporocilo="", rezultat_preverjanja=rezultat, stevilo=stevilo)
+    return render_template("admin.html",
+                           gesla=gesla,
+                           sporocilo="",
+                           rezultat_preverjanja=rezultat,
+                           stevilo=stevilo)
+
 
 
 
