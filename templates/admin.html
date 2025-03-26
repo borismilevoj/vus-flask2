@@ -11,15 +11,12 @@
             padding: 20px;
             border-radius: 10px;
         }
-
         h1, h2 {
             color: #333;
         }
-
         label {
             font-weight: bold;
         }
-
         input[type="text"], textarea {
             width: 100%;
             padding: 8px;
@@ -27,7 +24,6 @@
             border: 1px solid #ccc;
             border-radius: 4px;
         }
-
         button {
             background-color: #4CAF50;
             color: white;
@@ -36,35 +32,26 @@
             border-radius: 4px;
             cursor: pointer;
         }
-
         button:hover {
             background-color: #45a049;
         }
-
         table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
             background-color: white;
         }
-
         th, td {
             border: 1px solid #ccc;
             padding: 8px;
             text-align: left;
         }
-
         th {
             background-color: #eeeeee;
         }
-
         .inline-form {
             display: inline-block;
             margin-right: 10px;
-        }
-
-        .delete-form {
-            margin-top: 5px;
         }
     </style>
 </head>
@@ -72,18 +59,13 @@
 
 <h1>Administracija slovarja</h1>
 
-<!-- GESLO -->
 <label for="geslo">Geslo:</label><br>
 <input type="text" name="geslo" id="geslo" required><br><br>
 
-<!-- GUMB: PREVERI -->
 <form method="post" action="/preveri" class="inline-form">
     <input type="hidden" name="preveri_geslo" id="preveri_geslo_hidden">
     <button type="submit" onclick="kopirajGeslo()">Preveri</button>
 </form>
-
-
-<!-- GUMB: PONASTAVI -->
 <form method="get" action="/admin" class="inline-form">
     <button type="submit">Ponastavi</button>
 </form>
@@ -92,16 +74,11 @@
     <p><strong>{{ rezultat_preverjanja }}</strong></p>
 {% endif %}
 
-<br>
-
-<!-- OPIS + DODAJ -->
 <form method="post" action="/admin">
     <label for="opis">Opis:</label><br>
     <textarea name="opis" id="opis" rows="4" cols="40" required></textarea><br><br>
-
     <input type="hidden" name="geslo" id="geslo_hidden">
     <input type="hidden" name="opis" id="opis_hidden">
-
     <button type="submit" onclick="kopirajZaDodajanje()">Dodaj</button>
 </form>
 
@@ -109,11 +86,9 @@
     <p><strong>{{ sporocilo }}</strong></p>
 {% endif %}
 
-<p>V bazi je trenutno <strong>{{ stevilo }}</strong> gesel.</p>
-
-<hr>
-
-<h2>Obstoječa gesla:</h2>
+{% if gesla|length == 0 %}
+    <p>Ni gesel za prikaz.</p>
+{% else %}
 <table>
     <tr>
         <th>ID</th>
@@ -135,7 +110,7 @@
             </form>
         </td>
         <td>
-            <form method="post" action="/izbrisi_geslo" class="delete-form">
+            <form method="post" action="/izbrisi_geslo">
                 <input type="hidden" name="id" value="{{ vrstica.ID }}">
                 <button type="submit" onclick="return confirm('Res želiš izbrisati to geslo?')">Izbriši</button>
             </form>
@@ -143,6 +118,8 @@
     </tr>
     {% endfor %}
 </table>
+{% endif %}
+
 <script>
 function kopirajGeslo() {
     const vnos = document.getElementById("geslo").value;
@@ -153,5 +130,6 @@ function kopirajZaDodajanje() {
     document.getElementById("opis_hidden").value = document.getElementById("opis").value;
 }
 </script>
+
 </body>
 </html>
