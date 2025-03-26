@@ -87,7 +87,7 @@ def admin():
 
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("SELECT * FROM slovar ORDER BY ID DESC")
+    cur.execute("SELECT * FROM slovar WHERE UPPER(GESLO) = UPPER(?)", (geslo,))
     gesla = cur.fetchall()
     cur.execute("SELECT COUNT(*) FROM slovar")
     stevilo = cur.fetchone()[0]
