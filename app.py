@@ -62,9 +62,10 @@ def admin():
     rezultat_preverjanja = ""
     if request.method == 'GET':
         gesla = []
+        sporocilo = ""
+        rezultat_preverjanja = ""
         conn = get_db()
         cur = conn.cursor()
-
         cur.execute("SELECT COUNT(*) FROM slovar")
         stevilo = cur.fetchone()[0]
 
