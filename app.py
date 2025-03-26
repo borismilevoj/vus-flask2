@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, g
+from flask import Flask, render_template, request, g, jsonify
 from flask import session, redirect, url_for
 import sqlite3
 import os
@@ -99,6 +99,9 @@ def admin():
                            rezultat_preverjanja=rezultat_preverjanja,
                            stevilo=stevilo)
 
+@app.route('/isci_vzorec')
+def isci_vzorec():
+    return render_template('isci_vzorec.html')
 
 
 
@@ -173,6 +176,21 @@ def izbrisi_geslo():
 
     return render_template('admin.html', sporocilo="Geslo izbrisano!", gesla=gesla, rezultat_preverjanja="", stevilo=stevilo)
 
+app.route('/isci_po_vzorcu', methods=['POST'])
+def isci_po_vzorcu():
+    vzorec = request.form['vzorec'].strip().upper()
+    dolzina = int(request.form['dolzina'])
+
+    conn = sqlite3.connect('VUS.db')
+    cur = conn.cursor()
+
+    cur.execute("SELECT TRIM(GESLO), OPIS FROM slovar WHERE LENGTH(TRIM(GESLO)) = ? AND GESLO LIKE ?", (dolzina, vzorec))
+    rezultati = cur.fetchall()
+    conn.close()
+
+    gesla = [{'geslo': g, 'opis': o} for g, o in rezultati]
+
+    return jsonify(gesla)
+
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 10000))
-    app.run(host='0.0.0.0', port=port)
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
