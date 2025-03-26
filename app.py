@@ -1,8 +1,10 @@
 from flask import Flask, render_template, request, g
+from flask import session, redirect, url_for
 import sqlite3
 import os
 
 app = Flask(__name__)
+app.secret_key = 'Tifumannam1VUS_flask2'  # obvezno za delo s sejami
 DATABASE = 'VUS.db'
 
 def init_db():
@@ -39,6 +41,19 @@ def index():
 @app.route('/home')
 def home():
     return render_template('home.html')
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    napaka = ""
+    if request.method == 'POST':
+        password = request.form['password']
+        if password == 'Tifumannam1VUS_flask2':  # Geslo lahko spremeniš!
+            session['admin'] = True
+            return redirect('/admin')
+        else:
+            napaka = "Napačno geslo!"
+    return render_template('login.html', napaka=napaka)
+
 
 @app.route('/admin', methods=['GET', 'POST'])
 def admin():
@@ -90,7 +105,7 @@ def admin():
 def preveri():
     rezultat = ""
     geslo = request.form['preveri_geslo'].strip()
-
+    print(f"Preverjam geslo: {geslo}")
     if geslo:
         conn = get_db()
         cur = conn.cursor()
@@ -104,7 +119,7 @@ def preveri():
 
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("SELECT * FROM slovar ORDER BY ID DESC")
+    cur.execute("SELECT * FROM slovar WHERE UPPER(GESLO) = UPPER(?)", (geslo,))
     gesla = cur.fetchall()
     cur.execute("SELECT COUNT(*) FROM slovar")
     stevilo = cur.fetchone()[0]
