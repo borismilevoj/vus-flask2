@@ -185,13 +185,18 @@ def isci_po_vzorcu():
     conn = sqlite3.connect('VUS.db')
     cur = conn.cursor()
 
-    cur.execute("SELECT GESLO, OPIS FROM slovar WHERE LENGTH (GESLO) = ? AND GESLO LIKE ?", (dolzina, vzorec))
+    # Iskanje po točni dolžini, brez presledkov
+    cur.execute(
+        "SELECT TRIM(GESLO), OPIS FROM slovar WHERE LENGTH(TRIM(GESLO)) = ? AND GESLO LIKE ?",
+        (dolzina, vzorec)
+    )
     rezultati = cur.fetchall()
     conn.close()
 
     gesla = [{'geslo': g, 'opis': o} for g, o in rezultati]
 
     return jsonify(gesla)
+
 
 
 if __name__ == '__main__':
