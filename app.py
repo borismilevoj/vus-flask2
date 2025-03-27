@@ -185,11 +185,12 @@ def isci_po_vzorcu():
     conn = sqlite3.connect('VUS.db')
     cur = conn.cursor()
 
-    # Iskanje po točni dolžini, brez presledkov
+    # Popolna ujemajoča dolžina in LIKE po vzorcu
     cur.execute(
         "SELECT TRIM(GESLO), OPIS FROM slovar WHERE LENGTH(TRIM(GESLO)) = ? AND GESLO LIKE ?",
         (dolzina, vzorec)
     )
+
     rezultati = cur.fetchall()
     conn.close()
 
