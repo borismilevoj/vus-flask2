@@ -38,6 +38,11 @@ def close_db(exception=None):
 def index():
     return render_template('index.html')
 
+@app.route('/isci_opis')
+def isci_opis():
+    return render_template("isci_opis.html", gesla=None)
+
+
 @app.route('/home')
 def home():
     return render_template('home.html')
@@ -192,11 +197,51 @@ def isci_po_vzorcu():
     )
 
     rezultati = cur.fetchall()
+    print(f"[VZOREC] {vzorec} | [DOLŽINA] {dolzina} | [REZULTATI]: {len(rezultati)}")
     conn.close()
 
     gesla = [{'geslo': g, 'opis': o} for g, o in rezultati]
 
     return jsonify(gesla)
+
+@app.route('/isci_po_opisu', methods=['POST', 'GET'])
+def isci_po_opisu():
+    kljucna_beseda = request.form['opis'].strip().upper() if request.method == 'POST' else ""
+
+    if not kljucna_beseda:
+        return render_template("isci_opis.html", gesla=None)
+
+    conn = sqlite3.connect("VUS.db")
+    cur = conn.cursor()
+
+    besede = kljucna_beseda.split()
+
+    pogoji = []
+    params = []
+
+    for beseda in besede:
+        if beseda.isdigit():  # če je letnica, iščemo prosto
+            pogoji.append("UPPER(OPIS) LIKE ?")
+            params.append(f"%{beseda}%")
+        else:  # sicer iščemo besedo kot samostojno
+            pogoji.append("(UPPER(OPIS) LIKE ? OR UPPER(OPIS) LIKE ? OR UPPER(OPIS) LIKE ? OR UPPER(OPIS) LIKE ?)")
+            params.extend([
+                beseda + ' %',        # na začetku
+                '% ' + beseda + ' %', # v sredini
+                '% ' + beseda,        # na koncu
+                beseda                # čista beseda
+            ])
+
+    sql = "SELECT GESLO, OPIS FROM slovar WHERE " + " AND ".join(pogoji)
+
+    cur.execute(sql, params)
+    rezultati = cur.fetchall()
+    conn.close()
+
+    gesla = [{'GESLO': g, 'OPIS': o} for g, o in rezultati]
+
+    return render_template("isci_opis.html", gesla=gesla)
+
 
 
 
