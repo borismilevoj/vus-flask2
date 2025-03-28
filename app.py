@@ -4,7 +4,7 @@ import sqlite3
 import os
 
 app = Flask(__name__)
-app.secret_key = 'Tifumannam1VUS_flask2'  # obvezno za delo s sejami
+app.secret_key = 'admin123'  # obvezno za delo s sejami
 DATABASE = 'VUS.db'
 
 def init_db():
@@ -52,7 +52,7 @@ def login():
     napaka = ""
     if request.method == 'POST':
         password = request.form['password']
-        if password == 'Tifumannam1VUS_flask2':  # Geslo lahko spremeniš!
+        if password == 'admin123':  # Geslo lahko spremeniš!
             session['admin'] = True
             return redirect('/admin')
         else:
@@ -62,7 +62,8 @@ def login():
 
 @app.route('/admin', methods=['GET', 'POST'])
 def admin():
-
+    if not session.get('admin'):
+        return redirect('/login')
     sporocilo = ""
     rezultat_preverjanja = ""
     if request.method == 'GET':
