@@ -64,22 +64,9 @@ def login():
 def admin():
     if not session.get('admin'):
         return redirect('/login')
+
     sporocilo = ""
     rezultat_preverjanja = ""
-    if request.method == 'GET':
-        gesla = []
-        sporocilo = ""
-        rezultat_preverjanja = ""
-        conn = get_db()
-        cur = conn.cursor()
-        cur.execute("SELECT COUNT(*) FROM slovar")
-        stevilo = cur.fetchone()[0]
-
-        return render_template('admin.html',
-                               gesla=gesla,
-                               sporocilo="",
-                               rezultat_preverjanja="",
-                               stevilo=stevilo)
 
     if request.method == 'POST':
         geslo = request.form['geslo'].strip()
@@ -88,22 +75,32 @@ def admin():
         if geslo and opis:
             conn = get_db()
             cur = conn.cursor()
-            cur.execute("INSERT INTO slovar (GESLO, OPIS) VALUES (?, ?)", (geslo, opis))
+            cur.execute("INSERT INTO slovar (GESLO, OPIS) VALUES (?, ?)", (geslo.upper(), opis))
             conn.commit()
             sporocilo = f"Geslo '{geslo}' uspešno dodano!"
 
+    # Preštej vsa gesla
     conn = get_db()
+    cur = conn.cursor()
     cur.execute("SELECT COUNT(*) FROM slovar")
     stevilo = cur.fetchone()[0]
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM slovar WHERE UPPER(GESLO) = UPPER(?)", (geslo,))
+
+    # Prikaži samo gesla z enakim začetkom (če smo pravkar dodali/preverjali)
+    cur.execute("SELECT * FROM slovar ORDER BY ID DESC")
     gesla = cur.fetchall()
 
-    return render_template('admin.html',
+    # Sortiraj po opisu (po delu za vezajem, če obstaja)
+    gesla.sort(key=lambda x: (
+        0 if '-' in x['opis'] else 1,
+        x['opis'].split('-')[1].strip().split(' ')[0] if '-' in x['opis'] else x['opis']
+    ))
+
+    return render_template("admin.html",
                            gesla=gesla,
                            sporocilo=sporocilo,
                            rezultat_preverjanja=rezultat_preverjanja,
                            stevilo=stevilo)
+
 
 @app.route('/isci_vzorec')
 def isci_vzorec():
@@ -160,6 +157,9 @@ def uredi_geslo():
     cur = conn.cursor()
     cur.execute("SELECT * FROM slovar WHERE ID = ?", (geslo_id,))
     gesla = cur.fetchall()
+
+    cur.execute("SELECT COUNT(*) FROM slovar")
+    stevilo = cur.fetchone()[0]
     conn.close()
 
     return render_template("admin.html",
