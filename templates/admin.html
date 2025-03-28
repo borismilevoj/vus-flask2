@@ -80,6 +80,7 @@
     <input type="hidden" name="geslo" id="geslo_hidden">
     <input type="hidden" name="opis" id="opis_hidden">
     <button type="submit" onclick="kopirajZaDodajanje()">Dodaj</button>
+    <p>V bazi je trenutno <strong>{{ stevilo }}</strong> gesel.</p>
 </form>
 
 {% if sporocilo %}
@@ -89,6 +90,36 @@
 {% if gesla|length == 0 %}
     <p>Ni gesel za prikaz.</p>
 {% else %}
+<table>
+    <tr>
+        <th>ID</th>
+        <th>GESLO</th>
+        <th>OPIS</th>
+        <th>UREDI</th>
+        <th>IZBRIŠI</th>
+    </tr>
+    {% for vrstica in gesla %}
+    <tr>
+        <td>{{ vrstica.ID }}</td>
+        <td>{{ vrstica.GESLO }}</td>
+        <td>{{ vrstica.OPIS }}</td>
+        <td>
+            <form method="post" action="/uredi_geslo">
+                <input type="hidden" name="id" value="{{ vrstica.ID }}">
+                <input type="text" name="novi_opis" value="{{ vrstica.OPIS }}" required>
+                <button type="submit">Shrani</button>
+            </form>
+        </td>
+        <td>
+            <form method="post" action="/izbrisi_geslo">
+                <input type="hidden" name="id" value="{{ vrstica.ID }}">
+                <button type="submit" onclick="return confirm('Res želiš izbrisati to geslo?')">Izbriši</button>
+            </form>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+{% endif %}
 <table>
     <tr>
         <th>ID</th>
