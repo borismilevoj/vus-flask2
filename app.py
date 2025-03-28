@@ -67,6 +67,7 @@ def admin():
 
     sporocilo = ""
     rezultat_preverjanja = ""
+    gesla = []
 
     if request.method == 'POST':
         geslo = request.form['geslo'].strip()
@@ -77,28 +78,36 @@ def admin():
             cur = conn.cursor()
             cur.execute("INSERT INTO slovar (GESLO, OPIS) VALUES (?, ?)", (geslo.upper(), opis))
             conn.commit()
+            cur.execute("SELECT * FROM slovar WHERE UPPER(GESLO) LIKE ?", (geslo[:3].upper() + '%',))
+            gesla = cur.fetchall()
             sporocilo = f"Geslo '{geslo}' uspešno dodano!"
+            cur.execute("SELECT COUNT(*) FROM slovar")
+            stevilo = cur.fetchone()[0]
+            conn.close()
 
-    # Preštej vsa gesla
+            # Razvrsti po opisu
+            gesla.sort(key=lambda x: (
+                0 if '-' in x['opis'] else 1,
+                x['opis'].split('-')[1].strip().split(' ')[0] if '-' in x['opis'] else x['opis']
+            ))
+
+            return render_template("admin.html",
+                                   gesla=gesla,
+                                   sporocilo=sporocilo,
+                                   rezultat_preverjanja=rezultat_preverjanja,
+                                   stevilo=stevilo)
+
+    # GET zahteva: prazen seznam gesel
     conn = get_db()
     cur = conn.cursor()
     cur.execute("SELECT COUNT(*) FROM slovar")
     stevilo = cur.fetchone()[0]
-
-    # Prikaži samo gesla z enakim začetkom (če smo pravkar dodali/preverjali)
-    cur.execute("SELECT * FROM slovar ORDER BY ID DESC")
-    gesla = cur.fetchall()
-
-    # Sortiraj po opisu (po delu za vezajem, če obstaja)
-    gesla.sort(key=lambda x: (
-        0 if '-' in x['opis'] else 1,
-        x['opis'].split('-')[1].strip().split(' ')[0] if '-' in x['opis'] else x['opis']
-    ))
+    conn.close()
 
     return render_template("admin.html",
-                           gesla=gesla,
-                           sporocilo=sporocilo,
-                           rezultat_preverjanja=rezultat_preverjanja,
+                           gesla=[],
+                           sporocilo="",
+                           rezultat_preverjanja="",
                            stevilo=stevilo)
 
 
