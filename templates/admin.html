@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+
 <html>
 <head>
     <title>Administracija VUS</title>
@@ -11,12 +11,6 @@
             padding: 20px;
             border-radius: 10px;
         }
-        h1, h2 {
-            color: #333;
-        }
-        label {
-            font-weight: bold;
-        }
         input[type="text"], textarea {
             width: 100%;
             padding: 8px;
@@ -25,29 +19,21 @@
             border-radius: 4px;
         }
         button {
-            background-color: #4CAF50;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #45a049;
+            padding: 6px 12px;
+            margin-right: 5px;
         }
         table {
             width: 100%;
-            border-collapse: collapse;
             margin-top: 20px;
             background-color: white;
+            border-collapse: collapse;
         }
         th, td {
-            border: 1px solid #ccc;
             padding: 8px;
-            text-align: left;
+            border: 1px solid #ccc;
         }
         th {
-            background-color: #eeeeee;
+            background-color: #eee;
         }
         .inline-form {
             display: inline-block;
@@ -57,100 +43,84 @@
 </head>
 <body>
 
-<h1>Administracija slovarja</h1>
+<h2>Administracija gesel</h2>
 
+<!-- Vnos gesla -->
 <label for="geslo">Geslo:</label><br>
-<input type="text" name="geslo" id="geslo" required><br><br>
+<input type="text" id="geslo" name="geslo" required><br><br>
 
+<!-- Gumbi preveri / ponastavi -->
 <form method="post" action="/preveri" class="inline-form">
     <input type="hidden" name="preveri_geslo" id="preveri_geslo_hidden">
-    <button type="submit" onclick="kopirajGeslo()">Preveri</button>
+    <button type="submit" onclick="kopirajGeslo()">PREVERI</button>
 </form>
 <form method="get" action="/admin" class="inline-form">
-    <button type="submit">Ponastavi</button>
+    <button type="submit">PONASTAVI</button>
 </form>
 
+<!-- Prikaz sporočila PREVERJANJA z barvo -->
 {% if rezultat_preverjanja %}
-    <p><strong>{{ rezultat_preverjanja }}</strong></p>
+  {% if "že obstaja" in rezultat_preverjanja %}
+    <p style="color:blue;"><strong>{{ rezultat_preverjanja }}</strong></p>
+  {% else %}
+    <p style="color:red;"><strong>{{ rezultat_preverjanja }}</strong></p>
+  {% endif %}
 {% endif %}
 
+<!-- Vnos opisa -->
 <form method="post" action="/admin">
     <label for="opis">Opis:</label><br>
-    <textarea name="opis" id="opis" rows="4" cols="40" required></textarea><br><br>
+    <textarea name="opis" id="opis" rows="4" cols="40" required></textarea><br>
     <input type="hidden" name="geslo" id="geslo_hidden">
     <input type="hidden" name="opis" id="opis_hidden">
-    <button type="submit" onclick="kopirajZaDodajanje()">Dodaj</button>
-    <p>V bazi je trenutno <strong>{{ stevilo }}</strong> gesel.</p>
+    <button type="submit" onclick="kopirajZaDodajanje()">DODAJ</button>
 </form>
 
+<!-- Števec -->
+<p>V bazi je trenutno <strong>{{ stevilo }}</strong> gesel.</p>
+
+<!-- Sporočilo po dodajanju ali brisanju -->
 {% if sporocilo %}
-    <p><strong>{{ sporocilo }}</strong></p>
+  <p><strong>{{ sporocilo }}</strong></p>
 {% endif %}
 
-{% if gesla|length == 0 %}
+<!-- Tabela z rezultati -->
+{% if gesla is not defined or gesla|length == 0 %}
     <p>Ni gesel za prikaz.</p>
 {% else %}
-<table>
-    <tr>
-        <th>ID</th>
-        <th>GESLO</th>
-        <th>OPIS</th>
-        <th>UREDI</th>
-        <th>IZBRIŠI</th>
-    </tr>
-    {% for vrstica in gesla %}
-    <tr>
-        <td>{{ vrstica.ID }}</td>
-        <td>{{ vrstica.GESLO }}</td>
-        <td>{{ vrstica.OPIS }}</td>
-        <td>
-            <form method="post" action="/uredi_geslo">
-                <input type="hidden" name="id" value="{{ vrstica.ID }}">
-                <input type="text" name="novi_opis" value="{{ vrstica.OPIS }}" required>
-                <button type="submit">Shrani</button>
-            </form>
-        </td>
-        <td>
-            <form method="post" action="/izbrisi_geslo">
-                <input type="hidden" name="id" value="{{ vrstica.ID }}">
-                <button type="submit" onclick="return confirm('Res želiš izbrisati to geslo?')">Izbriši</button>
-            </form>
-        </td>
-    </tr>
-    {% endfor %}
-</table>
-{% endif %}
-<table>
-    <tr>
-        <th>ID</th>
-        <th>GESLO</th>
-        <th>OPIS</th>
-        <th>UREDI</th>
-        <th>IZBRIŠI</th>
-    </tr>
-    {% for vrstica in gesla %}
-    <tr>
-        <td>{{ vrstica.ID }}</td>
-        <td>{{ vrstica.GESLO }}</td>
-        <td>{{ vrstica.OPIS }}</td>
-        <td>
-            <form method="post" action="/uredi_geslo">
-                <input type="hidden" name="id" value="{{ vrstica.ID }}">
-                <input type="text" name="novi_opis" value="{{ vrstica.OPIS }}" required>
-                <button type="submit">Shrani</button>
-            </form>
-        </td>
-        <td>
-            <form method="post" action="/izbrisi_geslo">
-                <input type="hidden" name="id" value="{{ vrstica.ID }}">
-                <button type="submit" onclick="return confirm('Res želiš izbrisati to geslo?')">Izbriši</button>
-            </form>
-        </td>
-    </tr>
-    {% endfor %}
-</table>
+    <table>
+        <tr>
+            <th>ID</th>
+            <th>GESLO</th>
+            <th>OPIS</th>
+            <th>UREDI</th>
+            <th>IZBRIŠI</th>
+        </tr>
+        {% for vrstica in gesla %}
+        <tr>
+            <td>{{ vrstica.ID }}</td>
+            <td>{{ vrstica.GESLO }}</td>
+            <td>{{ vrstica.OPIS }}</td>
+            <td>
+                <form method="post" action="/uredi_geslo">
+                    <input type="hidden" name="id" value="{{ vrstica.ID }}">
+                    <input type="text" name="novi_opis" value="{{ vrstica.OPIS }}" required style="max-width: 300px;">
+                    <button type="button" onclick="povecajOpis(this)">UREDI</button>
+                    <button type="submit">Shrani</button>
+                </form>
+            </td>
+            <td>
+                <form method="post" action="/izbrisi_geslo">
+                    <input type="hidden" name="id" value="{{ vrstica.ID }}">
+                    <button type="submit" onclick="return confirm('Res želiš izbrisati to geslo?')">Izbriši</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
 {% endif %}
 
+<!-- JavaScript -->
 <script>
 function kopirajGeslo() {
     const vnos = document.getElementById("geslo").value;
@@ -160,7 +130,14 @@ function kopirajZaDodajanje() {
     document.getElementById("geslo_hidden").value = document.getElementById("geslo").value;
     document.getElementById("opis_hidden").value = document.getElementById("opis").value;
 }
+function povecajOpis(gumb) {
+    const input = gumb.parentElement.querySelector('input[name="novi_opis"]');
+    input.style.height = '80px';
+    input.style.width = '100%';
+    input.style.fontSize = '16px';
+}
 </script>
 
 </body>
 </html>
+"""
