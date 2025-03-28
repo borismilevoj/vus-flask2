@@ -93,11 +93,11 @@ def admin():
             sporocilo = f"Geslo '{geslo}' uspešno dodano!"
 
     conn = get_db()
+    cur.execute("SELECT COUNT(*) FROM slovar")
+    stevilo = cur.fetchone()[0]
     cur = conn.cursor()
     cur.execute("SELECT * FROM slovar WHERE UPPER(GESLO) = UPPER(?)", (geslo,))
     gesla = cur.fetchall()
-    cur.execute("SELECT COUNT(*) FROM slovar")
-    stevilo = cur.fetchone()[0]
 
     return render_template('admin.html',
                            gesla=gesla,
@@ -155,14 +155,19 @@ def uredi_geslo():
         cur.execute("UPDATE slovar SET OPIS=? WHERE ID=?", (novi_opis, geslo_id))
         conn.commit()
 
+    # Po posodobitvi
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("SELECT * FROM slovar ORDER BY ID DESC")
+    cur.execute("SELECT * FROM slovar WHERE ID = ?", (geslo_id,))
     gesla = cur.fetchall()
-    cur.execute("SELECT COUNT(*) FROM slovar")
-    stevilo = cur.fetchone()[0]
+    conn.close()
 
-    return render_template('admin.html', sporocilo="Opis posodobljen!", gesla=gesla, rezultat_preverjanja="", stevilo=stevilo)
+    return render_template("admin.html",
+                           gesla=gesla,
+                           sporocilo="Opis gesla uspešno posodobljen!",
+                           rezultat_preverjanja="",
+                           stevilo=stevilo)
+
 
 @app.route('/izbrisi_geslo', methods=['POST'])
 def izbrisi_geslo():
