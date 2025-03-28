@@ -20,7 +20,15 @@
         }
         button {
             padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            color: white;
+            background-color: #4CAF50;
+            cursor: pointer;
             margin-right: 5px;
+        }
+        button:hover {
+            background-color: #45a049;
         }
         table {
             width: 100%;
@@ -104,7 +112,8 @@
             <td>
                 <form method="post" action="/uredi_geslo">
                     <input type="hidden" name="id" value="{{ vrstica.ID }}">
-                    <input type="text" name="novi_opis" value="{{ vrstica.OPIS }}" required style="max-width: 300px;">
+                    <input type="text" name="novi_opis" value="{{ vrstica.OPIS }}" required
+                           style="width: 100%; font-size: 16px; padding: 6px;">
                     <button type="button" onclick="povecajOpis(this)">UREDI</button>
                     <button type="submit">Shrani</button>
                 </form>
@@ -140,4 +149,3 @@ function povecajOpis(gumb) {
 
 </body>
 </html>
-"""
