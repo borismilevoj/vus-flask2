@@ -78,24 +78,39 @@ def admin():
             cur = conn.cursor()
             cur.execute("INSERT INTO slovar (GESLO, OPIS) VALUES (?, ?)", (geslo.upper(), opis))
             conn.commit()
-            # ❗️Pridobi vsa gesla z istim geslom
             cur.execute("SELECT * FROM slovar WHERE UPPER(GESLO) = ?", (geslo.upper(),))
             gesla = cur.fetchall()
             cur.execute("SELECT COUNT(*) FROM slovar")
             stevilo = cur.fetchone()[0]
             conn.close()
 
-            # 🧠 Sortiraj po zadnjem vezaju (po imenu)
+            # Sort po zadnjem vezaju
             gesla.sort(key=lambda x: (
                 0 if '-' in x['opis'] else 1,
                 x['opis'].rsplit('-', 1)[-1].strip().split(' ')[0].upper() if '-' in x['opis'] else x['opis']
             ))
+
+            print("PO SORTIRANJU:")
+            for g in gesla:
+                print(g['opis'])
 
             return render_template("admin.html",
                                    gesla=gesla,
                                    sporocilo=sporocilo,
                                    rezultat_preverjanja=rezultat_preverjanja,
                                    stevilo=stevilo)
+
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT COUNT(*) FROM slovar")
+    stevilo = cur.fetchone()[0]
+    conn.close()
+
+    return render_template("admin.html",
+                           gesla=[],
+                           sporocilo="",
+                           rezultat_preverjanja="",
+                           stevilo=stevilo)
 
     # GET: Prazna tabela + števec
     conn = get_db()
