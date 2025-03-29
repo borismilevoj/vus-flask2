@@ -210,20 +210,37 @@ def uredi_geslo():
 
 @app.route('/izbrisi_geslo', methods=['POST'])
 def izbrisi_geslo():
+    if not session.get('admin'):
+        return redirect('/login')
+
     geslo_id = request.form.get('id')
+
     if geslo_id:
         conn = get_db()
         cur = conn.cursor()
         cur.execute("DELETE FROM slovar WHERE ID=?", (geslo_id,))
         conn.commit()
 
-    conn = get_db()
-    cur = conn.cursor()
-    gesla = []  # ne prikazuj ničesar
-    cur.execute("SELECT COUNT(*) FROM slovar")
-    stevilo = cur.fetchone()[0]
+        # Ponovno preverimo, če še obstajajo druga gesla z istim geslom
+        geslo = request.form.get('geslo', '').strip()
+        cur.execute("SELECT * FROM slovar WHERE UPPER(GESLO) = ?", (geslo.upper(),))
+        gesla = cur.fetchall()
+        cur.execute("SELECT COUNT(*) FROM slovar")
+        stevilo = cur.fetchone()[0]
+        conn.close()
 
-    return render_template('admin.html', sporocilo="Geslo izbrisano!", gesla=gesla, rezultat_preverjanja="", stevilo=stevilo)
+        # Uredi po zadnjem vezaju
+        gesla.sort(key=lambda x: (
+            0 if '-' in x['opis'] else 1,
+            x['opis'].rsplit('-', 1)[-1].strip().split(' ')[0].upper() if '-' in x['opis'] else x['opis']
+        ))
+
+        return render_template("admin.html",
+                               gesla=gesla,
+                               sporocilo="Geslo uspešno izbrisano!",
+                               rezultat_preverjanja="",
+                               stevilo=stevilo)
+
 
 
 @app.route('/isci_po_vzorcu', methods=['POST'])
