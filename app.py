@@ -78,7 +78,7 @@ def admin():
             cur = conn.cursor()
             cur.execute("INSERT INTO slovar (GESLO, OPIS) VALUES (?, ?)", (geslo.upper(), opis))
             conn.commit()
-            cur.execute("SELECT * FROM slovar WHERE UPPER(GESLO) LIKE ?", (geslo[:3].upper() + '%',))
+            cur.execute("SELECT * FROM slovar WHERE UPPER(GESLO) = ?", (geslo.upper(),))
             gesla = cur.fetchall()
             sporocilo = f"Geslo '{geslo}' uspešno dodano!"
             cur.execute("SELECT COUNT(*) FROM slovar")
@@ -189,8 +189,7 @@ def izbrisi_geslo():
 
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("SELECT * FROM slovar ORDER BY ID DESC")
-    gesla = cur.fetchall()
+    gesla = []  # ne prikazuj ničesar
     cur.execute("SELECT COUNT(*) FROM slovar")
     stevilo = cur.fetchone()[0]
 
