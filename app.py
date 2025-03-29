@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, jsonify,g
 from flask import session, redirect, url_for
 import sqlite3
 import os
+import unicodedata
 
 app = Flask(__name__)
 app.secret_key = 'admin123'  # obvezno za delo s sejami
@@ -60,10 +61,14 @@ def login():
     return render_template('login.html', napaka=napaka)
 
 
+
 @app.route('/admin', methods=['GET', 'POST'])
 def admin():
     if not session.get('admin'):
         return redirect('/login')
+
+    def normalize(s):
+        return unicodedata.normalize('NFKD', s).encode('ASCII', 'ignore').decode().upper()
 
     sporocilo = ""
     rezultat_preverjanja = ""
@@ -84,10 +89,10 @@ def admin():
             stevilo = cur.fetchone()[0]
             conn.close()
 
-            # Celotno besedilo po zadnjem vezaju za natančno abecedno razvrščanje
+            # Sortiranje z normalizacijo unicode znakov
             gesla.sort(key=lambda x: (
                 0 if '-' in x['opis'] else 1,
-                x['opis'].rsplit('-', 1)[-1].strip().upper() if '-' in x['opis'] else x['opis']
+                normalize(x['opis'].rsplit('-', 1)[-1].strip()) if '-' in x['opis'] else normalize(x['opis'])
             ))
 
             return render_template("admin.html",
