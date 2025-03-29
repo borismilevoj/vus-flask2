@@ -80,15 +80,13 @@ def admin():
             conn.commit()
             cur.execute("SELECT * FROM slovar WHERE UPPER(GESLO) = ?", (geslo.upper(),))
             gesla = cur.fetchall()
-            sporocilo = f"Geslo '{geslo}' uspešno dodano!"
             cur.execute("SELECT COUNT(*) FROM slovar")
             stevilo = cur.fetchone()[0]
             conn.close()
 
-            # Razvrsti po opisu
             gesla.sort(key=lambda x: (
                 0 if '-' in x['opis'] else 1,
-                x['opis'].split('-')[1].strip().split(' ')[0] if '-' in x['opis'] else x['opis']
+                x['opis'].rsplit('-', 1)[-1].strip().split(' ')[0] if '-' in x['opis'] else x['opis']
             ))
 
             return render_template("admin.html",
@@ -96,6 +94,31 @@ def admin():
                                    sporocilo=sporocilo,
                                    rezultat_preverjanja=rezultat_preverjanja,
                                    stevilo=stevilo)
+
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT COUNT(*) FROM slovar")
+    stevilo = cur.fetchone()[0]
+    conn.close()
+
+    return render_template("admin.html",
+                           gesla=[],
+                           sporocilo="",
+                           rezultat_preverjanja="",
+                           stevilo=stevilo)
+
+    # GET zahteva
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT COUNT(*) FROM slovar")
+    stevilo = cur.fetchone()[0]
+    conn.close()
+
+    return render_template("admin.html",
+                           gesla=[],
+                           sporocilo="",
+                           rezultat_preverjanja="",
+                           stevilo=stevilo)
 
     # GET zahteva: prazen seznam gesel
     conn = get_db()
