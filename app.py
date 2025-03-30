@@ -17,6 +17,8 @@ def get_db():
         g.db.row_factory = sqlite3.Row
     return g.db
 
+# =================================================
+
 @app.teardown_appcontext
 def close_db(exception=None):
     db = g.pop('db', None)
@@ -59,7 +61,7 @@ def admin():
         return redirect('/login')
 
     def normalize(text):
-        return unicodedata.normalize('NFKD', text).encode('ASCII', 'ignore').decode('ASCII')
+        return unicodedata.normalize('NFKD', text).encode('ASCII', 'ignore').decode('ASCII').lower()
 
     def extract_ime(opis):
         if '-' in opis:
@@ -80,13 +82,22 @@ def admin():
         if geslo and opis:
             conn = get_db()
             cur = conn.cursor()
+
+            # ⬇️ Vstavi geslo v bazo
             cur.execute("INSERT INTO slovar (GESLO, OPIS) VALUES (?, ?)", (geslo.upper(), opis))
             conn.commit()
+
+            # ⬇️ Pridobi vnešeno geslo
             cur.execute("SELECT * FROM slovar WHERE UPPER(GESLO) = ?", (geslo.upper(),))
             gesla = cur.fetchall()
+
+            # ⬇️ Sortiranje po imenu za zadnjim vezajem
             gesla.sort(key=lambda x: extract_ime(x['opis']))
+
+            # ⬇️ Števec
             cur.execute("SELECT COUNT(*) FROM slovar")
             stevilo = cur.fetchone()[0]
+
             conn.close()
 
             return render_template("admin.html",
@@ -95,7 +106,7 @@ def admin():
                                    rezultat_preverjanja="",
                                    stevilo=stevilo)
 
-    # GET zahteva
+    # GET zahteva – ob ponastavitvi ali prvem zagonu
     conn = get_db()
     cur = conn.cursor()
     cur.execute("SELECT COUNT(*) FROM slovar")
@@ -142,6 +153,8 @@ def logout():
     session.pop('admin', None)
     return redirect('/login')
 
+# =================IŠČI PO VZORCU =========================
+
 @app.route('/isci_po_vzorcu', methods=['POST'])
 def isci_po_vzorcu():
     vzorec = request.form['vzorec'].strip().upper()
@@ -155,6 +168,8 @@ def isci_po_vzorcu():
 
     gesla = [{'geslo': g, 'opis': o} for g, o in rezultati]
     return jsonify(gesla)
+
+# ===================IŠČI PO OPISU ==============?=========
 
 @app.route('/isci_po_opisu', methods=['POST'])
 def isci_po_opisu():
