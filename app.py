@@ -63,6 +63,10 @@ def login():
 
 
 
+
+import re
+import unicodedata
+
 @app.route('/admin', methods=['GET', 'POST'])
 def admin():
     if not session.get('admin'):
@@ -75,9 +79,9 @@ def admin():
         if '-' in opis:
             kandidat = opis.rsplit('-', 1)[-1].strip()
             ime = re.split(r'\s*\(', kandidat)[0].strip()
-            if ime and ime[0].isupper():
+            if ime:
                 return normalize(ime)
-        return 'zzz'  # Če ni z veliko, da gre na konec
+        return 'zzz'
 
     sporocilo = ""
     rezultat_preverjanja = ""
@@ -117,6 +121,7 @@ def admin():
                            sporocilo="",
                            rezultat_preverjanja="",
                            stevilo=stevilo)
+
 
 
 @app.route('/isci_vzorec')
