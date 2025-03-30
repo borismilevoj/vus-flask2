@@ -4,69 +4,99 @@
     <meta charset="UTF-8">
     <title>Administracija slovarja</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f2f2f2;
-            padding: 20px;
-        }
-        h1 {
-            color: #333;
-        }
-        form {
-            margin-bottom: 20px;
-        }
-        input[type="text"], textarea {
-            padding: 8px;
-            width: 300px;
+        body { font-family: Arial, sans-serif; background-color: #f3f3f3; padding: 20px; }
+        h1 { color: #333; }
+        input, textarea, select {
+            font-size: 16px;
+            padding: 6px;
             margin-bottom: 10px;
-        }
-        .inline-form {
-            display: inline-block;
-            margin-right: 10px;
         }
         button {
             background-color: #4CAF50;
             color: white;
-            padding: 10px 15px;
             border: none;
+            padding: 8px 14px;
+            margin: 4px 2px;
             cursor: pointer;
+            font-size: 16px;
         }
-        button:hover {
-            background-color: #45a049;
+        .rdece { color: red; font-weight: bold; }
+        .modro { color: blue; font-weight: bold; }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            background: white;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #eee;
         }
     </style>
 </head>
 <body>
     <h1>Administracija slovarja</h1>
 
-    <form method="post" action="/admin">
+    <form method="post" action="/preveri" class="inline-form">
         <label for="geslo">Geslo:</label><br>
-        <input type="text" id="geslo" name="geslo" required><br>
+        <input type="text" id="geslo" name="preveri_geslo" required>
+        <button type="submit">Preveri</button>
+    </form>
 
-        <form method="post" action="/preveri" class="inline-form">
-            <input type="hidden" name="preveri_geslo" id="preveri_geslo_hidden">
-            <button type="submit" onclick="kopirajGeslo()">Preveri</button>
-        </form>
+    <form method="get" action="/admin" class="inline-form">
+        <button type="submit">Ponastavi</button>
+    </form>
 
-        <form method="get" action="/admin" class="inline-form">
-            <button type="submit">Ponastavi</button>
-        </form>
+    {% if rezultat_preverjanja %}
+        <p class="{{ 'modro' if 'že obstaja' in rezultat_preverjanja else 'rdece' }}">
+            {{ rezultat_preverjanja }}
+        </p>
+    {% endif %}
 
-        {% if rezultat_preverjanja %}
-            <p style="color: {% if 'ne obstaja' in rezultat_preverjanja %}red{% else %}blue{% endif %};">
-                <strong>{{ rezultat_preverjanja }}</strong>
-            </p>
-        {% endif %}
-
+    <form method="post" action="/admin">
         <label for="opis">Opis:</label><br>
-        <textarea name="opis" id="opis" rows="4" cols="40" required></textarea><br>
-
-        <input type="hidden" name="geslo_hidden" id="geslo_hidden">
-        <input type="hidden" name="opis_hidden" id="opis_hidden">
-
-        <button type="submit" onclick="kopirajZaDodajanje()">Dodaj</button>
+        <textarea name="opis" id="opis" rows="4" cols="60" required></textarea><br>
+        <input type="hidden" name="geslo" id="geslo_hidden">
+        <input type="hidden" name="opis" id="opis_hidden">
+        <button type="submit">Dodaj</button>
     </form>
 
     <p>V bazi je trenutno <strong>{{ stevilo }}</strong> gesel.</p>
+
+    {% if gesla %}
+    <table>
+        <tr>
+            <th>ID</th>
+            <th>GESLO</th>
+            <th>OPIS</th>
+            <th>UREDI</th>
+            <th>IZBRIŠI</th>
+        </tr>
+        {% for vrstica in gesla %}
+        <tr>
+            <td>{{ vrstica.ID }}</td>
+            <td>{{ vrstica.GESLO }}</td>
+            <td>{{ vrstica.OPIS }}</td>
+            <td>
+                <form method="post" action="/uredi_geslo">
+                    <input type="hidden" name="id" value="{{ vrstica.ID }}">
+                    <input type="text" name="novi_opis" value="{{ vrstica.OPIS }}" style="width: 90%;" required>
+                    <button type="submit">Shrani</button>
+                </form>
+            </td>
+            <td>
+                <form method="post" action="/izbrisi_geslo">
+                    <input type="hidden" name="id" value="{{ vrstica.ID }}">
+                    <button type="submit" onclick="return confirm('Res želiš izbrisati to geslo?')">Izbriši</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% endif %}
+
 </body>
 </html>
