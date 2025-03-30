@@ -146,7 +146,35 @@ def preveri():
     stevilo = cur.fetchone()[0]
     return render_template("admin.html", gesla=[], sporocilo="", rezultat_preverjanja=rezultat, stevilo=stevilo)
 
+# ==============IZBRIŠI GESLO  =======================
+
+
+@app.route('/izbrisi_geslo', methods=['POST'])
+def izbrisi_geslo():
+    if not session.get('admin'):
+        return redirect('/login')
+
+    geslo_id = request.form['id']
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM slovar WHERE ID = ?", (geslo_id,))
+    conn.commit()
+
+    # Pridobi ponovno podatke za prikaz
+    cur.execute("SELECT * FROM slovar WHERE ID = ?", (geslo_id,))
+    gesla = cur.fetchall()
+    cur.execute("SELECT COUNT(*) FROM slovar")
+    stevilo = cur.fetchone()[0]
+
+    return render_template("admin.html",
+                           gesla=gesla,
+                           sporocilo="Geslo uspešno izbrisano.",
+                           rezultat_preverjanja="",
+                           stevilo=stevilo)
+
+
 # =============== LOGOUT ==============================
+
 
 @app.route('/logout')
 def logout():
