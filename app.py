@@ -5,7 +5,7 @@ import re
 import unicodedata
 
 app = Flask(__name__)
-app.secret_key = 'Tifumannam1VUS_flask2'
+app.secret_key = 'admin123'
 DATABASE = 'VUS.db'
 
 # ======== Funkcije za delo z bazo ========
