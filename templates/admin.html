@@ -4,68 +4,111 @@
     <meta charset="UTF-8">
     <title>Administracija slovarja</title>
     <style>
-        body { font-family: Arial, sans-serif; background-color: #f3f3f3; padding: 20px; }
-        h1 { color: #333; }
-        input, textarea, select {
-            font-size: 16px;
-            padding: 6px;
-            margin-bottom: 10px;
+        body {
+            font-family: sans-serif;
+            background: #f1f1f1;
+            margin: 40px;
         }
+
+        h1 {
+            color: #333;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
         button {
             background-color: #4CAF50;
             color: white;
+            padding: 8px 18px;
             border: none;
-            padding: 8px 14px;
-            margin: 4px 2px;
+            border-radius: 5px;
+            margin-right: 10px;
+            font-size: 14px;
             cursor: pointer;
-            font-size: 16px;
         }
-        .rdece { color: red; font-weight: bold; }
-        .modro { color: blue; font-weight: bold; }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
         table {
-            border-collapse: collapse;
+            margin-top: 30px;
             width: 100%;
+            border-collapse: collapse;
             background: white;
         }
+
         th, td {
-            border: 1px solid #ccc;
             padding: 10px;
             text-align: left;
+            border-bottom: 1px solid #ddd;
         }
+
         th {
-            background-color: #eee;
+            background-color: #f2f2f2;
+        }
+
+        .sporocilo {
+            margin-top: 15px;
+            font-weight: bold;
+        }
+
+        .modro {
+            color: blue;
+        }
+
+        .rdece {
+            color: red;
         }
     </style>
 </head>
 <body>
+
     <h1>Administracija slovarja</h1>
 
-    <form method="post" action="/preveri" class="inline-form">
-        <label for="geslo">Geslo:</label><br>
-        <input type="text" id="geslo" name="preveri_geslo" required>
+    <!-- PREVERJANJE -->
+    <form method="post" action="/preveri">
+        <label for="preveri_geslo">Preveri geslo:</label>
+        <input type="text" name="preveri_geslo" id="preveri_geslo" required>
         <button type="submit">Preveri</button>
-    </form>
-
-    <form method="get" action="/admin" class="inline-form">
-        <button type="submit">Ponastavi</button>
+        <button type="reset">Ponastavi</button>
     </form>
 
     {% if rezultat_preverjanja %}
-        <p class="{{ 'modro' if 'že obstaja' in rezultat_preverjanja else 'rdece' }}">
+        <p class="sporocilo {% if 'že obstaja' in rezultat_preverjanja %}modro{% else %}rdece{% endif %}">
             {{ rezultat_preverjanja }}
         </p>
     {% endif %}
 
+    <!-- DODAJANJE -->
     <form method="post" action="/admin">
-        <label for="opis">Opis:</label><br>
-        <textarea name="opis" id="opis" rows="4" cols="60" required></textarea><br>
-        <input type="hidden" name="geslo" id="geslo_hidden">
-        <input type="hidden" name="opis" id="opis_hidden">
+        <label for="geslo">Novo geslo:</label>
+        <input type="text" name="geslo" id="geslo" required>
+
+        <label for="opis">Opis gesla:</label>
+        <textarea name="opis" id="opis" rows="4" required></textarea>
+
         <button type="submit">Dodaj</button>
     </form>
 
+    <!-- SPOROČILO -->
+    {% if sporocilo %}
+        <p class="sporocilo">{{ sporocilo }}</p>
+    {% endif %}
+
     <p>V bazi je trenutno <strong>{{ stevilo }}</strong> gesel.</p>
 
+</body>
+</html>
+
+
+    <!-- TABELA -->
     {% if gesla %}
     <table>
         <tr>
@@ -83,7 +126,7 @@
             <td>
                 <form method="post" action="/uredi_geslo">
                     <input type="hidden" name="id" value="{{ vrstica.ID }}">
-                    <input type="text" name="novi_opis" value="{{ vrstica.OPIS }}" style="width: 90%;" required>
+                    <input type="text" name="novi_opis" value="{{ vrstica.OPIS }}" required style="width: 90%;">
                     <button type="submit">Shrani</button>
                 </form>
             </td>
@@ -97,6 +140,5 @@
         {% endfor %}
     </table>
     {% endif %}
-
 </body>
 </html>
