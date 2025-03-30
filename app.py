@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, jsonify,g
 from flask import session, redirect, url_for
 import sqlite3
 import os
+import re
 import unicodedata
 
 app = Flask(__name__)
@@ -68,7 +69,15 @@ def admin():
         return redirect('/login')
 
     def normalize(s):
-        return unicodedata.normalize('NFKD', s).encode('ASCII', 'ignore').decode().upper()
+        return unicodedata.normalize('NFKD', s).encode('ASCII', 'ignore').decode().lower()
+
+    def extract_ime(opis):
+        if '-' in opis:
+            kandidat = opis.rsplit('-', 1)[-1].strip()
+            ime = re.split(r'\s*\(', kandidat)[0].strip()
+            if ime and ime[0].isupper():
+                return normalize(ime)
+        return 'zzz'  # Če ni z veliko, da gre na konec
 
     sporocilo = ""
     rezultat_preverjanja = ""
@@ -89,11 +98,7 @@ def admin():
             stevilo = cur.fetchone()[0]
             conn.close()
 
-            # Sortiranje z normalizacijo unicode znakov
-            gesla.sort(key=lambda x: (
-                0 if '-' in x['opis'] else 1,
-                normalize(x['opis'].rsplit('-', 1)[-1].strip()) if '-' in x['opis'] else normalize(x['opis'])
-            ))
+            gesla.sort(key=lambda x: extract_ime(x['opis']))
 
             return render_template("admin.html",
                                    gesla=gesla,
