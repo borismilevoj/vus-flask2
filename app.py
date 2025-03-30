@@ -44,7 +44,7 @@ def home():
 def login():
     napaka = ""
     if request.method == 'POST':
-        geslo = request.form['password']
+        geslo = request.form['geslo']  # pazimo: geslo, ne password!
         if geslo == 'admin123':
             session['admin'] = True
             return redirect('/admin')
@@ -52,7 +52,13 @@ def login():
             napaka = "Napačno geslo!"
     return render_template('login.html', napaka=napaka)
 
+@app.route('/logout')
+def logout():
+    session.pop('admin', None)
+    return redirect('/login')
 
+
+# ========================== ADMIN ===========================================
 
 @app.route('/admin', methods=['GET', 'POST'])
 def admin():
