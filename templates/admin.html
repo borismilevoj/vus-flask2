@@ -1,151 +1,72 @@
 <!DOCTYPE html>
-<html>
+<html lang="sl">
 <head>
-    <title>Administracija VUS</title>
+    <meta charset="UTF-8">
+    <title>Administracija slovarja</title>
     <style>
         body {
-            font-family: sans-serif;
-            max-width: 800px;
-            margin: 40px auto;
-            background-color: #f5f5f5;
+            font-family: Arial, sans-serif;
+            background-color: #f2f2f2;
             padding: 20px;
-            border-radius: 10px;
+        }
+        h1 {
+            color: #333;
+        }
+        form {
+            margin-bottom: 20px;
         }
         input[type="text"], textarea {
-            width: 100%;
             padding: 8px;
-            margin-bottom: 12px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-        button {
-            padding: 6px 12px;
-            border: none;
-            border-radius: 4px;
-            color: white;
-            background-color: #4CAF50;
-            cursor: pointer;
-            margin-right: 5px;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-        table {
-            width: 100%;
-            margin-top: 20px;
-            background-color: white;
-            border-collapse: collapse;
-        }
-        th, td {
-            padding: 8px;
-            border: 1px solid #ccc;
-        }
-        th {
-            background-color: #eee;
+            width: 300px;
+            margin-bottom: 10px;
         }
         .inline-form {
             display: inline-block;
             margin-right: 10px;
         }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
     </style>
 </head>
 <body>
+    <h1>Administracija slovarja</h1>
 
-<h2>Administracija gesel</h2>
+    <form method="post" action="/admin">
+        <label for="geslo">Geslo:</label><br>
+        <input type="text" id="geslo" name="geslo" required><br>
 
-<!-- Vnos gesla -->
-<label for="geslo">Geslo:</label><br>
-<input type="text" id="geslo" name="geslo" required><br><br>
+        <form method="post" action="/preveri" class="inline-form">
+            <input type="hidden" name="preveri_geslo" id="preveri_geslo_hidden">
+            <button type="submit" onclick="kopirajGeslo()">Preveri</button>
+        </form>
 
-<!-- Gumbi preveri / ponastavi -->
-<form method="post" action="/preveri" class="inline-form">
-    <input type="hidden" name="preveri_geslo" id="preveri_geslo_hidden">
-    <button type="submit" onclick="kopirajGeslo()">PREVERI</button>
-</form>
-<form method="get" action="/admin" class="inline-form">
-    <button type="submit">PONASTAVI</button>
-</form>
+        <form method="get" action="/admin" class="inline-form">
+            <button type="submit">Ponastavi</button>
+        </form>
 
-<!-- Prikaz sporočila PREVERJANJA z barvo -->
-{% if rezultat_preverjanja %}
-  {% if "že obstaja" in rezultat_preverjanja %}
-    <p style="color:blue;"><strong>{{ rezultat_preverjanja }}</strong></p>
-  {% else %}
-    <p style="color:red;"><strong>{{ rezultat_preverjanja }}</strong></p>
-  {% endif %}
-{% endif %}
+        {% if rezultat_preverjanja %}
+            <p style="color: {% if 'ne obstaja' in rezultat_preverjanja %}red{% else %}blue{% endif %};">
+                <strong>{{ rezultat_preverjanja }}</strong>
+            </p>
+        {% endif %}
 
-<!-- Vnos opisa -->
-<form method="post" action="/admin">
-    <label for="opis">Opis:</label><br>
-    <textarea name="opis" id="opis" rows="4" cols="40" required></textarea><br>
-    <input type="hidden" name="geslo" id="geslo_hidden">
-    <input type="hidden" name="opis" id="opis_hidden">
-    <button type="submit" onclick="kopirajZaDodajanje()">DODAJ</button>
-</form>
+        <label for="opis">Opis:</label><br>
+        <textarea name="opis" id="opis" rows="4" cols="40" required></textarea><br>
 
-<!-- Števec -->
-<p>V bazi je trenutno <strong>{{ stevilo }}</strong> gesel.</p>
+        <input type="hidden" name="geslo_hidden" id="geslo_hidden">
+        <input type="hidden" name="opis_hidden" id="opis_hidden">
 
-<!-- Sporočilo po dodajanju ali brisanju -->
-{% if sporocilo %}
-  <p><strong>{{ sporocilo }}</strong></p>
-{% endif %}
+        <button type="submit" onclick="kopirajZaDodajanje()">Dodaj</button>
+    </form>
 
-<!-- Tabela z rezultati -->
-{% if gesla is not defined or gesla|length == 0 %}
-    <p>Ni gesel za prikaz.</p>
-{% else %}
-    <table>
-        <tr>
-            <th>ID</th>
-            <th>GESLO</th>
-            <th>OPIS</th>
-            <th>UREDI</th>
-            <th>IZBRIŠI</th>
-        </tr>
-        {% for vrstica in gesla %}
-        <tr>
-            <td>{{ vrstica.ID }}</td>
-            <td>{{ vrstica.GESLO }}</td>
-            <td>{{ vrstica.OPIS }}</td>
-            <td>
-                <form method="post" action="/uredi_geslo">
-                    <input type="hidden" name="id" value="{{ vrstica.ID }}">
-                    <input type="text" name="novi_opis" value="{{ vrstica.OPIS }}" required
-                           style="width: 100%; font-size: 16px; padding: 6px;">
-                    <button type="button" onclick="povecajOpis(this)">UREDI</button>
-                    <button type="submit">Shrani</button>
-                </form>
-            </td>
-            <td>
-                <form method="post" action="/izbrisi_geslo">
-                    <input type="hidden" name="id" value="{{ vrstica.ID }}">
-                    <button type="submit" onclick="return confirm('Res želiš izbrisati to geslo?')">Izbriši</button>
-                </form>
-            </td>
-        </tr>
-        {% endfor %}
-    </table>
-{% endif %}
-
-<!-- JavaScript -->
-<script>
-function kopirajGeslo() {
-    const vnos = document.getElementById("geslo").value;
-    document.getElementById("preveri_geslo_hidden").value = vnos;
-}
-function kopirajZaDodajanje() {
-    document.getElementById("geslo_hidden").value = document.getElementById("geslo").value;
-    document.getElementById("opis_hidden").value = document.getElementById("opis").value;
-}
-function povecajOpis(gumb) {
-    const input = gumb.parentElement.querySelector('input[name="novi_opis"]');
-    input.style.height = '80px';
-    input.style.width = '100%';
-    input.style.fontSize = '16px';
-}
-</script>
-
+    <p>V bazi je trenutno <strong>{{ stevilo }}</strong> gesel.</p>
 </body>
 </html>
