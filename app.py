@@ -63,25 +63,21 @@ def login():
 
 
 
-
-import re
-import unicodedata
-
 @app.route('/admin', methods=['GET', 'POST'])
 def admin():
     if not session.get('admin'):
         return redirect('/login')
 
-    def normalize(s):
-        return unicodedata.normalize('NFKD', s).encode('ASCII', 'ignore').decode().lower()
+    def normalize(text):
+        return unicodedata.normalize('NFKD', text).encode('ASCII', 'ignore').decode('ASCII')
 
     def extract_ime(opis):
         if '-' in opis:
             kandidat = opis.rsplit('-', 1)[-1].strip()
             ime = re.split(r'\s*\(', kandidat)[0].strip()
-            if ime:
+            if ime and ime[0].isupper():
                 return normalize(ime)
-        return 'zzz'
+        return 'zzz'  # če ni z veliko črko, gre na konec
 
     sporocilo = ""
     rezultat_preverjanja = ""
@@ -98,6 +94,7 @@ def admin():
             conn.commit()
             cur.execute("SELECT * FROM slovar WHERE UPPER(GESLO) = ?", (geslo.upper(),))
             gesla = cur.fetchall()
+            gesla.sort(key=lambda x: extract_ime(x['opis']))
             cur.execute("SELECT COUNT(*) FROM slovar")
             stevilo = cur.fetchone()[0]
             conn.close()
