@@ -1,57 +1,53 @@
 <!DOCTYPE html>
-<html>
+<html lang="sl">
 <head>
-    <title>Iskanje po opisu</title>
+    <meta charset="UTF-8">
+    <title>Iskanje gesla po opisu</title>
     <style>
-        body {
-            font-family: sans-serif;
-            max-width: 700px;
-            margin: 40px auto;
-            background-color: #f5f5f5;
-            padding: 20px;
-            border-radius: 10px;
-        }
-        h2 {
-            margin-bottom: 10px;
-        }
-        input[type="text"] {
-            width: 100%;
-            padding: 10px;
-            font-size: 16px;
-            margin-bottom: 15px;
-        }
-        button {
-            padding: 8px 16px;
-            margin-right: 10px;
-        }
-        #rezultati {
-            margin-top: 20px;
-        }
+        body { font-family: Arial; background-color: #f2f2f2; padding: 20px; }
+        h1 { color: #333; }
+        input[type="text"] { width: 400px; font-size: 18px; padding: 6px; }
+        button { padding: 6px 12px; margin-left: 10px; font-size: 16px; }
     </style>
 </head>
 <body>
+    <h1>Iskanje gesla po opisu</h1>
 
-<h2>Iskanje gesla po znanem opisu</h2>
+    <input type="text" id="opis" placeholder="npr. poklic, država, letnica...">
+    <button onclick="isci()">IŠČI</button>
+    <button onclick="ponastavi()">PONASTAVI</button>
 
-<form method="post" action="/isci_po_opisu">
-    <input type="text" name="opis" placeholder="npr. francoski 1898 igralec...">
-    <br>
-    <button type="submit">IŠČI</button>
-    <button type="submit" formaction="/isci_po_opisu">PONASTAVI</button>
-</form>
+    <p id="stevec"></p>
+    <ul id="rezultati"></ul>
 
-<div id="rezultati">
-{% if gesla %}
-    <p>Zadetkov: <strong>{{ gesla|length }}</strong></p>
-    <ul>
-    {% for g in gesla %}
-        <li><strong>{{ g.GESLO }}</strong>: {{ g.OPIS }}</li>
-    {% endfor %}
-    </ul>
-{% elif gesla is not none %}
-    <p><em>Ni zadetkov.</em></p>
-{% endif %}
-</div>
+    <br><a href="/admin">← Nazaj na administracijo</a>
 
+    <script>
+        function isci() {
+            const opis = document.getElementById("opis").value;
+
+            fetch("/isci_po_opisu", {
+                method: "POST",
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `iskalni_izraz=${encodeURIComponent(opis)}`
+            })
+            .then(resp => resp.json())
+            .then(data => {
+                document.getElementById("rezultati").innerHTML = "";
+                document.getElementById("stevec").textContent = "Zadetkov: " + data.length;
+                data.forEach(e => {
+                    const li = document.createElement("li");
+                    li.innerHTML = `<strong>${e.geslo}</strong>: ${e.opis}`;
+                    document.getElementById("rezultati").appendChild(li);
+                });
+            });
+        }
+
+        function ponastavi() {
+            document.getElementById("opis").value = "";
+            document.getElementById("stevec").textContent = "";
+            document.getElementById("rezultati").innerHTML = "";
+        }
+    </script>
 </body>
 </html>
