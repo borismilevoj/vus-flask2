@@ -5,83 +5,72 @@
     <title>Administracija slovarja</title>
     <style>
         body {
-            font-family: sans-serif;
-            background: #f1f1f1;
-            margin: 40px;
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            padding: 20px;
         }
 
         h1 {
             color: #333;
         }
 
-        input, textarea {
+        input[type="text"], textarea {
+            padding: 6px;
+            font-size: 14px;
+            margin-bottom: 10px;
             width: 100%;
-            padding: 10px;
-            margin-bottom: 12px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
         }
 
         button {
-            background-color: #4CAF50;
+            background-color: green;
             color: white;
-            padding: 8px 18px;
-            border: none;
-            border-radius: 5px;
-            margin-right: 10px;
+            padding: 6px 12px;
             font-size: 14px;
+            border: none;
+            border-radius: 4px;
             cursor: pointer;
+            margin-top: 5px;
         }
 
         button:hover {
-            background-color: #45a049;
+            background-color: darkgreen;
         }
 
         table {
-            margin-top: 30px;
             width: 100%;
             border-collapse: collapse;
+            margin-top: 20px;
             background: white;
         }
 
         th, td {
-            padding: 10px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
+            padding: 4px 6px;
+            border: 1px solid #ddd;
+            font-size: 14px;
+            vertical-align: middle;
         }
 
         th {
-            background-color: #f2f2f2;
+            background-color: #eee;
         }
 
-        .sporocilo {
-            margin-top: 15px;
-            font-weight: bold;
-        }
-
-        .modro {
-            color: blue;
-        }
-
-        .rdece {
-            color: red;
-        }
+        .modro { color: blue; font-weight: bold; }
+        .rdece { color: red; font-weight: bold; }
     </style>
 </head>
 <body>
-
     <h1>Administracija slovarja</h1>
 
-    <!-- PREVERJANJE -->
+    <!-- PREVERI -->
     <form method="post" action="/preveri">
         <label for="preveri_geslo">Preveri geslo:</label>
-        <input type="text" name="preveri_geslo" id="preveri_geslo" required>
+        <input type="text" id="preveri_geslo" name="preveri_geslo" required>
         <button type="submit">Preveri</button>
-        <button type="reset">Ponastavi</button>
+        <a href="/admin"><button type="button">Ponastavi</button></a>
     </form>
 
     {% if rezultat_preverjanja %}
-        <p class="sporocilo {% if 'že obstaja' in rezultat_preverjanja %}modro{% else %}rdece{% endif %}">
+        <p class="{% if 'ne obstaja' in rezultat_preverjanja %}rdece{% else %}modro{% endif %}">
             {{ rezultat_preverjanja }}
         </p>
     {% endif %}
@@ -89,55 +78,49 @@
     <!-- DODAJANJE -->
     <form method="post" action="/admin">
         <label for="geslo">Novo geslo:</label>
-        <input type="text" name="geslo" id="geslo" required>
+        <input type="text" id="geslo" name="geslo" required>
 
         <label for="opis">Opis gesla:</label>
-        <textarea name="opis" id="opis" rows="4" required></textarea>
+        <textarea name="opis" id="opis" rows="3" required></textarea>
 
         <button type="submit">Dodaj</button>
     </form>
 
-    <!-- SPOROČILO -->
-    {% if sporocilo %}
-        <p class="sporocilo">{{ sporocilo }}</p>
-    {% endif %}
-
     <p>V bazi je trenutno <strong>{{ stevilo }}</strong> gesel.</p>
 
-</body>
-</html>
-
-
-    <!-- TABELA -->
     {% if gesla %}
     <table>
-        <tr>
-            <th>ID</th>
-            <th>GESLO</th>
-            <th>OPIS</th>
-            <th>UREDI</th>
-            <th>IZBRIŠI</th>
-        </tr>
-        {% for vrstica in gesla %}
-        <tr>
-            <td>{{ vrstica.ID }}</td>
-            <td>{{ vrstica.GESLO }}</td>
-            <td>{{ vrstica.OPIS }}</td>
-            <td>
-                <form method="post" action="/uredi_geslo">
-                    <input type="hidden" name="id" value="{{ vrstica.ID }}">
-                    <input type="text" name="novi_opis" value="{{ vrstica.OPIS }}" required style="width: 90%;">
-                    <button type="submit">Shrani</button>
-                </form>
-            </td>
-            <td>
-                <form method="post" action="/izbrisi_geslo">
-                    <input type="hidden" name="id" value="{{ vrstica.ID }}">
-                    <button type="submit" onclick="return confirm('Res želiš izbrisati to geslo?')">Izbriši</button>
-                </form>
-            </td>
-        </tr>
-        {% endfor %}
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>GESLO</th>
+                <th>OPIS</th>
+                <th>UREDI</th>
+                <th>IZBRIŠI</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for vrstica in gesla %}
+            <tr>
+                <td>{{ vrstica.ID }}</td>
+                <td>{{ vrstica.GESLO }}</td>
+                <td>{{ vrstica.OPIS }}</td>
+                <td>
+                    <form method="post" action="/uredi_geslo">
+                        <input type="hidden" name="id" value="{{ vrstica.ID }}">
+                        <input type="text" name="novi_opis" value="{{ vrstica.OPIS }}" required>
+                        <button type="submit">Shrani</button>
+                    </form>
+                </td>
+                <td>
+                    <form method="post" action="/izbrisi_geslo">
+                        <input type="hidden" name="id" value="{{ vrstica.ID }}">
+                        <button type="submit" onclick="return confirm('Res želiš izbrisati to geslo?')">Izbriši</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
     </table>
     {% endif %}
 </body>
