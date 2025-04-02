@@ -28,13 +28,25 @@ def extract_ime(opis):
     if '-' in opis:
         kandidat = opis.rsplit('-', 1)[-1].strip()
         ime = re.split(r'\s*\(', kandidat)[0].strip()
-        if ime and ime[0].isupper():
-            return normalize(ime)
+        if ime and ime[0].isalpha() and ime[0].isupper():
+            return unicodedata.normalize('NFKD', ime).encode('ASCII', 'ignore').decode('ASCII').lower()
     return 'zzzzzzzz'
+
+
+
 
 @app.route('/')
 def index():
     return redirect('/isci_opis')
+
+@app.route('/isci_opis')
+def isci_opis():
+    return render_template("isci_opis.html")
+
+@app.route('/isci_vzorec')
+def isci_vzorec():
+    return render_template("isci_vzorec.html")
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
