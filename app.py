@@ -1,5 +1,4 @@
-
-from flask import Flask, render_template, request, jsonify, g, session, redirect
+from flask import Flask, render_template, request, redirect, session, jsonify, g
 import sqlite3
 import os
 import re
@@ -9,26 +8,21 @@ app = Flask(__name__)
 app.secret_key = 'Tifumannam1VUS_flask2'
 DATABASE = 'VUS.db'
 
- # ========== POVEZAVA Z BAZO ====================
-
 def get_db():
-    if 'db' not in g:
-        g.db = sqlite3.connect(DATABASE)
-        g.db.row_factory = sqlite3.Row
-    return g.db
-
-# =================================================
+    db = getattr(g, '_database', None)
+    if db is None:
+        db = g._database = sqlite3.connect(DATABASE)
+        db.row_factory = sqlite3.Row
+    return db
 
 @app.teardown_appcontext
-def close_db(exception=None):
-    db = g.pop('db', None)
+def close_connection(exception):
+    db = getattr(g, '_database', None)
     if db is not None:
         db.close()
 
 def normalize(text):
     return unicodedata.normalize('NFKD', text).encode('ASCII', 'ignore').decode('ASCII').lower()
-
-# ================ SORTIRANJE ===========================
 
 def extract_ime(opis):
     if '-' in opis:
@@ -36,40 +30,28 @@ def extract_ime(opis):
         ime = re.split(r'\s*\(', kandidat)[0].strip()
         if ime and ime[0].isupper():
             return normalize(ime)
-    return 'zzz'
+    return 'zzzzzzzz'
 
-# ===================== LOGIN ===========================
+@app.route('/')
+def index():
+    return redirect('/isci_opis')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     napaka = ""
     if request.method == 'POST':
-        password = request.form['geslo']
-        if password == 'admin123':
+        geslo = request.form['geslo']
+        if geslo == 'admin123':
             session['admin'] = True
             return redirect('/admin')
         else:
             napaka = "Napačno geslo."
     return render_template("login.html", napaka=napaka)
 
-# ========================= ADMIN ===========================
-
-
 @app.route('/admin', methods=['GET', 'POST'])
 def admin():
     if not session.get('admin'):
         return redirect('/login')
-
-    def normalize(text):
-        return unicodedata.normalize('NFKD', text).encode('ASCII', 'ignore').decode('ASCII').lower()
-
-    def extract_ime(opis):
-        if '-' in opis:
-            kandidat = opis.rsplit('-', 1)[-1].strip()
-            ime = re.split(r'\s*\(', kandidat)[0].strip()
-            if ime and ime[0].isupper():
-                return normalize(ime)
-        return 'zzz'
 
     sporocilo = ""
     rezultat_preverjanja = ""
@@ -82,44 +64,24 @@ def admin():
         if geslo and opis:
             conn = get_db()
             cur = conn.cursor()
-
-            # ⬇️ Vstavi geslo v bazo
             cur.execute("INSERT INTO slovar (GESLO, OPIS) VALUES (?, ?)", (geslo.upper(), opis))
             conn.commit()
-
-            # ⬇️ Pridobi vnešeno geslo
             cur.execute("SELECT * FROM slovar WHERE UPPER(GESLO) = ?", (geslo.upper(),))
             gesla = cur.fetchall()
-
-            # ⬇️ Sortiranje po imenu za zadnjim vezajem
             gesla.sort(key=lambda x: extract_ime(x['opis']))
-
-            # ⬇️ Števec
             cur.execute("SELECT COUNT(*) FROM slovar")
             stevilo = cur.fetchone()[0]
-
             conn.close()
 
-            return render_template("admin.html",
-                                   gesla=gesla,
-                                   sporocilo="Geslo uspešno dodano!",
-                                   rezultat_preverjanja="",
-                                   stevilo=stevilo)
+            return render_template("admin.html", gesla=gesla, sporocilo="Geslo uspešno dodano!", rezultat_preverjanja="", stevilo=stevilo)
 
-    # GET zahteva – ob ponastavitvi ali prvem zagonu
     conn = get_db()
     cur = conn.cursor()
     cur.execute("SELECT COUNT(*) FROM slovar")
     stevilo = cur.fetchone()[0]
     conn.close()
 
-    return render_template("admin.html",
-                           gesla=[],
-                           sporocilo="",
-                           rezultat_preverjanja="",
-                           stevilo=stevilo)
-
-# ===================== PREVERI =================================
+    return render_template("admin.html", gesla=[], sporocilo="", rezultat_preverjanja="", stevilo=stevilo)
 
 @app.route('/preveri', methods=['POST'])
 def preveri():
@@ -137,81 +99,54 @@ def preveri():
             rezultat = f"Geslo '{geslo}' še ne obstaja."
         cur.execute("SELECT * FROM slovar WHERE UPPER(GESLO) = UPPER(?)", (geslo,))
         gesla = cur.fetchall()
+        gesla.sort(key=lambda x: extract_ime(x['opis']))
         cur.execute("SELECT COUNT(*) FROM slovar")
         stevilo = cur.fetchone()[0]
+        conn.close()
+
         return render_template("admin.html", gesla=gesla, sporocilo="", rezultat_preverjanja=rezultat, stevilo=stevilo)
 
-    cur = get_db().cursor()
+    conn = get_db()
+    cur = conn.cursor()
     cur.execute("SELECT COUNT(*) FROM slovar")
     stevilo = cur.fetchone()[0]
+    conn.close()
+
     return render_template("admin.html", gesla=[], sporocilo="", rezultat_preverjanja=rezultat, stevilo=stevilo)
 
-# ==============IZBRIŠI GESLO  =======================
+@app.route('/uredi_geslo', methods=['POST'])
+def uredi_geslo():
+    id = request.form['id']
+    novi_opis = request.form['novi_opis'].strip()
 
+    if id and novi_opis:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("UPDATE slovar SET OPIS = ? WHERE ID = ?", (novi_opis, id))
+        conn.commit()
+        cur.execute("SELECT * FROM slovar WHERE ID = ?", (id,))
+        gesla = cur.fetchall()
+        gesla.sort(key=lambda x: extract_ime(x['opis']))
+        cur.execute("SELECT COUNT(*) FROM slovar")
+        stevilo = cur.fetchone()[0]
+        conn.close()
+
+        return render_template("admin.html", gesla=gesla, sporocilo="Opis posodobljen!", rezultat_preverjanja="", stevilo=stevilo)
+
+    return redirect("/admin")
 
 @app.route('/izbrisi_geslo', methods=['POST'])
 def izbrisi_geslo():
-    if not session.get('admin'):
-        return redirect('/login')
+    id = request.form['id']
 
-    geslo_id = request.form['id']
-    conn = get_db()
-    cur = conn.cursor()
-    cur.execute("DELETE FROM slovar WHERE ID = ?", (geslo_id,))
-    conn.commit()
+    if id:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("DELETE FROM slovar WHERE ID = ?", (id,))
+        conn.commit()
+        conn.close()
 
-    # Pridobi ponovno podatke za prikaz
-    cur.execute("SELECT * FROM slovar WHERE ID = ?", (geslo_id,))
-    gesla = cur.fetchall()
-    cur.execute("SELECT COUNT(*) FROM slovar")
-    stevilo = cur.fetchone()[0]
-
-    return render_template("admin.html",
-                           gesla=gesla,
-                           sporocilo="Geslo uspešno izbrisano.",
-                           rezultat_preverjanja="",
-                           stevilo=stevilo)
-
-
-# =============== LOGOUT ==============================
-
-
-@app.route('/logout')
-def logout():
-    session.pop('admin', None)
-    return redirect('/login')
-
-# =================IŠČI PO VZORCU =========================
-
-@app.route('/isci_po_vzorcu', methods=['POST'])
-def isci_po_vzorcu():
-    vzorec = request.form['vzorec'].strip().upper()
-    dolzina = int(request.form['dolzina'])
-
-    conn = sqlite3.connect(DATABASE)
-    cur = conn.cursor()
-    cur.execute("SELECT GESLO, OPIS FROM slovar WHERE LENGTH(GESLO) = ? AND GESLO LIKE ?", (dolzina, vzorec))
-    rezultati = cur.fetchall()
-    conn.close()
-
-    gesla = [{'geslo': g, 'opis': o} for g, o in rezultati]
-    return jsonify(gesla)
-
-# ===================IŠČI PO OPISU ==============?=========
-
-@app.route('/isci_po_opisu', methods=['POST'])
-def isci_po_opisu():
-    izraz = request.form['iskalni_izraz'].strip().lower()
-
-    conn = sqlite3.connect(DATABASE)
-    cur = conn.cursor()
-    cur.execute("SELECT GESLO, OPIS FROM slovar WHERE lower(OPIS) LIKE ?", ('%' + izraz + '%',))
-    rezultati = cur.fetchall()
-    conn.close()
-
-    gesla = [{'geslo': g, 'opis': o} for g, o in rezultati]
-    return jsonify(gesla)
-
+    return redirect("/admin")
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 10000))
