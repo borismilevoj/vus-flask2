@@ -5,8 +5,9 @@
     <title>Iskanje po opisu</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: Arial;
             margin: 40px;
+            background-color: #f8f8f8;
         }
         input, button {
             padding: 8px;
@@ -20,38 +21,50 @@
 <body>
     <h2>Iskanje gesla po znanem opisu</h2>
 
-    <input type="text" id="iskalni_izraz" placeholder="Vnesi iskalni niz...">
+    <input type="text" id="iskalni_izraz" placeholder="Npr. igralec, 1901, nemški">
     <button id="isci-gumb">IŠČI</button>
     <button onclick="ponastavi()">PONASTAVI</button>
 
+    <p id="stevec"></p>
     <ul id="rezultati"></ul>
 
     <script>
         document.getElementById('isci-gumb').addEventListener('click', function() {
-            const izraz = document.getElementById('iskalni_izraz').value;
+            const izraz = document.getElementById('iskalni_izraz').value.trim();
+
+            if (!izraz) return;
 
             fetch('/isci_po_opisu', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                },
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: 'iskalni_izraz=' + encodeURIComponent(izraz)
             })
             .then(response => response.json())
-            .then(podatki => {
+            .then(data => {
                 const seznam = document.getElementById('rezultati');
+                const stevec = document.getElementById('stevec');
                 seznam.innerHTML = '';
 
-                if (podatki.error) {
-                    seznam.innerHTML = `<li>${podatki.error}</li>`;
-                } else if (podatki.length === 0) {
+                if (data.error) {
+                    seznam.innerHTML = `<li>${data.error}</li>`;
+                    stevec.textContent = '';
+                } else if (data.length === 0) {
                     seznam.innerHTML = '<li>Ni zadetkov.</li>';
+                    stevec.textContent = 'Zadetkov: 0';
                 } else {
-                    for (const zadetek of podatki) {
+                    const filtrirani = data.filter(item => {
+                        const opis = item.opis.toLowerCase();
+                        return izraz.split(' ').every(beseda =>
+                            opis.split(/\W+/).includes(beseda.toLowerCase())
+                        );
+                    });
+
+                    stevec.textContent = 'Zadetkov: ' + filtrirani.length;
+                    filtrirani.forEach(zadetek => {
                         const li = document.createElement('li');
                         li.textContent = `${zadetek.geslo}: ${zadetek.opis}`;
                         seznam.appendChild(li);
-                    }
+                    });
                 }
             });
         });
@@ -59,6 +72,7 @@
         function ponastavi() {
             document.getElementById('iskalni_izraz').value = '';
             document.getElementById('rezultati').innerHTML = '';
+            document.getElementById('stevec').textContent = '';
         }
     </script>
 </body>
