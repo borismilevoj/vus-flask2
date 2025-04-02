@@ -5,13 +5,12 @@
     <title>Iskanje po opisu</title>
     <style>
         body {
-            font-family: Arial;
-            margin: 30px;
-            background-color: #f8f8f8;
+            font-family: Arial, sans-serif;
+            margin: 40px;
         }
         input, button {
             padding: 8px;
-            font-size: 16px;
+            margin-right: 10px;
         }
         #rezultati {
             margin-top: 20px;
@@ -19,42 +18,47 @@
     </style>
 </head>
 <body>
-    <h2>Iskanje po opisu</h2>
-    <input type="text" id="opis" placeholder="Npr. igralec, 1901, nemški" />
-    <button onclick="isci()">IŠČI</button>
+    <h2>Iskanje gesla po znanem opisu</h2>
+
+    <input type="text" id="iskalni_izraz" placeholder="Vnesi iskalni niz...">
+    <button id="isci-gumb">IŠČI</button>
     <button onclick="ponastavi()">PONASTAVI</button>
 
-    <p id="stevec"></p>
-    <div id="rezultati"></div>
+    <ul id="rezultati"></ul>
 
     <script>
-        function isci() {
-            const opis = document.getElementById("opis").value;
+        document.getElementById('isci-gumb').addEventListener('click', function() {
+            const izraz = document.getElementById('iskalni_izraz').value;
 
-            fetch("/isci_po_opisu", {
-                method: "POST",
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: `iskalni_izraz=${encodeURIComponent(opis)}`
+            fetch('/isci_po_opisu', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: 'iskalni_izraz=' + encodeURIComponent(izraz)
             })
-            .then(res => res.json())
-            .then(data => {
-                const rez = document.getElementById("rezultati");
-                const stevec = document.getElementById("stevec");
-                rez.innerHTML = "";
-                stevec.textContent = `Zadetkov: ${data.length}`;
+            .then(response => response.json())
+            .then(podatki => {
+                const seznam = document.getElementById('rezultati');
+                seznam.innerHTML = '';
 
-                data.forEach(e => {
-                    const p = document.createElement("p");
-                    p.innerHTML = `<strong>${e.geslo}</strong>: ${e.opis}`;
-                    rez.appendChild(p);
-                });
+                if (podatki.error) {
+                    seznam.innerHTML = `<li>${podatki.error}</li>`;
+                } else if (podatki.length === 0) {
+                    seznam.innerHTML = '<li>Ni zadetkov.</li>';
+                } else {
+                    for (const zadetek of podatki) {
+                        const li = document.createElement('li');
+                        li.textContent = `${zadetek.geslo}: ${zadetek.opis}`;
+                        seznam.appendChild(li);
+                    }
+                }
             });
-        }
+        });
 
         function ponastavi() {
-            document.getElementById("opis").value = "";
-            document.getElementById("rezultati").innerHTML = "";
-            document.getElementById("stevec").textContent = "";
+            document.getElementById('iskalni_izraz').value = '';
+            document.getElementById('rezultati').innerHTML = '';
         }
     </script>
 </body>
