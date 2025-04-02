@@ -2,25 +2,30 @@
 <html lang="sl">
 <head>
     <meta charset="UTF-8">
-    <title>Iskanje gesla po opisu</title>
+    <title>Iskanje po opisu</title>
     <style>
-        body { font-family: Arial; background-color: #f2f2f2; padding: 20px; }
-        h1 { color: #333; }
-        input[type="text"] { width: 400px; font-size: 18px; padding: 6px; }
-        button { padding: 6px 12px; margin-left: 10px; font-size: 16px; }
+        body {
+            font-family: Arial;
+            margin: 30px;
+            background-color: #f8f8f8;
+        }
+        input, button {
+            padding: 8px;
+            font-size: 16px;
+        }
+        #rezultati {
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
-    <h1>Iskanje gesla po opisu</h1>
-
-    <input type="text" id="opis" placeholder="npr. poklic, država, letnica...">
+    <h2>Iskanje po opisu</h2>
+    <input type="text" id="opis" placeholder="Npr. igralec, 1901, nemški" />
     <button onclick="isci()">IŠČI</button>
     <button onclick="ponastavi()">PONASTAVI</button>
 
     <p id="stevec"></p>
-    <ul id="rezultati"></ul>
-
-    <br><a href="/admin">← Nazaj na administracijo</a>
+    <div id="rezultati"></div>
 
     <script>
         function isci() {
@@ -31,22 +36,25 @@
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: `iskalni_izraz=${encodeURIComponent(opis)}`
             })
-            .then(resp => resp.json())
+            .then(res => res.json())
             .then(data => {
-                document.getElementById("rezultati").innerHTML = "";
-                document.getElementById("stevec").textContent = "Zadetkov: " + data.length;
+                const rez = document.getElementById("rezultati");
+                const stevec = document.getElementById("stevec");
+                rez.innerHTML = "";
+                stevec.textContent = `Zadetkov: ${data.length}`;
+
                 data.forEach(e => {
-                    const li = document.createElement("li");
-                    li.innerHTML = `<strong>${e.geslo}</strong>: ${e.opis}`;
-                    document.getElementById("rezultati").appendChild(li);
+                    const p = document.createElement("p");
+                    p.innerHTML = `<strong>${e.geslo}</strong>: ${e.opis}`;
+                    rez.appendChild(p);
                 });
             });
         }
 
         function ponastavi() {
             document.getElementById("opis").value = "";
-            document.getElementById("stevec").textContent = "";
             document.getElementById("rezultati").innerHTML = "";
+            document.getElementById("stevec").textContent = "";
         }
     </script>
 </body>

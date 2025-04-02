@@ -2,77 +2,95 @@
 <html lang="sl">
 <head>
     <meta charset="UTF-8">
-    <title>Iskanje gesla po znanih črkah</title>
+    <title>Iskanje po vzorcu</title>
     <style>
-        body { font-family: Arial; background-color: #f2f2f2; padding: 20px; }
-        h1 { color: #333; }
-        input { font-size: 20px; width: 40px; text-align: center; }
-        button { padding: 6px 12px; margin: 10px 5px; font-size: 16px; }
+        body {
+            font-family: Arial;
+            margin: 30px;
+            background-color: #f8f8f8;
+        }
+        input {
+            width: 40px;
+            padding: 5px;
+            font-size: 18px;
+            text-align: center;
+            margin: 2px;
+        }
+        button {
+            padding: 8px 12px;
+            margin-top: 10px;
+            font-size: 16px;
+        }
     </style>
 </head>
 <body>
-    <h1>Iskanje gesla po znanih črkah</h1>
+    <h2>Iskanje po vzorcu gesla</h2>
 
     <label for="dolzina">Dolžina gesla:</label>
-    <select id="dolzina" onchange="generirajPolja()">
+    <select id="dolzina" onchange="ustvariPolja()">
         {% for i in range(3, 21) %}
         <option value="{{ i }}">{{ i }}</option>
         {% endfor %}
     </select>
 
     <div id="polja"></div>
+
+    <br>
     <button onclick="isci()">IŠČI</button>
     <button onclick="ponastavi()">PONASTAVI</button>
 
     <p id="stevec"></p>
-    <ul id="rezultati"></ul>
-
-    <br><a href="/admin">← Nazaj na administracijo</a>
+    <div id="rezultati"></div>
 
     <script>
-        function generirajPolja() {
-            const n = document.getElementById("dolzina").value;
-            const poljaDiv = document.getElementById("polja");
-            poljaDiv.innerHTML = "";
-            for (let i = 0; i < n; i++) {
-                const inp = document.createElement("input");
-                inp.setAttribute("maxlength", 1);
-                poljaDiv.appendChild(inp);
+        function ustvariPolja() {
+            const dolzina = parseInt(document.getElementById("dolzina").value);
+            const polja = document.getElementById("polja");
+            polja.innerHTML = "";
+
+            for (let i = 0; i < dolzina; i++) {
+                const input = document.createElement("input");
+                input.setAttribute("maxlength", 1);
+                polja.appendChild(input);
             }
         }
 
         function isci() {
-            const dolzina = document.getElementById("dolzina").value;
             const inputs = document.querySelectorAll("#polja input");
             let vzorec = "";
-            inputs.forEach(input => {
-                vzorec += input.value ? input.value.toUpperCase() : "_";
+            inputs.forEach(inp => {
+                vzorec += inp.value ? inp.value.toUpperCase() : "_";
             });
+
+            const dolzina = document.getElementById("dolzina").value;
 
             fetch("/isci_po_vzorcu", {
                 method: "POST",
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: `dolzina=${dolzina}&vzorec=${vzorec}`
             })
-            .then(resp => resp.json())
+            .then(res => res.json())
             .then(data => {
-                document.getElementById("rezultati").innerHTML = "";
-                document.getElementById("stevec").textContent = "Zadetkov: " + data.length;
+                const rez = document.getElementById("rezultati");
+                const stevec = document.getElementById("stevec");
+                rez.innerHTML = "";
+                stevec.textContent = `Zadetkov: ${data.length}`;
+
                 data.forEach(e => {
-                    const li = document.createElement("li");
-                    li.innerHTML = `<strong>${e.geslo}</strong>: ${e.opis}`;
-                    document.getElementById("rezultati").appendChild(li);
+                    const p = document.createElement("p");
+                    p.innerHTML = `<strong>${e.geslo}</strong>: ${e.opis}`;
+                    rez.appendChild(p);
                 });
             });
         }
 
         function ponastavi() {
             document.getElementById("polja").innerHTML = "";
-            document.getElementById("stevec").textContent = "";
             document.getElementById("rezultati").innerHTML = "";
+            document.getElementById("stevec").textContent = "";
         }
 
-        window.onload = generirajPolja;
+        window.onload = ustvariPolja;
     </script>
 </body>
 </html>
