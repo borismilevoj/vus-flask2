@@ -3,6 +3,11 @@ import sqlite3
 import os
 import re
 import unicodedata
+from flask_cors import CORS
+
+app = Flask(__name__)
+CORS(app)
+
 
 app = Flask(__name__)
 app.secret_key = 'Tifumannam1VUS_flask2'
@@ -36,26 +41,6 @@ def extract_ime(opis):
 def index():
     return redirect('/isci_opis')
 
-@app.route('/isci_opis')
-def isci_opis():
-    return render_template("isci_opis.html", gesla=[])
-
-@app.route('/isci_po_opisu', methods=['POST'])
-def isci_po_opisu():
-    izraz = request.form['iskalni_izraz'].strip().upper()
-
-    if not izraz:
-        return jsonify([])
-
-    conn = get_db()
-    cur = conn.cursor()
-    cur.execute("SELECT GESLO, OPIS FROM slovar WHERE UPPER(OPIS) LIKE ?", ('%' + izraz + '%',))
-    rezultati = cur.fetchall()
-    conn.close()
-
-    return jsonify([{'geslo': r['GESLO'], 'opis': r['OPIS']} for r in rezultati])
-
-
 
 @app.route('/isci_opis')
 def isci_opis():
@@ -64,13 +49,20 @@ def isci_opis():
 @app.route('/isci_po_opisu', methods=['POST'])
 def isci_po_opisu():
     izraz = request.form['iskalni_izraz'].strip().upper()
+
+    if not izraz:
+        return jsonify([])  # ali 400 napaka
+
     conn = get_db()
     cur = conn.cursor()
     cur.execute("SELECT GESLO, OPIS FROM slovar WHERE UPPER(OPIS) LIKE ?", ('%' + izraz + '%',))
     rezultati = cur.fetchall()
     conn.close()
-    gesla = [{'geslo': g, 'opis': o} for g, o in rezultati]
+
+    gesla = [{'geslo': r['GESLO'], 'opis': r['OPIS']} for r in rezultati]
     return jsonify(gesla)
+
+
 
 @app.route('/isci_vzorec')
 def isci_vzorec():
@@ -80,11 +72,13 @@ def isci_vzorec():
 def isci_po_vzorcu():
     vzorec = request.form['vzorec'].strip().upper()
     dolzina = int(request.form['dolzina'])
+
     conn = get_db()
     cur = conn.cursor()
     cur.execute("SELECT GESLO, OPIS FROM slovar WHERE LENGTH(GESLO) = ? AND GESLO LIKE ?", (dolzina, vzorec))
     rezultati = cur.fetchall()
     conn.close()
+
     gesla = [{'geslo': g, 'opis': o} for g, o in rezultati]
     return jsonify(gesla)
 
