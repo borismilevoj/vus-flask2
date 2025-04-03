@@ -38,6 +38,12 @@
 <body>
     <h1>Iskanje gesla po znanih črkah</h1>
 
+    <form id="vzorec-form" method="post" action="/isci_po_vzorcu">
+        <input type="hidden" name="vzorec" id="vzorec">
+        <input type="hidden" name="dolzina" id="dolzina">
+        <button type="submit">IŠČI</button>
+    </form>
+
     <label for="dolzina">Dolžina gesla:</label>
     <select id="dolzina">
         {% for i in range(2, 21) %}
