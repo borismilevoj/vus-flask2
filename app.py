@@ -1,12 +1,14 @@
 from flask import Flask, render_template, request, redirect, session, jsonify, g
+from flask_cors import CORS  # ✅ omogoči CORS
+
 import sqlite3
 import os
 import re
 import unicodedata
-from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app)
+CORS(app)  # ✅ omogoči CORS za celotno aplikacijo
+
 
 
 app = Flask(__name__)
@@ -51,7 +53,7 @@ def isci_po_opisu():
     izraz = request.form['iskalni_izraz'].strip().upper()
 
     if not izraz:
-        return jsonify([])  # ali 400 napaka
+        return jsonify({'error': 'Vnesi iskalni izraz!'}), 400
 
     conn = get_db()
     cur = conn.cursor()
@@ -59,7 +61,7 @@ def isci_po_opisu():
     rezultati = cur.fetchall()
     conn.close()
 
-    gesla = [{'geslo': r['GESLO'], 'opis': r['OPIS']} for r in rezultati]
+    gesla = [{'geslo': g, 'opis': o} for g, o in rezultati]
     return jsonify(gesla)
 
 
@@ -67,6 +69,7 @@ def isci_po_opisu():
 @app.route('/isci_vzorec')
 def isci_vzorec():
     return render_template("isci_vzorec.html")
+
 
 @app.route('/isci_po_vzorcu', methods=['POST'])
 def isci_po_vzorcu():
@@ -81,6 +84,8 @@ def isci_po_vzorcu():
 
     gesla = [{'geslo': g, 'opis': o} for g, o in rezultati]
     return jsonify(gesla)
+
+
 
 
 @app.route('/login', methods=['GET', 'POST'])

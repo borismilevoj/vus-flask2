@@ -28,47 +28,32 @@
     <h1>Iskanje gesla po opisu</h1>
 
     <form id="opis-form" method="post" action="/isci_po_opisu">
-        <input type="text" name="iskalni_izraz" required>
+        <input type="text" name="iskalni_izraz" placeholder="Vnesi izraz">
         <button type="submit">IŠČI</button>
     </form>
+
 
 
     <div id="rezultati"></div>
 
     <script>
-        document.getElementById('opis-form').addEventListener('submit', function(e) {
-            e.preventDefault();
+document.getElementById("vzorec-form").addEventListener("submit", async function(e) {
+    e.preventDefault();
+    const dolzina = document.getElementById("dolzina").value;
+    const vzorec = document.getElementById("vzorec").value;
 
-            const obrazec = e.target;
-            const podatki = new FormData(obrazec);
+    const res = await fetch("/isci_po_vzorcu", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: `vzorec=${vzorec}&dolzina=${dolzina}`
+    });
 
-            fetch(obrazec.action, {
-                method: 'POST',
-                body: podatki
-            })
-            .then(response => response.json())
-            .then(data => {
-                const div = document.getElementById('rezultati');
-                div.innerHTML = `<p>Zadetkov: <strong>${data.length}</strong></p>`;
+    const podatki = await res.json();
+    // tukaj prikaz rezultatov
+});
+</script>
 
-                if (data.length === 0) {
-                    div.innerHTML += "<p>Ni zadetkov.</p>";
-                    return;
-                }
-
-                const seznam = document.createElement('ul');
-                data.forEach(item => {
-                    const el = document.createElement('li');
-                    el.innerHTML = `<strong>${item.geslo}</strong>: ${item.opis}`;
-                    seznam.appendChild(el);
-                });
-                div.appendChild(seznam);
-            })
-            .catch(error => {
-                document.getElementById('rezultati').innerHTML = "Napaka pri iskanju.";
-                console.error(error);
-            });
-        });
-    </script>
 </body>
 </html>
