@@ -51,18 +51,23 @@ def isci_opis():
 @app.route('/isci_po_opisu', methods=['POST'])
 def isci_po_opisu():
     izraz = request.form['iskalni_izraz'].strip().upper()
-
     if not izraz:
         return jsonify({'error': 'Vnesi iskalni izraz!'}), 400
 
+    pogoji = izraz.split()  # razdeli po besedah
+    pogoji_sql = " AND ".join([f"OPIS LIKE '%{p}%'" for p in pogoji])
+
+    query = f"SELECT GESLO, OPIS FROM slovar WHERE {pogoji_sql}"
+
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("SELECT GESLO, OPIS FROM slovar WHERE UPPER(OPIS) LIKE ?", ('%' + izraz + '%',))
+    cur.execute(query)
     rezultati = cur.fetchall()
     conn.close()
 
     gesla = [{'geslo': g, 'opis': o} for g, o in rezultati]
     return jsonify(gesla)
+
 
 
 
@@ -84,6 +89,7 @@ def isci_po_vzorcu():
 
     gesla = [{'geslo': g, 'opis': o} for g, o in rezultati]
     return jsonify(gesla)
+
 
 
 
