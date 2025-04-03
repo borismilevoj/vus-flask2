@@ -1,17 +1,23 @@
 <!DOCTYPE html>
-<html lang="sl">
+<html>
 <head>
-    <meta charset="UTF-8">
     <title>Iskanje po opisu</title>
     <style>
         body {
-            font-family: Arial;
-            margin: 40px;
-            background-color: #f8f8f8;
+            font-family: sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
         }
-        input, button {
-            padding: 8px;
-            margin-right: 10px;
+        input[type="text"], button {
+            padding: 10px;
+            font-size: 16px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-left: 10px;
         }
         #rezultati {
             margin-top: 20px;
@@ -19,61 +25,49 @@
     </style>
 </head>
 <body>
-    <h2>Iskanje gesla po znanem opisu</h2>
+    <h1>Iskanje gesla po opisu</h1>
 
-    <input type="text" id="iskalni_izraz" placeholder="Npr. igralec, 1901, nemški">
-    <button id="isci-gumb">IŠČI</button>
-    <button onclick="ponastavi()">PONASTAVI</button>
+    <form id="opis-form" method="post" action="/isci_po_opisu">
+        <input type="text" name="iskalni_izraz" placeholder="Vnesi iskalni niz" required>
+        <button type="submit">IŠČI</button>
+    </form>
 
-    <p id="stevec"></p>
-    <ul id="rezultati"></ul>
+    <div id="rezultati"></div>
 
     <script>
-        document.getElementById('isci-gumb').addEventListener('click', function() {
-            const izraz = document.getElementById('iskalni_izraz').value.trim();
+        document.getElementById('opis-form').addEventListener('submit', function(e) {
+            e.preventDefault();
 
-            if (!izraz) return;
+            const obrazec = e.target;
+            const podatki = new FormData(obrazec);
 
-            fetch('/isci_po_opisu', {
+            fetch(obrazec.action, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: 'iskalni_izraz=' + encodeURIComponent(izraz)
+                body: podatki
             })
             .then(response => response.json())
             .then(data => {
-                const seznam = document.getElementById('rezultati');
-                const stevec = document.getElementById('stevec');
-                seznam.innerHTML = '';
+                const div = document.getElementById('rezultati');
+                div.innerHTML = `<p>Zadetkov: <strong>${data.length}</strong></p>`;
 
-                if (data.error) {
-                    seznam.innerHTML = `<li>${data.error}</li>`;
-                    stevec.textContent = '';
-                } else if (data.length === 0) {
-                    seznam.innerHTML = '<li>Ni zadetkov.</li>';
-                    stevec.textContent = 'Zadetkov: 0';
-                } else {
-                    const filtrirani = data.filter(item => {
-                        const opis = item.opis.toLowerCase();
-                        return izraz.split(' ').every(beseda =>
-                            opis.split(/\W+/).includes(beseda.toLowerCase())
-                        );
-                    });
-
-                    stevec.textContent = 'Zadetkov: ' + filtrirani.length;
-                    filtrirani.forEach(zadetek => {
-                        const li = document.createElement('li');
-                        li.textContent = `${zadetek.geslo}: ${zadetek.opis}`;
-                        seznam.appendChild(li);
-                    });
+                if (data.length === 0) {
+                    div.innerHTML += "<p>Ni zadetkov.</p>";
+                    return;
                 }
+
+                const seznam = document.createElement('ul');
+                data.forEach(item => {
+                    const el = document.createElement('li');
+                    el.innerHTML = `<strong>${item.geslo}</strong>: ${item.opis}`;
+                    seznam.appendChild(el);
+                });
+                div.appendChild(seznam);
+            })
+            .catch(error => {
+                document.getElementById('rezultati').innerHTML = "Napaka pri iskanju.";
+                console.error(error);
             });
         });
-
-        function ponastavi() {
-            document.getElementById('iskalni_izraz').value = '';
-            document.getElementById('rezultati').innerHTML = '';
-            document.getElementById('stevec').textContent = '';
-        }
     </script>
 </body>
 </html>
