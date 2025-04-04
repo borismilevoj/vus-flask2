@@ -1,31 +1,36 @@
 <!DOCTYPE html>
-<html>
+<html lang="sl">
 <head>
-    <title>Iskanje po vzorcu</title>
+    <meta charset="UTF-8">
+    <title>Iskanje gesla po znanih črkah</title>
     <style>
         body {
             font-family: sans-serif;
             padding: 20px;
-            background-color: #f9f9f9;
+            background-color: #f2f2f2;
         }
         h1 {
             color: #333;
         }
+        select, input {
+            font-size: 18px;
+            padding: 5px;
+        }
+        #polja {
+            margin: 10px 0;
+        }
         #polja input {
-            width: 40px;
-            height: 40px;
-            font-size: 24px;
+            width: 30px;
             text-align: center;
-            margin: 5px;
+            margin-right: 5px;
         }
         button {
-            padding: 10px 15px;
-            font-size: 16px;
+            padding: 6px 14px;
+            margin: 5px;
             background-color: #4CAF50;
             color: white;
             border: none;
             cursor: pointer;
-            margin-right: 10px;
         }
         button:hover {
             background-color: #45a049;
@@ -38,15 +43,9 @@
 <body>
     <h1>Iskanje gesla po znanih črkah</h1>
 
-    <form method="post" action="/isci_po_vzorcu">
-        <input type="text" name="vzorec" id="vzorec">
-        <input type="number" name="dolzina" id="dolzina">
-        <button type="submit">IŠČI</button>
-    </form>
-
     <label for="dolzina">Dolžina gesla:</label>
     <select id="dolzina">
-        {% for i in range(2, 21) %}
+        {% for i in range(3, 21) %}
             <option value="{{ i }}">{{ i }}</option>
         {% endfor %}
     </select>
@@ -56,65 +55,68 @@
     <button onclick="isci()">IŠČI</button>
     <button onclick="ponastavi()">PONASTAVI</button>
 
-    <div id="rezultati"></div>
+    <p><strong>Zadetkov:</strong> <span id="stevilo">0</span></p>
+    <ul id="rezultati"></ul>
 
     <script>
-        const dolzinaSelect = document.getElementById("dolzina");
         const poljaDiv = document.getElementById("polja");
 
-        dolzinaSelect.addEventListener("change", ustvariPolja);
+        document.getElementById("dolzina").addEventListener("change", ustvariPolja);
 
         function ustvariPolja() {
-            const dolzina = parseInt(dolzinaSelect.value);
+            const dolzina = parseInt(document.getElementById("dolzina").value);
             poljaDiv.innerHTML = "";
             for (let i = 0; i < dolzina; i++) {
                 const input = document.createElement("input");
+                input.type = "text";
                 input.maxLength = 1;
-                input.dataset.index = i;
-                input.addEventListener("input", premikNaprej);
+                input.oninput = function () {
+                    this.value = this.value.toUpperCase();
+                };
                 poljaDiv.appendChild(input);
             }
         }
 
-        function premikNaprej(e) {
-            const naslednji = e.target.nextElementSibling;
-            if (naslednji && e.target.value) {
-                naslednji.focus();
-            }
-        }
-
         function isci() {
+            const polja = poljaDiv.querySelectorAll("input");
             let vzorec = "";
-            for (let input of poljaDiv.children) {
-                vzorec += input.value ? input.value.toUpperCase() : "_";
+            for (let polje of polja) {
+                vzorec += polje.value ? polje.value.toUpperCase() : "_";
             }
 
-            const dolzina = dolzinaSelect.value;
+            const dolzina = document.getElementById("dolzina").value;
 
             fetch("/isci_po_vzorcu", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/x-www-form-urlencoded"
-                },
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
                 body: `vzorec=${vzorec}&dolzina=${dolzina}`
             })
             .then(response => response.json())
             .then(data => {
-                const div = document.getElementById("rezultati");
-                if (data.length > 0) {
-                    div.innerHTML = `<p><strong>Zadetkov: ${data.length}</strong></p><ul>` + data.map(item => `<li><strong>${item.geslo}</strong>: ${item.opis}</li>`).join('') + "</ul>";
+                const rezultati = document.getElementById("rezultati");
+                rezultati.innerHTML = "";
+                document.getElementById("stevilo").textContent = data.length;
+                if (data.length === 0) {
+                    const li = document.createElement("li");
+                    li.textContent = "Ni zadetkov.";
+                    rezultati.appendChild(li);
                 } else {
-                    div.innerHTML = `<p><strong>Zadetkov: 0</strong></p><p>Ni zadetkov.</p>`;
+                    for (let e of data) {
+                        const li = document.createElement("li");
+                        li.innerHTML = `<strong>${e.geslo}</strong>: ${e.opis}`;
+                        rezultati.appendChild(li);
+                    }
                 }
             });
         }
 
         function ponastavi() {
             document.getElementById("rezultati").innerHTML = "";
+            document.getElementById("stevilo").textContent = "0";
             ustvariPolja();
         }
 
-        ustvariPolja(); // inicialno
+        ustvariPolja();  // inicialno
     </script>
 </body>
 </html>
