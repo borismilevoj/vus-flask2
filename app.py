@@ -87,11 +87,13 @@ def isci_po_vzorcu():
     rezultati = cur.fetchall()
     conn.close()
 
-    # Sortiraj rezultate z isto funkcijo kot v adminu
-    podatki = [{'geslo': g, 'opis': o} for g, o in rezultati]
-    podatki.sort(key=lambda x: extract_ime(x['opis']))
+    gesla = [{'geslo': g, 'opis': o} for g, o in rezultati]
 
-    return jsonify(podatki)
+    # 🔠 Sortiraj po geslu (ali po opisu, če želiš)
+    gesla.sort(key=lambda x: x['geslo'])  # lahko zamenjaš z x['opis']
+
+    return jsonify(gesla)
+
 
 
 
