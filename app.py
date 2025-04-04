@@ -97,10 +97,6 @@ def isci_po_vzorcu():
 
 
 
-
-
-
-
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     napaka = ""
