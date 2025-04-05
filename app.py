@@ -89,9 +89,6 @@ def isci_po_opisu():
     return jsonify(gesla)
 
 
-
-
-
 @app.route('/isci_vzorec')
 def isci_vzorec():
     return render_template("isci_vzorec.html")
@@ -227,6 +224,16 @@ def izbrisi_geslo():
         conn.close()
 
     return redirect("/admin")
+
+@app.route('/stevilo_gesel', methods=['GET'])
+def stevilo_gesel():
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT COUNT(*) FROM slovar")
+    stevilo = cur.fetchone()[0]
+    conn.close()
+    return jsonify({"stevilo": stevilo})
+
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 10000))
