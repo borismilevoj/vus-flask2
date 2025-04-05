@@ -2,191 +2,122 @@
 <html lang="sl">
 <head>
   <meta charset="UTF-8">
- <h1>🔡 Iskanje po vzorcu (VUS)</h1>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VUS – Veliki ugankarski slovar</title>
+  <meta name="description" content="Slovar za križanke in uganke. Poišči gesla po vzorcu ali opisu. VUS – pomoč za reševanje križank online.">
+  <meta name="keywords" content="križanke, slovar za križanke, ugankarski slovar, reševanje križank, gesla, iskanje po opisu, VUS">
   <style>
     body {
-      font-family: 'Segoe UI', sans-serif;
       margin: 0;
-      padding: 20px;
-      background: linear-gradient(to right, #e0eafc, #cfdef3);
-      color: #333;
-    }
-
-    h1 {
+      font-family: 'Segoe UI', sans-serif;
+      background: url('https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/Crossword_example.svg/1024px-Crossword_example.svg.png') no-repeat center center fixed;
+      background-size: cover;
+      color: white;
       text-align: center;
-      color: #004b6b;
-      margin-bottom: 10px;
     }
-
-    .navodila {
-      text-align: center;
-      font-size: 1rem;
-      color: #555;
-      margin-bottom: 30px;
-    }
-
-    .vnos {
+    nav {
+      background-color: rgba(0, 0, 0, 0.8);
+      padding: 10px;
+      position: fixed;
+      top: 0;
+      width: 100%;
       display: flex;
       justify-content: center;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-bottom: 20px;
+      gap: 20px;
+      z-index: 100;
     }
-
-    .crka-polje {
-      width: 40px;
-      height: 50px;
-      font-size: 24px;
-      text-align: center;
-      border: 2px solid #007acc;
-      border-radius: 10px;
-      box-shadow: 2px 2px 4px rgba(0,0,0,0.1);
-      transition: background-color 0.3s;
-    }
-
-    .crka-polje.filled {
-      background-color: #c6f7e2;
-    }
-
-    .btn {
-      background-color: #007acc;
-      color: white;
-      padding: 10px 20px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      margin: 5px;
-      font-size: 1rem;
-      transition: background-color 0.2s;
-    }
-
-    .btn:hover {
-      background-color: #005f99;
-    }
-
-    .counter {
-      text-align: center;
+    nav a {
+      color: #ffc107;
+      text-decoration: none;
       font-weight: bold;
+      font-size: 1rem;
+    }
+    .overlay {
+      background-color: rgba(0, 0, 0, 0.7);
+      position: absolute;
+      top: 60px;
+      left: 0; right: 0; bottom: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+    h1 {
+      font-size: 3.5rem;
+      margin-bottom: 10px;
+      color: #ffc107;
+    }
+    p {
+      font-size: 1.2rem;
+      max-width: 700px;
+    }
+    .btn {
+      background-color: #ffc107;
+      color: black;
+      padding: 12px 24px;
       margin-top: 20px;
-      color: #007700;
+      border: none;
+      border-radius: 5px;
+      font-size: 1rem;
+      cursor: pointer;
+      text-decoration: none;
     }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background-color: white;
+    .navodila {
+      margin-top: 40px;
+      background-color: rgba(255, 255, 255, 0.1);
+      padding: 20px;
       border-radius: 10px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      overflow: hidden;
     }
-
-    th, td {
-      padding: 12px;
-      text-align: left;
-      border-bottom: 1px solid #eee;
+    .navodila ul {
+      list-style: none;
+      padding: 0;
     }
-
-    th {
-      background-color: #f4f4f4;
+    .navodila li {
+      margin: 10px 0;
+      font-size: 1rem;
     }
-
-    @media (max-width: 600px) {
-      .crka-polje {
-        width: 35px;
-        height: 45px;
-        font-size: 20px;
-      }
-      .btn {
-        width: 100%;
-      }
+    footer {
+      position: absolute;
+      bottom: 10px;
+      width: 100%;
+      text-align: center;
+      font-size: 0.9rem;
+      color: #ccc;
+    }
+    .footer-link {
+      color: #ffc107;
+      text-decoration: none;
     }
   </style>
 </head>
 <body>
-  <h1>🔤 Iskanje po vzorcu</h1>
-  <div class="navodila">Vnesi znane črke gesla in pritisni IŠČI. Prazna polja pustite prazna.</div>
+  <nav>
+    <a href="/">Domov</a>
+    <a href="/isci_vzorec">Iskanje po vzorcu</a>
+    <a href="/isci_opis">Iskanje po opisu</a>
+    <a href="/predlagaj">Prispevaj geslo</a>
+  </nav>
 
-  <div style="text-align:center; margin-bottom:10px;">
-    Število črk: <input type="number" id="dolzina" min="1" max="30" value="5">
-    <button class="btn" onclick="ustvariPolja()">Ustvari polja</button>
+  <div class="overlay">
+    <h1>VUS</h1>
+    <p><strong>Veliki ugankarski slovar</strong><br>Interaktivni slovar gesel iz sveta križank, kvizov in znanja. Poišči gesla po vzorcu ali opisu, predlagaj nova gesla in pomagaj soustvarjati zakladnico slovenskega znanja!</p>
+    <a href="/isci_vzorec" class="btn">ZAČNI ISKATI</a>
+
+    <div class="navodila">
+      <h2>Možnosti:</h2>
+      <ul>
+        <li>🔤 Iskanje gesel po znanih črkah (npr. __S__)</li>
+        <li>🧠 Iskanje po opisu (ime, poklic, letnica ...)</li>
+        <li>📬 Predlagaj novo geslo (po e-pošti ali obrazcu)</li>
+        <li>📱 Prijazno do mobilnih naprav</li>
+        <li>📊 (Prihaja) Dnevna križanka in lestvica prispevkov</li>
+      </ul>
+    </div>
   </div>
 
-  <div class="vnos" id="poljaContainer"></div>
-
-  <div style="text-align:center">
-    <button class="btn" onclick="isciPoVzorcu()">IŠČI</button>
-    <button class="btn" onclick="ponastavi()">PONASTAVI</button>
-  </div>
-
-  <div class="counter" id="stevecZadetkov"></div>
-  <div id="rezultatiContainer"></div>
-
-  <script>
-    function ustvariPolja() {
-      const dolzina = parseInt(document.getElementById('dolzina').value);
-      const container = document.getElementById('poljaContainer');
-      container.innerHTML = '';
-
-      for (let i = 0; i < dolzina; i++) {
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.maxLength = 1;
-        input.className = 'crka-polje';
-        input.oninput = function () {
-          this.classList.toggle('filled', this.value.trim() !== '');
-          if (this.value.length === 1 && this.nextElementSibling) {
-            this.nextElementSibling.focus();
-          }
-        };
-        container.appendChild(input);
-      }
-    }
-
-    function isciPoVzorcu() {
-      const polja = document.querySelectorAll('.crka-polje');
-      let vzorec = '';
-      polja.forEach(polje => {
-        const crka = polje.value.trim();
-        vzorec += crka === '' ? '_' : crka.toUpperCase();
-      });
-
-      fetch('/isci_po_vzorcu', {
-        method: 'POST',
-        body: new URLSearchParams({ vzorec: vzorec, dolzina: polja.length })
-      })
-        .then(response => response.json())
-        .then(podatki => prikaziRezultate(podatki))
-        .catch(error => console.error('Napaka pri iskanju po vzorcu:', error));
-    }
-
-    function prikaziRezultate(rezultati) {
-      const container = document.getElementById('rezultatiContainer');
-      const stevec = document.getElementById('stevecZadetkov');
-      container.innerHTML = '';
-      stevec.innerHTML = '';
-
-      if (!rezultati || rezultati.length === 0) {
-        stevec.textContent = 'Ni najdenih zadetkov.';
-        return;
-      }
-
-      stevec.textContent = `Najdeno: ${rezultati.length} zadetkov`;
-
-      let html = '<table><tr><th>GESLO</th><th>OPIS</th></tr>';
-      rezultati.forEach(r => {
-        html += `<tr><td>${r.geslo}</td><td>${r.opis}</td></tr>`;
-      });
-      html += '</table>';
-      container.innerHTML = html;
-    }
-
-    function ponastavi() {
-      document.getElementById('dolzina').value = '';
-      document.getElementById('poljaContainer').innerHTML = '';
-      document.getElementById('rezultatiContainer').innerHTML = '';
-      document.getElementById('stevecZadetkov').innerHTML = '';
-    }
-  </script>
+  <footer>
+    © 2025 VUS – Veliki ugankarski slovar • <a href="mailto:ugankarski.slovar@gmail.com" class="footer-link">Piši nam</a>
+  </footer>
 </body>
 </html>
