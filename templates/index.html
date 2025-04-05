@@ -27,11 +27,19 @@
       z-index: 100;
     }
     nav a {
-      color: #ffc107;
-      text-decoration: none;
-      font-weight: bold;
-      font-size: 1rem;
-    }
+  background-color: #333;
+  padding: 8px 16px;
+  border-radius: 6px;
+  transition: background-color 0.2s;
+  color: #ffc107;
+  text-decoration: none;
+  font-weight: bold;
+  font-size: 1rem;
+}
+
+nav a:hover {
+  background-color: #555;
+}
     .overlay {
       background-color: rgba(0, 0, 0, 0.85);
       position: absolute;
@@ -104,14 +112,14 @@
     <p><strong>Veliki ugankarski slovar</strong><br>Interaktivni slovar gesel iz sveta križank, kvizov in znanja. Poišči gesla po vzorcu ali opisu, predlagaj nova gesla in pomagaj soustvarjati zakladnico slovenskega znanja!</p>
     <a href="/isci_vzorec" class="btn">ZAČNI ISKATI</a>
 
-    <div class="navodila">
+    <div class="navodila" style="font-size: 0.95rem;">
   <h2>Kaj omogoča VUS?</h2>
   <ul>
     <li>🔤 Iskanje gesel po vzorcu (npr. <code>__S__</code>)</li>
     <li>🧠 Iskanje gesel po opisu (npr. <em>igralec 1953</em>)</li>
-    <li>📬 Predlagaj geslo in pomagaj širiti bazo</li>
-    <li>📱 Prijazno za uporabo tudi na telefonu</li>
-    <li>📊 (Kmalu!) Dnevna križanka in lestvica prispevkov</li>
+    <li>📬 Predlagaj nova gesla in soustvarjaj slovar</li>
+    <li>📱 Uporaba prijazna tudi na mobilnih napravah</li>
+    <li>📊 <em>(kmalu)</em> Dnevna križanka in lestvica prispevkov</li>
   </ul>
 </div>
   </div>
