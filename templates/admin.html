@@ -61,19 +61,40 @@
 <body>
     <h1>Administracija slovarja</h1>
 
-    <!-- PREVERI -->
-    <form method="post" action="/preveri">
-        <label for="preveri_geslo">Preveri geslo:</label>
-        <input type="text" id="preveri_geslo" name="preveri_geslo" required>
-        <button type="submit">Preveri</button>
-        <a href="/admin"><button type="button">Ponastavi</button></a>
-    </form>
+<!-- PREVERI -->
+<form method="post" action="/preveri">
+    <label for="preveri_geslo">Preveri geslo:</label>
+    <input type="text" id="preveri_geslo" name="preveri_geslo" required>
+    <button type="submit">Preveri</button>
+    <a href="/admin"><button type="button">Ponastavi</button></a>
+</form>
 
-    {% if rezultat_preverjanja %}
-        <p class="{% if 'ne obstaja' in rezultat_preverjanja %}rdece{% else %}modro{% endif %}">
-            {{ rezultat_preverjanja }}
-        </p>
-    {% endif %}
+{% if rezultat_preverjanja %}
+    <p class="{% if 'ne obstaja' in rezultat_preverjanja %}rdece{% else %}modro{% endif %}">
+        {{ rezultat_preverjanja }}
+    </p>
+{% endif %}
+
+{% if rezultati %}
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Geslo</th>
+                <th>Opis</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in rezultati %}
+            <tr>
+                <td>{{ r.id }}</td>
+                <td>{{ r.geslo }}</td>
+                <td>{{ r.opis }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endif %}
 
     <!-- DODAJANJE -->
     <form method="post" action="/admin">
