@@ -2,10 +2,147 @@
 <html lang="sl">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>VUS – Veliki ugankarski slovar</title>
+  <meta name="description" content="Slovar za križanke in uganke. Poišči gesla po vzorcu ali opisu. VUS – pomoč za reševanje križank online.">
+  <meta name="keywords" content="križanke, slovar za križanke, ugankarski slovar, reševanje križank, gesla, iskanje po opisu, VUS">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: url('/static/slika.png') no-repeat center center fixed;
+      background-size: cover;
+      color: white;
+      text-align: center;
+    }
+    nav {
+      background-color: rgba(0, 0, 0, 0.8);
+      padding: 10px;
+      position: fixed;
+      top: 0;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      z-index: 100;
+    }
+    nav a {
+      background-color: #333;
+      padding: 6px 12px;
+      border-radius: 4px;
+      transition: background-color 0.2s;
+      color: #ffc107;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 0.95rem;
+    }
+
+    nav a:hover {
+      background-color: #555;
+    }
+    .overlay {
+      background-color: rgba(0, 0, 0, 0.85);
+      position: absolute;
+      top: 100px;
+      left: 0; right: 0; bottom: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+    h1 {
+      font-size: 3.5rem;
+      margin-bottom: 10px;
+      color: #ffc107;
+    }
+    p {
+      font-size: 1.2rem;
+      max-width: 700px;
+    }
+    .btn {
+      background-color: #ffc107;
+      color: black;
+      padding: 12px 24px;
+      margin-top: 20px;
+      border: none;
+      border-radius: 5px;
+      font-size: 1rem;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .navodila {
+      margin-top: 40px;
+      background-color: rgba(0, 0, 0, 0.5);
+      padding: 20px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      margin-bottom: 30px;
+    }
+    .navodila ul {
+      list-style: none;
+      padding: 0;
+    }
+    .navodila li {
+      margin: 10px 0;
+      font-size: 1rem;
+    }
+    footer {
+      position: absolute;
+      bottom: 10px;
+      width: 100%;
+      text-align: left;
+      font-size: 0.9rem;
+      color: #ccc;
+      padding-left: 20px;
+    }
+    .footer-link {
+      color: #ffc107;
+      text-decoration: none;
+    }
+  </style>
 </head>
 <body>
-  <h1>Dobrodošel v VUS</h1>
-  <p>To je testna stran – Flask deluje! 🎉</p>
+  <nav>
+    <a href="/">Domov</a>
+    <a href="/isci_vzorec">Iskanje po vzorcu</a>
+    <a href="/isci_opis">Iskanje po opisu</a>
+    <a href="/predlagaj">Prispevaj geslo</a>
+  </nav>
+
+  <div class="overlay">
+    <h1>VUS</h1>
+    <p><strong>Veliki ugankarski slovar</strong><br>Interaktivni slovar gesel iz sveta križank, kvizov in znanja. Poišči gesla po vzorcu ali opisu, predlagaj nova gesla in pomagaj soustvarjati zakladnico slovenskega znanja!</p>
+    <a href="/isci_vzorec" class="btn">ZAČNI ISKATI</a>
+
+    <div class="navodila">
+      <h2>Kaj omogoča VUS?</h2>
+      <ul>
+        <li>🔤 Iskanje gesel po vzorcu (npr. <code>__S__</code>)</li>
+        <li>🧠 Iskanje gesel po opisu (npr. <em>igralec 1953</em>)</li>
+        <li>📬 Predlagaj nova gesla in soustvarjaj slovar</li>
+        <li>📱 Uporaba prijazna tudi na mobilnih napravah</li>
+        <li>📊 <em>(kmalu)</em> Dnevna križanka in lestvica prispevkov</li>
+      </ul>
+    </div>
+  </div>
+
+  <footer>
+    © 2025 VUS – Veliki ugankarski slovar<br>
+    <a href="mailto:ugankarski.slovar@gmail.com" class="footer-link">📬 Piši nam</a>
+  </footer>
+
+  <!-- Dinamični števec gesel -->
+  <div id="stevec" style="position: absolute; bottom: 10px; right: 20px; font-size: 0.9rem; color: #aaa;"></div>
+  <script>
+    fetch('/stevilo_gesel')
+      .then(response => response.json())
+      .then(data => {
+        document.getElementById('stevec').textContent = `🧩 V bazi: ${data.stevilo.toLocaleString('sl-SI')} gesel`;
+      })
+      .catch(() => {
+        document.getElementById('stevec').textContent = '🧩 Trenutno ni podatka o številu gesel';
+      });
+  </script>
 </body>
 </html>
