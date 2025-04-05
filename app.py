@@ -41,7 +41,8 @@ def extract_ime(opis):
 
 @app.route('/')
 def index():
-    return redirect('/isci_opis')
+    return render_template('index.html')
+
 
 
 @app.route('/isci_opis')
@@ -95,8 +96,6 @@ def isci_po_vzorcu():
     return jsonify(gesla)
 
 
-
-
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     napaka = ""
@@ -111,8 +110,8 @@ def login():
 
 @app.route('/admin', methods=['GET', 'POST'])
 def admin():
-    if not session.get('admin'):
-        return redirect('/login')
+    #if not session.get('admin'):
+    #    return redirect('/login')
 
     sporocilo = ""
     rezultat_preverjanja = ""
