@@ -45,9 +45,10 @@ def index():
 
 
 
-@app.route("/isci_opis_stran")
-def isci_opis_stran():
+@app.route("/isci_opis")
+def isci_opis():
     return render_template("isci_opis.html")
+
 
 
 @app.route('/isci_po_opisu', methods=['POST'])
