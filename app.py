@@ -58,23 +58,24 @@ def isci_po_opisu():
     if not kljucne_besede:
         return jsonify({'error': 'Vnesi ključno besedo za iskanje po opisu.'}), 400
 
-    # naprej s poizvedbo …
-
-
     besede = kljucne_besede.split()
     pogoji = []
     params = []
 
     for beseda in besede:
-        pogoji.append(
-            "(UPPER(OPIS) LIKE ? OR UPPER(OPIS) LIKE ? OR UPPER(OPIS) LIKE ? OR UPPER(OPIS) = ?)"
-        )
-        params.extend([
-            beseda + ' %',        # na začetku
-            '% ' + beseda + ' %', # v sredini
-            '% ' + beseda,        # na koncu
-            beseda                # samo beseda
-        ])
+        if beseda.isdigit():
+            # Če je letnica (število), dovolj, da se pojavi kjerkoli
+            pogoji.append("UPPER(OPIS) LIKE ?")
+            params.append(f"%{beseda}%")
+        else:
+            # Če je beseda, išči samo celo besedo (na začetku, sredi, koncu ali samostojno)
+            pogoji.append("(UPPER(OPIS) LIKE ? OR UPPER(OPIS) LIKE ? OR UPPER(OPIS) LIKE ? OR UPPER(OPIS) = ?)")
+            params.extend([
+                f"{beseda} %",
+                f"% {beseda} %",
+                f"% {beseda}",
+                f"{beseda}"
+            ])
 
     sql = "SELECT GESLO, OPIS FROM slovar WHERE " + " AND ".join(pogoji)
 
