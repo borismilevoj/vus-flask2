@@ -168,7 +168,7 @@ def preveri():
     if geslo:
         conn = get_db()
         cur = conn.cursor()
-        cur.execute("SELECT COUNT(*) FROM slovar WHERE UPPER(GESLO) = UPPER(?)", (geslo,))
+        cur.execute("SELECT COUNT(*) FROM slovar WHERE UPPER(GESLO) = ?", (geslo.upper(),))
         obstaja = cur.fetchone()[0]
         if obstaja:
             rezultat = f"Geslo '{geslo}' že obstaja v bazi."
