@@ -1,122 +1,215 @@
 <!DOCTYPE html>
 <html lang="sl">
 <head>
-    <meta charset="UTF-8">
-    <title>Iskanje gesla po znanih črkah</title>
-    <style>
-        body {
-            font-family: sans-serif;
-            padding: 20px;
-            background-color: #f2f2f2;
-        }
-        h1 {
-            color: #333;
-        }
-        select, input {
-            font-size: 18px;
-            padding: 5px;
-        }
-        #polja {
-            margin: 10px 0;
-        }
-        #polja input {
-            width: 30px;
-            text-align: center;
-            margin-right: 5px;
-        }
-        button {
-            padding: 6px 14px;
-            margin: 5px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-        ul {
-            margin-top: 20px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Iskanje po vzorcu | VUS</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: url('/static/slika.png') no-repeat center center fixed;
+      background-size: cover;
+      color: white;
+      text-align: center;
+    }
+    nav {
+      background-color: rgba(0, 0, 0, 0.8);
+      padding: 10px;
+      position: fixed;
+      top: 0;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      z-index: 100;
+    }
+    nav a {
+      background-color: #333;
+      padding: 6px 12px;
+      border-radius: 4px;
+      transition: background-color 0.2s;
+      color: #ffc107;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 0.95rem;
+    }
+    nav a:hover {
+      background-color: #555;
+    }
+    .overlay {
+      background-color: rgba(0, 0, 0, 0.85);
+      position: absolute;
+      top: 100px;
+      left: 0; right: 0; bottom: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      align-items: center;
+      padding: 20px;
+    }
+    h1 {
+      font-size: 3rem;
+      margin-bottom: 10px;
+      color: #ffc107;
+    }
+    .navodila {
+      font-size: 1rem;
+      color: #ccc;
+      margin-bottom: 20px;
+    }
+    .vnos {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+    .crka-polje {
+      width: 40px;
+      height: 50px;
+      font-size: 24px;
+      text-align: center;
+      border: 2px solid #007acc;
+      border-radius: 10px;
+      box-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+      transition: background-color 0.3s;
+    }
+    .crka-polje.filled {
+      background-color: #c6f7e2;
+    }
+    .btn {
+      background-color: #ffc107;
+      color: black;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      margin: 5px;
+      font-size: 1rem;
+      transition: background-color 0.2s;
+    }
+    .btn:hover {
+      background-color: #ffdb4d;
+    }
+    .counter {
+      text-align: center;
+      font-weight: bold;
+      margin-top: 20px;
+      color: #00ff88;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      overflow: hidden;
+      color: black;
+    }
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #eee;
+    }
+    th {
+      background-color: #f4f4f4;
+    }
+  </style>
 </head>
 <body>
-    <h1>Iskanje gesla po znanih črkah</h1>
+  <nav>
+    <a href="/">Domov</a>
+    <a href="/isci_vzorec">Iskanje po vzorcu</a>
+    <a href="/isci_opis">Iskanje po opisu</a>
+    <a href="/predlagaj">Prispevaj geslo</a>
+  </nav>
 
-    <label for="dolzina">Dolžina gesla:</label>
-    <select id="dolzina">
-        {% for i in range(3, 21) %}
-            <option value="{{ i }}">{{ i }}</option>
-        {% endfor %}
-    </select>
+  <div class="overlay">
+    <h1>Iskanje po vzorcu</h1>
+    <div class="navodila">Vnesi znane črke gesla. Prazna polja pusti prazna (npr. <code>__A_O</code>)</div>
 
-    <div id="polja"></div>
+    <div style="text-align:center; margin-bottom:10px;">
+      Število črk: <input type="number" id="dolzina" min="1" max="30" value="5">
+      <button class="btn" onclick="ustvariPolja()">Ustvari polja</button>
+    </div>
 
-    <button onclick="isci()">IŠČI</button>
-    <button onclick="ponastavi()">PONASTAVI</button>
+    <div class="vnos" id="poljaContainer"></div>
 
-    <p><strong>Zadetkov:</strong> <span id="stevilo">0</span></p>
-    <ul id="rezultati"></ul>
+    <div style="text-align:center">
+      <button class="btn" onclick="isciPoVzorcu()">IŠČI</button>
+      <button class="btn" onclick="ponastavi()">PONASTAVI</button>
+    </div>
 
-    <script>
-        const poljaDiv = document.getElementById("polja");
+    <div class="counter" id="stevecZadetkov"></div>
+    <div id="rezultatiContainer"></div>
+  </div>
 
-        document.getElementById("dolzina").addEventListener("change", ustvariPolja);
+  <script>
+    function ustvariPolja() {
+      const dolzina = parseInt(document.getElementById('dolzina').value);
+      const container = document.getElementById('poljaContainer');
+      container.innerHTML = '';
 
-        function ustvariPolja() {
-            const dolzina = parseInt(document.getElementById("dolzina").value);
-            poljaDiv.innerHTML = "";
-            for (let i = 0; i < dolzina; i++) {
-                const input = document.createElement("input");
-                input.type = "text";
-                input.maxLength = 1;
-                input.oninput = function () {
-                    this.value = this.value.toUpperCase();
-                };
-                poljaDiv.appendChild(input);
-            }
-        }
+      for (let i = 0; i < dolzina; i++) {
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.maxLength = 1;
+        input.className = 'crka-polje';
+        input.oninput = function () {
+          this.classList.toggle('filled', this.value.trim() !== '');
+          if (this.value.length === 1 && this.nextElementSibling) {
+            this.nextElementSibling.focus();
+          }
+        };
+        container.appendChild(input);
+      }
+    }
 
-        function isci() {
-            const polja = poljaDiv.querySelectorAll("input");
-            let vzorec = "";
-            for (let polje of polja) {
-                vzorec += polje.value ? polje.value.toUpperCase() : "_";
-            }
+    function isciPoVzorcu() {
+      const polja = document.querySelectorAll('.crka-polje');
+      let vzorec = '';
+      polja.forEach(polje => {
+        const crka = polje.value.trim();
+        vzorec += crka === '' ? '_' : crka.toUpperCase();
+      });
 
-            const dolzina = document.getElementById("dolzina").value;
+      fetch('/isci_po_vzorcu', {
+        method: 'POST',
+        body: new URLSearchParams({ vzorec: vzorec, dolzina: polja.length })
+      })
+        .then(response => response.json())
+        .then(podatki => prikaziRezultate(podatki))
+        .catch(error => console.error('Napaka pri iskanju po vzorcu:', error));
+    }
 
-            fetch("/isci_po_vzorcu", {
-                method: "POST",
-                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-                body: `vzorec=${vzorec}&dolzina=${dolzina}`
-            })
-            .then(response => response.json())
-            .then(data => {
-                const rezultati = document.getElementById("rezultati");
-                rezultati.innerHTML = "";
-                document.getElementById("stevilo").textContent = data.length;
-                if (data.length === 0) {
-                    const li = document.createElement("li");
-                    li.textContent = "Ni zadetkov.";
-                    rezultati.appendChild(li);
-                } else {
-                    for (let e of data) {
-                        const li = document.createElement("li");
-                        li.innerHTML = `<strong>${e.geslo}</strong>: ${e.opis}`;
-                        rezultati.appendChild(li);
-                    }
-                }
-            });
-        }
+    function prikaziRezultate(rezultati) {
+      const container = document.getElementById('rezultatiContainer');
+      const stevec = document.getElementById('stevecZadetkov');
+      container.innerHTML = '';
+      stevec.innerHTML = '';
 
-        function ponastavi() {
-            document.getElementById("rezultati").innerHTML = "";
-            document.getElementById("stevilo").textContent = "0";
-            ustvariPolja();
-        }
+      if (!rezultati || rezultati.length === 0) {
+        stevec.textContent = 'Ni najdenih zadetkov.';
+        return;
+      }
 
-        ustvariPolja();  // inicialno
-    </script>
+      stevec.textContent = `Najdeno: ${rezultati.length} zadetkov`;
+
+      let html = '<table><tr><th>GESLO</th><th>OPIS</th></tr>';
+      rezultati.forEach(r => {
+        html += `<tr><td>${r.geslo}</td><td>${r.opis}</td></tr>`;
+      });
+      html += '</table>';
+      container.innerHTML = html;
+    }
+
+    function ponastavi() {
+      document.getElementById('dolzina').value = '';
+      document.getElementById('poljaContainer').innerHTML = '';
+      document.getElementById('rezultatiContainer').innerHTML = '';
+      document.getElementById('stevecZadetkov').innerHTML = '';
+    }
+  </script>
 </body>
 </html>
