@@ -45,29 +45,44 @@ def index():
 
 
 
-@app.route('/isci_opis')
-def isci_opis():
+@app.route("/isci_opis_stran")
+def isci_opis_stran():
     return render_template("isci_opis.html")
+
 
 @app.route('/isci_po_opisu', methods=['POST'])
 def isci_po_opisu():
-    izraz = request.form['iskalni_izraz'].strip().upper()
-    if not izraz:
-        return jsonify({'error': 'Vnesi iskalni izraz!'}), 400
+    kljucne_besede = request.form['opis'].strip().upper()
 
-    pogoji = izraz.split()  # razdeli po besedah
-    pogoji_sql = " AND ".join([f"OPIS LIKE '%{p}%'" for p in pogoji])
+    if not kljucne_besede:
+        return jsonify({'error': 'Vnesi ključno besedo za iskanje po opisu.'}), 400
 
-    query = f"SELECT GESLO, OPIS FROM slovar WHERE {pogoji_sql}"
+    besede = kljucne_besede.split()
+    pogoji = []
+    params = []
+
+    for beseda in besede:
+        pogoji.append(
+            "(UPPER(OPIS) LIKE ? OR UPPER(OPIS) LIKE ? OR UPPER(OPIS) LIKE ? OR UPPER(OPIS) = ?)"
+        )
+        params.extend([
+            beseda + ' %',        # na začetku
+            '% ' + beseda + ' %', # v sredini
+            '% ' + beseda,        # na koncu
+            beseda                # samo beseda
+        ])
+
+    sql = "SELECT GESLO, OPIS FROM slovar WHERE " + " AND ".join(pogoji)
 
     conn = get_db()
     cur = conn.cursor()
-    cur.execute(query)
+    cur.execute(sql, params)
     rezultati = cur.fetchall()
     conn.close()
 
     gesla = [{'geslo': g, 'opis': o} for g, o in rezultati]
     return jsonify(gesla)
+
 
 
 
