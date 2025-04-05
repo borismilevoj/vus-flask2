@@ -127,5 +127,18 @@ nav a:hover {
   <footer>
     © 2025 VUS – Veliki ugankarski slovar • <a href="mailto:ugankarski.slovar@gmail.com" class="footer-link">Piši nam</a>
   </footer>
+
+<!-- Dinamični števec gesel -->
+<div id="stevec" style="position: absolute; bottom: 10px; right: 20px; font-size: 0.9rem; color: #aaa;"></div>
+<script>
+  fetch('/stevilo_gesel')
+    .then(response => response.json())
+    .then(data => {
+      document.getElementById('stevec').textContent = `🧩 V bazi: ${data.stevilo.toLocaleString('sl-SI')} gesel`;
+    })
+    .catch(() => {
+      document.getElementById('stevec').textContent = '🧩 Trenutno ni podatka o številu gesel';
+    });
+</script>
 </body>
 </html>
