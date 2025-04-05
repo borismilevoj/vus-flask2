@@ -53,10 +53,13 @@ def isci_opis():
 
 @app.route('/isci_po_opisu', methods=['POST'])
 def isci_po_opisu():
-    kljucne_besede = request.form['opis'].strip().upper()
+    kljucne_besede = request.form.get('opis', '').strip().upper()
 
     if not kljucne_besede:
         return jsonify({'error': 'Vnesi ključno besedo za iskanje po opisu.'}), 400
+
+    # naprej s poizvedbo …
+
 
     besede = kljucne_besede.split()
     pogoji = []
