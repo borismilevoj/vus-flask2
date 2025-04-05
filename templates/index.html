@@ -131,6 +131,7 @@ nav a:hover {
 
 <!-- Dinamični števec gesel -->
 <div id="stevec" style="position: absolute; bottom: 10px; right: 20px; font-size: 0.9rem; color: #aaa;"></div>
+
 <script>
   fetch('/stevilo_gesel')
     .then(response => response.json())
@@ -140,6 +141,9 @@ nav a:hover {
     .catch(() => {
       document.getElementById('stevec').textContent = '🧩 Trenutno ni podatka o številu gesel';
     });
+</script>
+
+
 </script>
 </body>
 </html>
