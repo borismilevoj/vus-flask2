@@ -64,11 +64,9 @@ def isci_po_opisu():
 
     for beseda in besede:
         if beseda.isdigit():
-            # Letnica ali številka – išče povsod
             pogoji.append("UPPER(OPIS) LIKE ?")
             params.append(f"%{beseda}%")
         else:
-            # Beseda – išče kot celo besedo
             pogoji.append("(UPPER(OPIS) LIKE ? OR UPPER(OPIS) LIKE ? OR UPPER(OPIS) LIKE ? OR UPPER(OPIS) = ?)")
             params.extend([
                 f"{beseda} %",
@@ -87,6 +85,7 @@ def isci_po_opisu():
 
     gesla = [{'geslo': g, 'opis': o} for g, o in rezultati]
     return jsonify(gesla)
+
 
 
 
