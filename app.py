@@ -173,7 +173,8 @@ def admin():
 
 @app.route('/preveri', methods=['POST'])
 def preveri():
-    geslo = request.form.get('preveri_geslo', '').strip()
+    podatki = request.get_json()
+    geslo = podatki.get('preveri_geslo', '').strip()
     if not geslo:
         return jsonify({"sporocilo": "Vnesi geslo za preverjanje.", "rezultati": []}), 400
 
