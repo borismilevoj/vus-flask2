@@ -169,16 +169,20 @@
     font-size: 0.9rem;
   }
 }
+nav a.active {
+  background-color: #ffc107;
+  color: black;
+}
 
   </style>
 </head>
 <body>
   <nav>
-    <a href="/">Domov</a>
-    <a href="/isci_vzorec">Iskanje po vzorcu</a>
-    <a href="/isci_opis">Iskanje po opisu</a>
-    <a href="/predlagaj">Prispevaj geslo</a>
-  </nav>
+  <a href="/">Domov</a>
+  <a href="/isci_vzorec" class="active">Iskanje po vzorcu</a>
+  <a href="/isci_opis">Iskanje po opisu</a>
+</nav>
+
 
   <div class="overlay" style="margin-bottom: 80px;">
     <h1 style="color:#ffc107; font-size:2.5rem; margin-bottom:10px;">Iskanje po vzorcu</h1>
