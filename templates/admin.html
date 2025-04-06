@@ -62,12 +62,16 @@
     <h1>Administracija slovarja</h1>
 
 <!-- PREVERI -->
-<form method="post" action="/preveri">
-    <label for="preveri_geslo">Preveri geslo:</label>
-    <input type="text" id="preveri_geslo" name="preveri_geslo" required>
-    <button type="submit">Preveri</button>
-    <div id="rezultat_preverjanja"></div>
+
+<div>
+  <label for="preveri_geslo">Preveri geslo:</label>
+  <input type="text" id="preveri_geslo" name="preveri_geslo" required>
+  <button type="button" onclick="preveriGeslo()">Preveri</button>
+</div>
+
+<div id="rezultat_preverjanja"></div>
 <div id="tabela_rezultatov"></div>
+
 
     <a href="/admin"><button type="button">Ponastavi</button></a>
 </form>
