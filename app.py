@@ -49,31 +49,40 @@ def index():
 def isci_opis():
     return render_template("isci_opis.html")
 
+def odstrani_sumnike(niz):
+    zamenjave = {
+        'Š': 'S', 'š': 's',
+        'Č': 'C', 'č': 'c',
+        'Ž': 'Z', 'ž': 'z'
+    }
+    return ''.join(zamenjave.get(c, c) for c in niz)
 
 
 @app.route('/isci_po_opisu', methods=['POST'])
 def isci_po_opisu():
-    kljucne_besede = request.form.get('opis', '').strip().upper()
-
-    if not kljucne_besede:
+    surovo = request.form.get('opis', '').strip()
+    if not surovo:
         return jsonify({'error': 'Vnesi ključno besedo za iskanje po opisu.'}), 400
 
-    besede = kljucne_besede.split()
+    # Pretvori v velike črke in odstrani šumnike
+    brez_sumnikov = odstrani_sumnike(surovo).upper()
+    besede = brez_sumnikov.split()
+
     pogoji = []
     params = []
 
     for beseda in besede:
         if beseda.isdigit():
-            pogoji.append("UPPER(OPIS) LIKE ?")
+            pogoji.append("OPIS LIKE ?")
             params.append(f"%{beseda}%")
         else:
-            pogoji.append("(UPPER(OPIS) LIKE ? OR UPPER(OPIS) LIKE ? OR UPPER(OPIS) LIKE ? OR UPPER(OPIS) = ?)")
-            params.extend([
-                f"{beseda} %",
-                f"% {beseda} %",
-                f"% {beseda}",
-                f"{beseda}"
-            ])
+            # Uporabi REPLACE da tudi OPIS odstrani šumnike
+            pogoj = (
+                "UPPER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(OPIS, 'Š','S'),'Ž','Z'),'Č','C'),'š','s'),'ž','z'),'č','c'))"
+                " LIKE ?"
+            )
+            pogoji.append(pogoj)
+            params.append(f"%{beseda}%")
 
     sql = "SELECT GESLO, OPIS FROM slovar WHERE " + " AND ".join(pogoji)
 
@@ -85,6 +94,7 @@ def isci_po_opisu():
 
     gesla = [{'geslo': g, 'opis': o} for g, o in rezultati]
     return jsonify(gesla)
+
 
 
 
