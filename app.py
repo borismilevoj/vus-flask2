@@ -174,6 +174,10 @@ def admin():
 @app.route('/preveri', methods=['POST'])
 def preveri():
     geslo = request.form.get('preveri_geslo', '').strip()
+    if not geslo:
+        return jsonify({"sporocilo": "Vnesi geslo za preverjanje.", "rezultati": []}), 400
+
+    # Uporabi normalizacijo za primerjavo
     normalizirano_geslo = normaliziraj_geslo(geslo).upper()
 
     conn = get_db()
@@ -190,7 +194,11 @@ def preveri():
             "rezultati": gesla
         }), 200
     else:
-        return jsonify({"sporocilo": "Gesla ni v bazi!"}), 404
+        return jsonify({
+            "sporocilo": "Gesla ni v bazi!",
+            "rezultati": []
+        }), 200
+
 
 
 @app.route('/uredi_geslo', methods=['POST'])
