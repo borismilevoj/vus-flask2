@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, session, jsonify, g
 from flask_cors import CORS  # ✅ omogoči CORS
+from pretvornik import normaliziraj_geslo
 
 import sqlite3
 import os
@@ -64,24 +65,18 @@ def isci_po_opisu():
     if not surovo:
         return jsonify({'error': 'Vnesi ključno besedo za iskanje po opisu.'}), 400
 
-    # Pretvori v velike črke in odstrani šumnike
-    brez_sumnikov = odstrani_sumnike(surovo).upper()
-    besede = brez_sumnikov.split()
+    normalizirano = normaliziraj_geslo(surovo).upper()
+    besede = normalizirano.split()
 
     pogoji = []
     params = []
 
     for beseda in besede:
         if beseda.isdigit():
-            pogoji.append("OPIS LIKE ?")
+            pogoji.append("REPLACE(REPLACE(REPLACE(REPLACE(OPIS, 'Š','S'),'Ž','Z'),'Č','C'),'š','s') LIKE ?")
             params.append(f"%{beseda}%")
         else:
-            # Uporabi REPLACE da tudi OPIS odstrani šumnike
-            pogoj = (
-                "UPPER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(OPIS, 'Š','S'),'Ž','Z'),'Č','C'),'š','s'),'ž','z'),'č','c'))"
-                " LIKE ?"
-            )
-            pogoji.append(pogoj)
+            pogoji.append("(REPLACE(REPLACE(REPLACE(REPLACE(UPPER(OPIS), 'Š','S'),'Ž','Z'),'Č','C'),'š','s') LIKE ?)")
             params.append(f"%{beseda}%")
 
     sql = "SELECT GESLO, OPIS FROM slovar WHERE " + " AND ".join(pogoji)
@@ -99,6 +94,7 @@ def isci_po_opisu():
 
 
 
+
 @app.route('/isci_vzorec')
 def isci_vzorec():
     return render_template("isci_vzorec.html")
@@ -106,22 +102,25 @@ def isci_vzorec():
 
 @app.route('/isci_po_vzorcu', methods=['POST'])
 def isci_po_vzorcu():
-    vzorec = request.form['vzorec'].strip().upper()
-
-    # Odstrani znake, ki jih v križankah ni (presledki, apostrofi)
-    vzorec = vzorec.replace(" ", "").replace("'", "").replace("’", "")
-
+    vzorec = request.form['vzorec'].strip()
+    vzorec = normaliziraj_geslo(vzorec).replace(" ", "").replace("'", "").replace("’", "").upper()
     dolzina = len(vzorec)
 
     conn = get_db()
     cur = conn.cursor()
 
-    cur.execute("SELECT GESLO, OPIS FROM slovar WHERE LENGTH(REPLACE(REPLACE(GESLO, ' ', ''), '''', '')) = ? AND REPLACE(REPLACE(UPPER(GESLO), ' ', ''), '''', '') LIKE ?", (dolzina, vzorec))
+    cur.execute(
+        "SELECT GESLO, OPIS FROM slovar WHERE LENGTH(REPLACE(REPLACE(GESLO, ' ', ''), '''', '')) = ? "
+        "AND REPLACE(REPLACE(UPPER(GESLO), ' ', ''), '''', '') LIKE ?",
+        (dolzina, vzorec)
+    )
+
     rezultati = cur.fetchall()
     conn.close()
 
     gesla = [{'geslo': g, 'opis': o} for g, o in rezultati]
     return jsonify(gesla)
+
 
 
 
@@ -174,34 +173,26 @@ def admin():
 
 @app.route('/preveri', methods=['POST'])
 def preveri():
-    rezultat = ""
-    geslo = request.form['preveri_geslo'].strip()
-
-    if geslo:
-        conn = get_db()
-        cur = conn.cursor()
-        cur.execute("SELECT COUNT(*) FROM slovar WHERE UPPER(GESLO) = ?", (geslo.upper(),))
-        obstaja = cur.fetchone()[0]
-        if obstaja:
-            rezultat = f"Geslo '{geslo}' že obstaja v bazi."
-        else:
-            rezultat = f"Geslo '{geslo}' še ne obstaja."
-        cur.execute("SELECT * FROM slovar WHERE UPPER(GESLO) = UPPER(?)", (geslo,))
-        gesla = cur.fetchall()
-        gesla.sort(key=lambda x: extract_ime(x['opis']))
-        cur.execute("SELECT COUNT(*) FROM slovar")
-        stevilo = cur.fetchone()[0]
-        conn.close()
-
-        return render_template("admin.html", gesla=gesla, sporocilo="", rezultat_preverjanja=rezultat, stevilo=stevilo)
+    podatki = request.get_json()
+    geslo = podatki.get('preveri_geslo')
+    normalizirano_geslo = normaliziraj_geslo(geslo).upper()
 
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("SELECT COUNT(*) FROM slovar")
-    stevilo = cur.fetchone()[0]
+
+    cur.execute("SELECT ID, GESLO, OPIS FROM slovar WHERE UPPER(GESLO) = ?", (normalizirano_geslo,))
+    rezultat = cur.fetchall()
     conn.close()
 
-    return render_template("admin.html", gesla=[], sporocilo="", rezultat_preverjanja=rezultat, stevilo=stevilo)
+    if rezultat:
+        gesla = [{"id": r["ID"], "geslo": r["GESLO"], "opis": r["OPIS"]} for r in rezultat]
+        return jsonify({
+            "sporocilo": f"Število zadetkov: {len(gesla)}",
+            "rezultati": gesla
+        }), 200
+    else:
+        return jsonify({"sporocilo": "Gesla ni v bazi!"}), 404
+
 
 @app.route('/uredi_geslo', methods=['POST'])
 def uredi_geslo():
