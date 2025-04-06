@@ -173,8 +173,7 @@ def admin():
 
 @app.route('/preveri', methods=['POST'])
 def preveri():
-    podatki = request.get_json()
-    geslo = podatki.get('preveri_geslo')
+    geslo = request.form.get('preveri_geslo', '').strip()
     normalizirano_geslo = normaliziraj_geslo(geslo).upper()
 
     conn = get_db()
