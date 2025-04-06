@@ -66,6 +66,9 @@
     <label for="preveri_geslo">Preveri geslo:</label>
     <input type="text" id="preveri_geslo" name="preveri_geslo" required>
     <button type="submit">Preveri</button>
+    <div id="rezultat_preverjanja"></div>
+<div id="tabela_rezultatov"></div>
+
     <a href="/admin"><button type="button">Ponastavi</button></a>
 </form>
 
@@ -144,5 +147,46 @@
         </tbody>
     </table>
     {% endif %}
+<script>
+  function preveriGeslo() {
+    const geslo = document.getElementById('preveri_geslo').value.trim();
+
+    fetch('/preveri', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ preveri_geslo: geslo })
+    })
+    .then(response => response.json())
+    .then(data => {
+      const divSporocilo = document.getElementById('rezultat_preverjanja');
+      const divTabela = document.getElementById('tabela_rezultatov');
+
+      // Prikaži sporočilo (modro ali rdeče)
+      if (data.sporocilo.includes('ni')) {
+        divSporocilo.innerHTML = `<p style="color: red;">${data.sporocilo}</p>`;
+        divTabela.innerHTML = '';
+      } else {
+        divSporocilo.innerHTML = `<p style="color: blue;">${data.sporocilo}</p>`;
+
+        // Naredi tabelo rezultatov
+        let html = '<table><thead><tr><th>ID</th><th>Geslo</th><th>Opis</th></tr></thead><tbody>';
+        data.rezultati.forEach(r => {
+          html += `<tr><td>${r.id}</td><td>${r.geslo}</td><td>${r.opis}</td></tr>`;
+        });
+        html += '</tbody></table>';
+        divTabela.innerHTML = html;
+      }
+    })
+    .catch(err => {
+      console.error("Napaka pri preverjanju:", err);
+    });
+  }
+</script>
+</body>
+</html>
+
+
 </body>
 </html>
