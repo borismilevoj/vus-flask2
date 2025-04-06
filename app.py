@@ -107,20 +107,22 @@ def isci_vzorec():
 @app.route('/isci_po_vzorcu', methods=['POST'])
 def isci_po_vzorcu():
     vzorec = request.form['vzorec'].strip().upper()
-    dolzina = int(request.form['dolzina'])
+
+    # Odstrani znake, ki jih v križankah ni (presledki, apostrofi)
+    vzorec = vzorec.replace(" ", "").replace("'", "").replace("’", "")
+
+    dolzina = len(vzorec)
 
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("SELECT GESLO, OPIS FROM slovar WHERE LENGTH(GESLO) = ? AND GESLO LIKE ?", (dolzina, vzorec))
+
+    cur.execute("SELECT GESLO, OPIS FROM slovar WHERE LENGTH(REPLACE(REPLACE(GESLO, ' ', ''), '''', '')) = ? AND REPLACE(REPLACE(UPPER(GESLO), ' ', ''), '''', '') LIKE ?", (dolzina, vzorec))
     rezultati = cur.fetchall()
     conn.close()
 
     gesla = [{'geslo': g, 'opis': o} for g, o in rezultati]
-
-    # 🔠 Sortiraj po geslu (ali po opisu, če želiš)
-    gesla.sort(key=lambda x: x['geslo'])  # lahko zamenjaš z x['opis']
-
     return jsonify(gesla)
+
 
 
 @app.route('/login', methods=['GET', 'POST'])
