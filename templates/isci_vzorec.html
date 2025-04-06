@@ -10,13 +10,12 @@
     body {
       margin: 0;
       font-family: 'Segoe UI', sans-serif;
-      background: url('/static/slika.png') no-repeat center center fixed;
-      background-size: cover;
-      color: white;
+      background: linear-gradient(to right, #e0eafc, #cfdef3);
+      color: #333;
       text-align: center;
     }
     nav {
-      background-color: rgba(0, 0, 0, 0.8);
+      background-color: #0a2342;
       padding: 10px;
       position: fixed;
       top: 0;
@@ -27,37 +26,30 @@
       z-index: 100;
     }
     nav a {
-      background-color: #333;
+      background-color: #fff;
       padding: 6px 12px;
       border-radius: 4px;
       transition: background-color 0.2s;
-      color: #ffc107;
+      color: #0a2342;
       text-decoration: none;
       font-weight: bold;
       font-size: 0.95rem;
     }
     nav a:hover {
-      background-color: #555;
+      background-color: #ddd;
     }
     .overlay {
-      background-color: rgba(0, 0, 0, 0.85);
-      position: absolute;
-      top: 100px;
-      left: 0; right: 0; bottom: 0;
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-start;
-      align-items: center;
+      margin-top: 80px;
       padding: 20px;
     }
     h1 {
-      font-size: 3rem;
+      font-size: 2.5rem;
+      color: #004b6b;
       margin-bottom: 10px;
-      color: #ffc107;
     }
     .navodila {
       font-size: 1rem;
-      color: #ccc;
+      color: #555;
       margin-bottom: 20px;
     }
     .vnos {
@@ -81,8 +73,8 @@
       background-color: #c6f7e2;
     }
     .btn {
-      background-color: #ffc107;
-      color: black;
+      background-color: #007acc;
+      color: white;
       padding: 10px 20px;
       border: none;
       border-radius: 6px;
@@ -92,13 +84,13 @@
       transition: background-color 0.2s;
     }
     .btn:hover {
-      background-color: #ffdb4d;
+      background-color: #005f99;
     }
     .counter {
       text-align: center;
       font-weight: bold;
       margin-top: 20px;
-      color: #00ff88;
+      color: #007700;
     }
     table {
       width: 100%;
