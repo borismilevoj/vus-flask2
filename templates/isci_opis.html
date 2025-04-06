@@ -175,6 +175,14 @@ nav a.active {
   background-color: #ffc107;
   color: black;
 }
+.fade-in {
+  animation: fadeIn 0.4s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
 
   </style>
 </head>
@@ -236,6 +244,11 @@ nav a.active {
     });
     html += '</table>';
     container.innerHTML = html;
+    container.innerHTML = html;
+container.classList.remove('fade-in');
+void container.offsetWidth;
+container.classList.add('fade-in');
+
   }
 
   function ponastavi() {
