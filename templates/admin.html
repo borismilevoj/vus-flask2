@@ -58,15 +58,18 @@
 <body>
   <h1>Administracija slovarja</h1>
 
-  <!-- PREVERI (JS različica) -->
+  <!-- PREVERI -->
   <div>
     <label for="preveri_geslo">Preveri geslo:</label>
-    <input type="text" id="preveri_geslo" name="preveri_geslo" required>
+    <input type="text" id="preveri_geslo" required>
     <button type="button" onclick="preveriGeslo()">Preveri</button>
     <a href="/admin"><button type="button">Ponastavi</button></a>
   </div>
 
-    <!-- DODAJANJE -->
+  <div id="rezultat_preverjanja"></div>
+  <div id="tabela_rezultatov" style="margin-top: 20px;"></div>
+
+  <!-- DODAJANJE -->
   <form method="post" action="/admin">
     <label for="geslo">Novo geslo:</label>
     <input type="text" id="geslo" name="geslo" required>
@@ -78,117 +81,76 @@
   </form>
 
   <p>V bazi je trenutno <strong>{{ stevilo }}</strong> gesel.</p>
-  <div id="rezultat_preverjanja"></div>
-  <div id="tabela_rezultatov" style="margin-top: 20px;"></div>
 
-  {% if gesla and request.endpoint != 'preveri' %}
-
-  <table>
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>GESLO</th>
-        <th>OPIS</th>
-        <th>UREDI</th>
-        <th>IZBRIŠI</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for vrstica in gesla %}
-      <tr>
-        <td>{{ vrstica.ID }}</td>
-        <td>{{ vrstica.GESLO }}</td>
-        <td>{{ vrstica.OPIS }}</td>
-        <td>
-          <form method="post" action="/uredi_geslo">
-            <input type="hidden" name="id" value="{{ vrstica.ID }}">
-            <input type="text" name="novi_opis" value="{{ vrstica.OPIS }}" required>
-            <button type="submit">Shrani</button>
-          </form>
-        </td>
-        <td>
-          <form method="post" action="/izbrisi_geslo">
-            <input type="hidden" name="id" value="{{ vrstica.ID }}">
-            <button type="submit" onclick="return confirm('Res želiš izbrisati to geslo?')">Izbriši</button>
-          </form>
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-{% endif %}
-
-
-  <!-- SCRIPT za preverjanje gesla -->
+  <!-- SCRIPT -->
   <script>
-function preveriGeslo() {
-  const geslo = document.getElementById('preveri_geslo').value.trim();
+    function preveriGeslo() {
+      const geslo = document.getElementById('preveri_geslo').value.trim();
 
-  fetch('/preveri', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ preveri_geslo: geslo })
-  })
-  .then(response => response.json())
-  .then(data => {
-    const divSporocilo = document.getElementById('rezultat_preverjanja');
-    const divTabela = document.getElementById('tabela_rezultatov');
+      fetch('/preveri', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ preveri_geslo: geslo })
+      })
+      .then(response => response.json())
+      .then(data => {
+        const divSporocilo = document.getElementById('rezultat_preverjanja');
+        const divTabela = document.getElementById('tabela_rezultatov');
 
-    if (!data.rezultati || data.rezultati.length === 0) {
-      divSporocilo.innerHTML = `<p style="color: red;">${data.sporocilo}</p>`;
-      divTabela.innerHTML = '';
-      return;
+        if (!data.rezultati || data.rezultati.length === 0) {
+          divSporocilo.innerHTML = `<p style="color: red;">${data.sporocilo}</p>`;
+          divTabela.innerHTML = '';
+          return;
+        }
+
+        divSporocilo.innerHTML = `<p style="color: blue;">${data.sporocilo}</p>`;
+
+        let html = `
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Geslo</th>
+                <th>Opis</th>
+                <th>Uredi</th>
+                <th>Izbriši</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
+
+        data.rezultati.forEach(r => {
+          html += `
+            <tr>
+              <td>${r.id}</td>
+              <td>${r.geslo}</td>
+              <td>${r.opis}</td>
+              <td>
+                <form method="post" action="/uredi_geslo">
+                  <input type="hidden" name="id" value="${r.id}">
+                  <input type="text" name="novi_opis" value="${r.opis}" required>
+                  <button type="submit">Shrani</button>
+                </form>
+              </td>
+              <td>
+                <form method="post" action="/izbrisi_geslo">
+                  <input type="hidden" name="id" value="${r.id}">
+                  <button type="submit" onclick="return confirm('Res želiš izbrisati to geslo?')">Izbriši</button>
+                </form>
+              </td>
+            </tr>
+          `;
+        });
+
+        html += '</tbody></table>';
+        divTabela.innerHTML = html;
+      })
+      .catch(err => {
+        console.error("Napaka pri preverjanju:", err);
+      });
     }
-
-    divSporocilo.innerHTML = `<p style="color: blue;">${data.sporocilo}</p>`;
-
-    let html = `
-      <table style="width: 100%; border-collapse: collapse; background: white; margin-top: 10px;">
-        <thead>
-          <tr style="background-color: #eee;">
-            <th>ID</th>
-            <th>Geslo</th>
-            <th>Opis</th>
-            <th>Uredi</th>
-            <th>Izbriši</th>
-          </tr>
-        </thead>
-        <tbody>
-    `;
-
-    data.rezultati.forEach(r => {
-      html += `
-        <tr>
-          <td>${r.id}</td>
-          <td>${r.geslo}</td>
-          <td>${r.opis}</td>
-          <td>
-            <form method="post" action="/uredi_geslo">
-              <input type="hidden" name="id" value="${r.id}">
-              <input type="text" name="novi_opis" value="${r.opis}" required>
-              <button type="submit">Shrani</button>
-            </form>
-          </td>
-          <td>
-            <form method="post" action="/izbrisi_geslo">
-              <input type="hidden" name="id" value="${r.id}">
-              <button type="submit" onclick="return confirm('Res želiš izbrisati to geslo?')">Izbriši</button>
-            </form>
-          </td>
-        </tr>
-      `;
-    });
-
-    html += '</tbody></table>';
-    divTabela.innerHTML = html;
-  })
-  .catch(err => {
-    console.error("Napaka pri preverjanju:", err);
-  });
-}
-</script>
-
+  </script>
 </body>
 </html>
