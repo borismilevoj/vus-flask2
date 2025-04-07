@@ -65,6 +65,8 @@ def isci_po_opisu():
     if not surovo:
         return jsonify({'error': 'Vnesi ključno besedo za iskanje po opisu.'}), 400
 
+    # Če uporabljaš normalizacijo
+    from pretvornik import normaliziraj_geslo
     normalizirano = normaliziraj_geslo(surovo).upper()
     besede = normalizirano.split()
 
@@ -73,11 +75,13 @@ def isci_po_opisu():
 
     for beseda in besede:
         if beseda.isdigit():
-            pogoji.append("REPLACE(REPLACE(REPLACE(REPLACE(OPIS, 'Š','S'),'Ž','Z'),'Č','C'),'š','s') LIKE ?")
+            # številke iščemo povsod
+            pogoji.append("UPPER(OPIS) LIKE ?")
             params.append(f"%{beseda}%")
         else:
-            pogoji.append("(REPLACE(REPLACE(REPLACE(REPLACE(UPPER(OPIS), 'Š','S'),'Ž','Z'),'Č','C'),'š','s') LIKE ?)")
-            params.append(f"%{beseda}%")
+            # cele besede – uporabimo presledke levo in desno
+            pogoji.append("(' ' || UPPER(OPIS) || ' ') LIKE ?")
+            params.append(f"% {beseda} %")
 
     sql = "SELECT GESLO, OPIS FROM slovar WHERE " + " AND ".join(pogoji)
 
@@ -89,6 +93,7 @@ def isci_po_opisu():
 
     gesla = [{'geslo': g, 'opis': o} for g, o in rezultati]
     return jsonify(gesla)
+
 
 
 
