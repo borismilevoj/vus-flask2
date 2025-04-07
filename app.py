@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, session, jsonify, g
 from flask_cors import CORS  # ✅ omogoči CORS
 from pretvornik import normaliziraj_geslo
+from flask import flash
 
 import sqlite3
 import os
@@ -280,8 +281,12 @@ def zamenjaj_opis():
     conn = get_db()
     cur = conn.cursor()
     cur.execute("UPDATE slovar SET OPIS = REPLACE(OPIS, ?, ?) WHERE OPIS LIKE ?", (star, novi, f"%{star}%"))
+    st_sprememb = cur.rowcount
     conn.commit()
     conn.close()
+
+    # 🔙 Posreduj sporočilo naprej (če želiš)
+    flash(f"Zamenjanih opisov: {st_sprememb}", "info")
 
     return redirect('/admin')
 
