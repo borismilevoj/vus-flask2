@@ -4,9 +4,45 @@
   <meta charset="UTF-8">
   <title>Domov | VUS</title>
   <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      text-align: center;
+    }
+
+    .banner {
+      width: 100%;
+      height: auto;
+      max-height: 400px;
+      object-fit: cover;
+      border-bottom: 3px solid #004b6b;
+    }
+
+    .vsebina {
+      padding: 20px;
+    }
+
+    h1 {
+      color: #004b6b;
+    }
+
+    p {
+      font-size: 1.1rem;
+      color: #333;
+    }
+  </style>
 </head>
 <body>
-  <h1>Dobrodošel v VUS</h1>
-  <p>To je domača stran slovarja za križanke – klikni zgoraj, da začneš iskati.</p>
+
+  <!-- 🖼 Banner slika -->
+  <img src="{{ url_for('static', filename='slika.png') }}" alt="VUS banner" class="banner">
+
+  <div class="vsebina">
+    <h1>Dobrodošel v VUS</h1>
+    <p>Veliki ugankarski slovar – tvoj pomočnik pri reševanju križank.</p>
+    <p><a href="/isci_opis">Začni iskanje po opisu</a> ali <a href="/isci_vzorec">po vzorcu</a>.</p>
+  </div>
+
 </body>
 </html>
