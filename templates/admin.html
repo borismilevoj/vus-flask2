@@ -81,6 +81,17 @@
  <div id="rezultat_preverjanja"></div>
 <div id="tabela_rezultatov" style="margin-top: 20px;"></div>
 
+<h2>Zamenjaj izraz v opisih</h2>
+<form method="post" action="/zamenjaj_opis">
+  <label for="star_izraz">Stari izraz:</label>
+  <input type="text" id="star_izraz" name="star_izraz" required>
+
+  <label for="novi_izraz">Novi izraz:</label>
+  <input type="text" id="novi_izraz" name="novi_izraz" required>
+
+  <button type="submit">Zamenjaj</button>
+</form>
+
 <script>
 function preveriGeslo() {
   const geslo = document.getElementById('preveri_geslo').value.trim();
@@ -160,4 +171,12 @@ function preveriGeslo() {
 }
 </script>
 </body>
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <p style="color: green;"><strong>{{ message }}</strong></p>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
 </html>
