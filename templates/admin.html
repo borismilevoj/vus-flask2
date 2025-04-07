@@ -81,7 +81,8 @@
   <div id="rezultat_preverjanja"></div>
   <div id="tabela_rezultatov" style="margin-top: 20px;"></div>
 
-  {% if gesla and not rezultat_preverjanja %}
+  {% if gesla and request.endpoint != 'preveri' %}
+
   <table>
     <thead>
       <tr>
