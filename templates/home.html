@@ -4,45 +4,76 @@
   <meta charset="UTF-8">
   <title>Domov | VUS</title>
   <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+
   <style>
     body {
-      font-family: 'Segoe UI', sans-serif;
       margin: 0;
-      text-align: center;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    .banner-container {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+      overflow: hidden;
     }
 
     .banner {
       width: 100%;
-      height: auto;
-      max-height: 400px;
+      height: 100%;
       object-fit: cover;
-      border-bottom: 3px solid #004b6b;
+      filter: brightness(50%);
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 1;
     }
 
-    .vsebina {
-      padding: 20px;
+    .overlay {
+      position: relative;
+      z-index: 2;
+      color: white;
+      text-align: center;
+      top: 40%;
+      transform: translateY(-50%);
+      padding: 0 20px;
     }
 
-    h1 {
-      color: #004b6b;
+    .overlay h1 {
+      font-size: 3rem;
+      margin-bottom: 20px;
     }
 
-    p {
+    .overlay p {
+      font-size: 1.2rem;
+      margin-bottom: 30px;
+    }
+
+    .overlay button {
+      background-color: #ffc107;
+      color: black;
       font-size: 1.1rem;
-      color: #333;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .overlay button:hover {
+      background-color: #e0a800;
     }
   </style>
 </head>
+
 <body>
-
-  <!-- 🖼 Banner slika -->
-  <img src="{{ url_for('static', filename='slika.png') }}" alt="VUS banner" class="banner">
-
-  <div class="vsebina">
-    <h1>Dobrodošel v VUS</h1>
-    <p>Veliki ugankarski slovar – tvoj pomočnik pri reševanju križank.</p>
-    <p><a href="/isci_opis">Začni iskanje po opisu</a> ali <a href="/isci_vzorec">po vzorcu</a>.</p>
+  <div class="banner-container">
+    <div class="overlay">
+      <h1>VUS – Veliki ugankarski slovar</h1>
+      <p>Slovar za križanke in uganke. Poišči gesla po vzorcu ali opisu.</p>
+      <a href="/isci_opis"><button>ZAČNI ISKATI</button></a>
+    </div>
+    <img src="{{ url_for('static', filename='slika.png') }}" class="banner">
   </div>
-
 </body>
+
 </html>
