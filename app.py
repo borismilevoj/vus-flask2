@@ -259,6 +259,7 @@ def izbrisi_geslo():
 
     return redirect("/admin")
 
+
 @app.route('/stevilo_gesel', methods=['GET'])
 def stevilo_gesel():
     conn = get_db()
@@ -268,6 +269,19 @@ def stevilo_gesel():
     conn.close()
     return jsonify({"stevilo": stevilo})
 
+@app.route('/zamenjaj_opis', methods=['POST'])
+def zamenjaj_opis():
+    star = request.form.get('star_izraz', '').strip()
+    novi = request.form.get('novi_izraz', '').strip()
+
+    if not star or not novi:
+        return redirect('/admin')
+
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("UPDATE slovar SET OPIS = REPLACE(OPIS, ?, ?) WHERE OPIS LIKE ?", (star, novi, f"%{star}%"))
+    conn.commit()
+    conn.close()
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 10000))
