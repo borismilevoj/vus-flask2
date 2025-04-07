@@ -147,7 +147,7 @@ def sortiraj_gesla(gesla):
 
     return sorted(gesla, key=sortirni_kljuc)
 
-
+import sqlite3
 
 @app.route("/admin", methods=["GET", "POST"])
 def admin():
@@ -157,7 +157,7 @@ def admin():
 
         if geslo and opis:
             # Ločena povezava za dodajanje
-            conn_dodaj = get_db()
+            conn_dodaj = sqlite3.connect("VUS.db")
             cur_dodaj = conn_dodaj.cursor()
             cur_dodaj.execute("INSERT INTO slovar (GESLO, OPIS) VALUES (?, ?)", (geslo.upper(), opis))
             conn_dodaj.commit()
@@ -170,8 +170,8 @@ def admin():
     gesla = cur.fetchall()
     cur.execute("SELECT COUNT(*) FROM slovar")
     stevilo = cur.fetchone() [0]
-
     conn_beri.close()
+    
 
     # Sortiranje (če ga uporabljaš)
     gesla = sortiraj_gesla(gesla)
