@@ -128,6 +128,28 @@ def isci_po_vzorcu():
 
 
 
+def sortiraj_gesla(gesla):
+    def sortirni_kljuc(vrstica):
+        opis = vrstica["OPIS"] if isinstance(vrstica, dict) else vrstica.OPIS
+
+        # 1. Ali vsebuje vezaj?
+        if "-" in opis:
+            deli = opis.split("-")
+            za_vezajem = deli[1].strip() if len(deli) > 1 else ""
+
+            # 2. Če je prva črka po vezaju velika → uporabi za sortiranje
+            if za_vezajem and za_vezajem[0].isupper():
+                return (0, za_vezajem.upper())
+
+            # 3. Vezaj obstaja, ampak ni veliko ime
+            return (1, opis.upper())
+
+        # 4. Gesla brez vezaja gredo na konec
+        return (2, opis.upper())
+
+    return sorted(gesla, key=sortirni_kljuc)
+
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -141,40 +163,35 @@ def login():
             napaka = "Napačno geslo."
     return render_template("login.html", napaka=napaka)
 
-@app.route('/admin', methods=['GET', 'POST'])
+@app.route("/admin", methods=["GET", "POST"])
 def admin():
-    #if not session.get('admin'):
-    #    return redirect('/login')
-
-    sporocilo = ""
-    rezultat_preverjanja = ""
-    gesla = []
-
-    if request.method == 'POST':
-        geslo = request.form['geslo'].strip()
-        opis = request.form['opis'].strip()
+    if request.method == "POST":
+        geslo = request.form.get("geslo", "").strip()
+        opis = request.form.get("opis", "").strip()
 
         if geslo and opis:
             conn = get_db()
             cur = conn.cursor()
             cur.execute("INSERT INTO slovar (GESLO, OPIS) VALUES (?, ?)", (geslo.upper(), opis))
             conn.commit()
-            cur.execute("SELECT * FROM slovar WHERE UPPER(GESLO) = ?", (geslo.upper(),))
-            gesla = cur.fetchall()
-            gesla.sort(key=lambda x: extract_ime(x['opis']))
-            cur.execute("SELECT COUNT(*) FROM slovar")
-            stevilo = cur.fetchone()[0]
             conn.close()
 
-            return render_template("admin.html", gesla=gesla, sporocilo="Geslo uspešno dodano!", rezultat_preverjanja="", stevilo=stevilo)
-
+    # Pridobi vsa gesla iz baze
     conn = get_db()
     cur = conn.cursor()
+    cur.execute("SELECT * FROM slovar")
+    gesla = cur.fetchall()
+
+    # Preštej število vseh gesel
     cur.execute("SELECT COUNT(*) FROM slovar")
     stevilo = cur.fetchone()[0]
     conn.close()
 
-    return render_template("admin.html", gesla=[], sporocilo="", rezultat_preverjanja="", stevilo=stevilo)
+    # Uporabi sortiranje po posebni logiki
+    gesla = sortiraj_gesla(gesla)
+
+    return render_template("admin.html", gesla=gesla, stevilo=stevilo)
+
 
 @app.route('/preveri', methods=['POST'])
 def preveri():
