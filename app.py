@@ -130,7 +130,8 @@ def isci_po_vzorcu():
 
 def sortiraj_gesla(gesla):
     def sortirni_kljuc(vrstica):
-        opis = vrstica["OPIS"] if isinstance(vrstica, dict) else vrstica.OPIS
+        opis = vrstica["OPIS"]
+        ...
 
         # 1. Ali vsebuje vezaj?
         if "-" in opis:
