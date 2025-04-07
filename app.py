@@ -97,10 +97,6 @@ def isci_po_opisu():
 
 
 
-
-
-
-
 @app.route('/isci_vzorec')
 def isci_vzorec():
     return render_template("isci_vzorec.html")
@@ -153,18 +149,6 @@ def sortiraj_gesla(gesla):
 
 
 
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    napaka = ""
-    if request.method == 'POST':
-        geslo = request.form['geslo']
-        if geslo == 'admin123':
-            session['admin'] = True
-            return redirect('/admin')
-        else:
-            napaka = "Napačno geslo."
-    return render_template("login.html", napaka=napaka)
-
 @app.route("/admin", methods=["GET", "POST"])
 def admin():
     if request.method == "POST":
@@ -172,24 +156,24 @@ def admin():
         opis = request.form.get("opis", "").strip()
 
         if geslo and opis:
-            conn = get_db()
-            cur = conn.cursor()
-            cur.execute("INSERT INTO slovar (GESLO, OPIS) VALUES (?, ?)", (geslo.upper(), opis))
-            conn.commit()
-            conn.close()
+            # Ločena povezava za dodajanje
+            conn_dodaj = get_db()
+            cur_dodaj = conn_dodaj.cursor()
+            cur_dodaj.execute("INSERT INTO slovar (GESLO, OPIS) VALUES (?, ?)", (geslo.upper(), opis))
+            conn_dodaj.commit()
+            conn_dodaj.close()
 
-    # Pridobi vsa gesla iz baze
-    conn = get_db()
-    cur = conn.cursor()
+    # Druga ločena povezava za branje
+    conn_beri = get_db()
+    cur = conn_beri.cursor()
     cur.execute("SELECT * FROM slovar")
     gesla = cur.fetchall()
-
-    # Preštej število vseh gesel
     cur.execute("SELECT COUNT(*) FROM slovar")
-    stevilo = cur.fetchone()[0]
-    conn.close()
+    stevilo = cur.fetchone() [0]
 
-    # Uporabi sortiranje po posebni logiki
+    conn_beri.close()
+
+    # Sortiranje (če ga uporabljaš)
     gesla = sortiraj_gesla(gesla)
 
     return render_template("admin.html", gesla=gesla, stevilo=stevilo)
