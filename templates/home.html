@@ -97,6 +97,13 @@
     .overlay button:hover {
       background-color: #e0a800;
     }
+
+    footer {
+      text-align: center;
+      margin-top: 40px;
+      font-size: 0.9rem;
+      color: #555;
+    }
   </style>
 </head>
 <body>
@@ -113,11 +120,19 @@
     <h1>VUS – Veliki ugankarski slovar</h1>
     <p>Slovar za križanke in uganke. Poišči gesla po vzorcu ali opisu.</p>
     <a href="/isci_opis"><button>ZAČNI ISKATI</button></a>
-    <br><br>
-    <a href="/prispevaj"><button>Prispevaj geslo</button></a>
   </div>
   <img src="{{ url_for('static', filename='slika.png') }}" class="banner">
 </div>
+
+<!-- Gumb Prispevaj pod glavno vsebino -->
+<div style="text-align: center; margin-top: 40px;">
+  <a href="/prispevaj"><button>Prispevaj geslo</button></a>
+</div>
+
+<!-- Footer -->
+<footer>
+  © 2025 VUS – Veliki ugankarski slovar
+</footer>
 
 </body>
 </html>
