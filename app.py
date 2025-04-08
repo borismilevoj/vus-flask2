@@ -264,7 +264,8 @@ def zamenjaj_opis():
 
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("UPDATE slovar SET OPIS = REPLACE(OPIS, ?, ?) WHERE OPIS LIKE ?", (star, novi, f"%{star}%"))
+    cur.execute("UPDATE slovar SET OPIS = REPLACE(OPIS, ?, ?) WHERE OPIS LIKE ?",
+   (star, novi, f"%{star}%"))
     st_sprememb = cur.rowcount
     conn.commit()
     conn.close()
@@ -274,6 +275,29 @@ def zamenjaj_opis():
 
     return redirect('/admin')
 
+
+@app.route("/prispevaj", methods=["GET", "POST"])
+def prispevaj():
+    if request.method == "POST":
+        uporabnik = request.form.get("uporabnik", "").strip()
+        geslo = request.form.get("geslo", "").strip().upper()
+        opis = request.form.get("opis", "").strip()
+
+        if geslo and opis:
+            conn = get_db()
+            cur = conn.cursor()
+            cur.execute(
+                "INSERT INTO prispevki (uporabnik, geslo, opis) VALUES (?, ?, ?)",
+                (uporabnik, geslo, opis)
+            )
+            conn.commit()
+            conn.close()
+            return render_template("prispevaj.html", sporocilo="Hvala za prispevek!")
+
+    return render_template("prispevaj.html")
+
+
+
 if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 10000))
+    port = int(os.environ.get("PORT",1000))
     app.run(host='0.0.0.0', port=port)
