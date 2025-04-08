@@ -121,11 +121,50 @@
     .overlay button:hover {
       background-color: #e0a800;
     }
+    nav {
+  background-color: #0a2342;
+  padding: 10px;
+  position: fixed;
+  top: 0;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  z-index: 100;
+}
+
+nav a {
+  background-color: #fff;
+  padding: 6px 12px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+  color: #0a2342;
+  text-decoration: none;
+  font-weight: bold;
+  font-size: 0.95rem;
+}
+
+nav a:hover {
+  background-color: #ddd;
+}
+
+nav a.active {
+  background-color: #ffc107;
+  color: black;
+}
+
   </style>
 </head>
 
 <body>
-  <div class="overlay fade-in">
+<nav>
+  <a href="/" class="active">Domov</a>
+  <a href="/isci_vzorec">Išči po vzorcu</a>
+  <a href="/isci_opis">Išči po opisu</a>
+  <a href="/prispevaj">Prispevaj</a>
+</nav>
+
+<div class="overlay fade-in">
   <h1>VUS – Veliki ugankarski slovar</h1>
   <p>Slovar za križanke in uganke. Poišči gesla po vzorcu ali opisu.</p>
   <a href="/isci_opis"><button>ZAČNI ISKATI</button></a>
