@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
   <title>VUS – Veliki ugankarski slovar</title>
   <meta name="description" content="Slovar za križanke in uganke. Poišči gesla po vzorcu ali opisu. VUS – pomoč za reševanje križank online.">
   <meta name="keywords" content="križanke, slovar za križanke, ugankarski slovar, reševanje križank, gesla, iskanje po opisu, VUS">
@@ -133,6 +134,13 @@ nav a.active {
   </style>
 </head>
 <body>
+body {
+  background-image: url("{{ url_for('static', filename='slika.png') }}");
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
   <nav>
   <a href="/" class="active">Domov</a>
   <a href="/isci_vzorec">Iskanje po vzorcu</a>

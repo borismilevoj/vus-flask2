@@ -1,0 +1,14 @@
+# created by virtualenv automatically
+# Python cache
+**/__pycache__/
+
+*.pyc
+
+# SQLite baza
+*.db
+
+# IDE datoteke (če uporabljaš PyCharm)
+.idea/
+
+# Sistemski fajli
+.DS_Store
