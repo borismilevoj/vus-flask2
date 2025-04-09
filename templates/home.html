@@ -12,19 +12,9 @@
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
+
     gtag('config', 'G-E14XLFV5NS');
   </script>
-
-  <style>
-    /* celoten tvoj stil sem tukaj zložil */
-    body { ... }
-    nav { ... }
-    .banner-container { ... }
-    ...
-  </style>
-</head>
-
-
 
   <style>
     body {
@@ -128,6 +118,7 @@
     }
   </style>
 </head>
+
 <body>
 
 <nav>
@@ -145,7 +136,7 @@
     <br><br>
     <a href="/prispevaj"><button>Prispevaj geslo</button></a>
   </div>
-  <img src="{{ url_for('static', filename='slika.png') }}" class="banner">
+  <img src="{{ url_for('static', filename='slika.png') }}" class="banner" alt="Ozadje slovarja">
 </div>
 
 <footer>
