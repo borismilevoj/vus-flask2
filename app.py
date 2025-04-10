@@ -102,7 +102,7 @@ def isci_vzorec():
     return render_template("isci_vzorec.html")
 
 
-@app.route('/isci_po_vzorcu', methods=['POST'])
+@app.route('/isci_vzorec', methods=['GET', 'POST'])
 def isci_po_vzorcu():
     vzorec = request.form['vzorec'].strip()
     vzorec = normaliziraj_geslo(vzorec).replace(" ", "").replace("'", "").replace("’", "").upper()
