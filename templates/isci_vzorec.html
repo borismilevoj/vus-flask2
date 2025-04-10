@@ -4,131 +4,126 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Iskanje po vzorcu | VUS</title>
-  <meta name="description" content="Poišči gesla po znanih črkah v VUS – Velikem ugankarskem slovarju.">
-  <meta name="keywords" content="križanke, iskanje po vzorcu, vzorec gesla, VUS, slovar za križanke">
-<style>
-  body {
-    margin: 0;
-    font-family: 'Segoe UI', sans-serif;
-    background: linear-gradient(to right, #e0eafc, #cfdef3);
-    color: #333;
-    text-align: center;
-  }
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to right, #e0eafc, #cfdef3);
+      color: #333;
+      text-align: center;
+    }
 
-  nav {
-    background-color: #0a2342;
-    padding: 10px;
-    position: fixed;
-    top: 0;
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    gap: 20px;
-    z-index: 100;
-  }
+    nav {
+      background-color: #0a2342;
+      padding: 10px;
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+    }
 
-  nav a {
-    background-color: #fff;
-    padding: 6px 12px;
-    border-radius: 4px;
-    transition: background-color 0.2s;
-    color: #0a2342;
-    text-decoration: none;
-    font-weight: bold;
-    font-size: 0.95rem;
-  }
+    nav a {
+      color: #fff;
+      text-decoration: none;
+      font-weight: bold;
+      padding: 6px 12px;
+      border-radius: 4px;
+    }
 
-  nav a:hover {
-    background-color: #ddd;
-  }
+    nav a.active, nav a:hover {
+      background-color: #ffc107;
+      color: black;
+    }
 
-  nav a.active {
-    background-color: #ffc107;
-    color: black;
-  }
+    h1 {
+      color: #004b6b;
+      margin-top: 20px;
+    }
 
-  .overlay {
-    margin-top: 80px;
-    padding: 20px;
-  }
+    .navodila {
+      text-align: left;
+      margin: 20px auto;
+      max-width: 600px;
+      font-size: 1.05rem;
+      background-color: #ffffffcc;
+      padding: 15px;
+      border-radius: 8px;
+    }
 
-  h1 {
-    font-size: 2.5rem;
-    color: #004b6b;
-    margin-bottom: 10px;
-  }
+    .vnosno-polje {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin: 20px 0;
+      flex-wrap: wrap;
+    }
 
-  .navodila {
-    font-size: 1rem;
-    color: #555;
-    margin-bottom: 20px;
-  }
+    .crka-polje {
+      width: 40px;
+      height: 50px;
+      font-size: 24px;
+      text-align: center;
+      border: 2px solid #007acc;
+      border-radius: 10px;
+    }
 
-  .vnos {
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 20px;
-  }
+    button {
+      background-color: #007acc;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      margin: 10px;
+      font-size: 1rem;
+    }
 
-  .crka-polje {
-    width: 40px;
-    height: 50px;
-    font-size: 24px;
-    text-align: center;
-    border: 2px solid #007acc;
-    border-radius: 10px;
-    box-shadow: 2px 2px 4px rgba(0,0,0,0.1);
-    transition: background-color 0.3s;
-  }
+    button:hover {
+      background-color: #005f99;
+    }
 
-  .crka-polje.filled {
-    background-color: #c6f7e2;
-  }
+    .rezultati {
+      background-color: white;
+      padding: 20px;
+      margin: 20px auto;
+      max-width: 800px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
 
-  .btn {
-    background-color: #007acc;
-    color: white;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    margin: 5px;
-    font-size: 1rem;
-    transition: background-color 0.2s;
-  }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      color: black;
+    }
 
-  .btn:hover {
-    background-color: #005f99;
-  }
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #eee;
+    }
 
-  .counter {
-    text-align: center;
-    font-weight: bold;
-    margin-top: 20px;
-    color: #007700;
-  }
+    th {
+      background-color: #f4f4f4;
+    }
+  </style>
+</head>
+  <nav>
+    <a href="/" class="active">Domov</a>
+    <a href="/isci_vzorec">Išči po vzorcu</a>
+    <a href="/isci_opis">Išči po opisu</a>
+    <a href="/prispevaj">Prispevaj</a>
+  </nav>
 
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    background-color: white;
-    border-radius: 10px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    overflow: hidden;
-    color: black;
-  }
+  <h1>Iskanje po vzorcu</h1>
 
-  th, td {
-    padding: 12px;
-    text-align: left;
-    border-bottom: 1px solid #eee;
-  }
-
-  th {
-    background-color: #f4f4f4;
-  }
+  <div class="navodila">
+    <p>1. Izberi številko črk, ki jih vsebuje iskano geslo,</p>
+    <p>2. Klikni na gumb <strong>USTVARI POLJA</strong>,</p>
+    <p>3. Vnesi znane črke,<br><em>* Lahko poskusiš tudi s črkami, za katere predvidevaš, da bi ustrezala</em></p>
+    <p>4. Klikni na gumb <strong>IŠČI</strong>,</p>
+    <p>5. Po končanem iskanju in prikazanem rezultatu, klikni na gumb <strong>PONASTAVI</strong>.</p>
+  </div>
 
   /* ✅ Responsive prilagoditev */
   @media (max-width: 600px) {
