@@ -5,20 +5,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Iskanje po vzorcu | VUS</title>
   <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
-
   <style>
     body {
       margin: 0;
       font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to right, #e0eafc, #cfdef3);
+      color: #333;
     }
 
     nav {
       background-color: #0a2342;
       padding: 10px;
+      position: fixed;
+      top: 0;
+      width: 100%;
       display: flex;
       justify-content: center;
       gap: 20px;
-      flex-wrap: wrap;
+      z-index: 100;
     }
 
     nav a {
@@ -41,17 +45,26 @@
       color: black;
     }
 
-    .vsebina {
-      text-align: center;
-      margin-top: 40px;
+    .vnos {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 30px;
+      padding-top: 100px;
+      flex-wrap: wrap;
+    }
+
+    .navodila-blok {
+      max-width: 300px;
+      font-size: 1rem;
     }
 
     .vnosno-polje {
+      margin: 15px 0;
       display: flex;
+      flex-wrap: wrap;
       justify-content: center;
       gap: 8px;
-      flex-wrap: wrap;
-      margin: 20px 0;
     }
 
     .crka-polje {
@@ -62,6 +75,11 @@
       border: 2px solid #007acc;
       border-radius: 10px;
       box-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+      transition: background-color 0.3s;
+    }
+
+    .crka-polje.filled {
+      background-color: #c6f7e2;
     }
 
     .btn {
@@ -73,27 +91,104 @@
       cursor: pointer;
       margin: 5px;
       font-size: 1rem;
-      transition: background-color 0.2s;
     }
 
     .btn:hover {
       background-color: #005f99;
     }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      overflow: hidden;
+      margin-top: 30px;
+    }
+
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #eee;
+    }
+
+    th {
+      background-color: #f4f4f4;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      text-align: center;
+      color: #004b6b;
+      margin-top: 140px;
+    }
   </style>
+</head>
+<body>
+  <nav>
+    <a href="/">Domov</a>
+    <a href="/isci_vzorec" class="active">Iskanje po vzorcu</a>
+    <a href="/isci_opis">Iskanje po opisu</a>
+  </nav>
+
+  <h1>Iskanje po vzorcu</h1>
+
+  <div class="vnos">
+    <div class="navodila-blok">
+      <ol>
+        <li>Izberi število črk, ki jih vsebuje iskano geslo</li>
+        <li>Klikni na gumb <strong>USTVARI POLJA</strong></li>
+        <li>Vnesi znane črke<br><em>* Lahko poskusiš tudi s črkami, za katere predvidevaš, da bi ustrezala</em></li>
+        <li>Klikni na gumb <strong>IŠČI</strong></li>
+        <li>Po končanem iskanju klikni na gumb <strong>PONASTAVI</strong></li>
+      </ol>
+    </div>
+
+    <form id="vzorecForm" method="post" action="/isci_vzorec">
+      <label for="stevilo_crk">Število črk:</label>
+      <select id="stevilo_crk" name="stevilo_crk"></select>
+      <button type="button" class="btn" onclick="ustvariPolja()">Ustvari polja</button>
+      <div id="poljaContainer" class="vnosno-polje"></div>
+      <button type="button" class="btn" onclick="isciVzorec()">IŠČI</button>
+      <button type="button" class="btn" onclick="ponastavi()">PONASTAVI</button>
+    </form>
+  </div>
+
+  {% if gesla %}
+    <div class="rezultati">
+      <h2>Rezultati iskanja</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>GESLO</th>
+            <th>OPIS</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for g in gesla %}
+          <tr class="fade-in">
+            <td>{{ g.GESLO }}</td>
+            <td>{{ g.OPIS }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% endif %}
 
   <script>
-    document.addEventListener("DOMContentLoaded", function() {
-      const izbirnik = document.getElementById("stevilo_crk");
+    const izbirnik = document.getElementById("stevilo_crk");
+    if (izbirnik) {
       for (let i = 3; i <= 20; i++) {
         const option = document.createElement("option");
         option.value = i;
         option.textContent = i;
         izbirnik.appendChild(option);
       }
-    });
+    }
 
     function ustvariPolja() {
-      const izbirnik = document.getElementById("stevilo_crk");
       const poljaContainer = document.getElementById("poljaContainer");
       const st = parseInt(izbirnik.value);
       poljaContainer.innerHTML = "";
@@ -116,43 +211,5 @@
       window.location.href = "/isci_vzorec";
     }
   </script>
-</head>
-<body>
-  <nav>
-    <a href="/">Domov</a>
-    <a href="/isci_vzorec" class="active">Iskanje po vzorcu</a>
-    <a href="/isci_opis">Iskanje po opisu</a>
-    <a href="/prispevaj">Prispevaj</a>
-  </nav>
-
-  <div class="vsebina">
-    <h1>Iskanje po vzorcu</h1>
-
-    <form id="vzorecForm" method="post" action="/isci_vzorec">
-      <label for="stevilo_crk">Število črk:</label>
-      <select id="stevilo_crk" name="stevilo_crk"></select>
-      <button type="button" class="btn" onclick="ustvariPolja()">Ustvari polja</button>
-
-      <div id="poljaContainer" class="vnosno-polje"></div>
-
-      <button type="button" class="btn" onclick="isciVzorec()">Išči</button>
-      <button type="button" class="btn" onclick="ponastavi()">Ponastavi</button>
-    </form>
-
-    {% if rezultati %}
-      <div class="rezultati">
-        <table>
-          <thead>
-            <tr><th>Geslo</th><th>Opis</th></tr>
-          </thead>
-          <tbody>
-            {% for r in rezultati %}
-              <tr><td>{{ r.GESLO }}</td><td>{{ r.OPIS }}</td></tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    {% endif %}
-  </div>
 </body>
 </html>
