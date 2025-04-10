@@ -5,12 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Iskanje po vzorcu | VUS</title>
   <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+
   <style>
     body {
       margin: 0;
       font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(to right, #e0eafc, #cfdef3);
-      color: #333;
     }
 
     nav {
@@ -19,15 +18,22 @@
       display: flex;
       justify-content: center;
       gap: 20px;
+      flex-wrap: wrap;
     }
 
     nav a {
       background-color: #fff;
       padding: 6px 12px;
       border-radius: 4px;
+      transition: background-color 0.2s;
       color: #0a2342;
       text-decoration: none;
       font-weight: bold;
+      font-size: 0.95rem;
+    }
+
+    nav a:hover {
+      background-color: #ddd;
     }
 
     nav a.active {
@@ -35,41 +41,17 @@
       color: black;
     }
 
-    .container {
-      display: flex;
-      flex-direction: row;
-      justify-content: center;
-      align-items: flex-start;
-      margin-top: 40px;
-      padding: 0 20px;
-      gap: 40px;
-    }
-
-    .instructions {
-      max-width: 400px;
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      font-size: 1rem;
-    }
-
-    .content {
-      flex: 1;
+    .vsebina {
       text-align: center;
-    }
-
-    h1 {
-      color: #004b6b;
-      margin-bottom: 20px;
+      margin-top: 40px;
     }
 
     .vnosno-polje {
       display: flex;
       justify-content: center;
-      flex-wrap: wrap;
       gap: 8px;
-      margin-bottom: 20px;
+      flex-wrap: wrap;
+      margin: 20px 0;
     }
 
     .crka-polje {
@@ -90,49 +72,51 @@
       border-radius: 6px;
       cursor: pointer;
       margin: 5px;
+      font-size: 1rem;
+      transition: background-color 0.2s;
     }
 
     .btn:hover {
       background-color: #005f99;
     }
   </style>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      const izbirnik = document.getElementById("stevilo_crk");
+      for (let i = 3; i <= 20; i++) {
+        const option = document.createElement("option");
+        option.value = i;
+        option.textContent = i;
+        izbirnik.appendChild(option);
+      }
+    });
+
+    function ustvariPolja() {
+      const izbirnik = document.getElementById("stevilo_crk");
+      const poljaContainer = document.getElementById("poljaContainer");
+      const st = parseInt(izbirnik.value);
+      poljaContainer.innerHTML = "";
+
+      for (let i = 0; i < st; i++) {
+        const input = document.createElement("input");
+        input.type = "text";
+        input.name = "crka" + i;
+        input.maxLength = 1;
+        input.classList.add("crka-polje");
+        poljaContainer.appendChild(input);
+      }
+    }
+
+    function isciVzorec() {
+      document.getElementById("vzorecForm").submit();
+    }
+
+    function ponastavi() {
+      window.location.href = "/isci_vzorec";
+    }
+  </script>
 </head>
-<script>
-  // Napolni izbirnik s številkami od 3 do 20
-  const izbirnik = document.getElementById("stevilo_crk");
-  if (izbirnik) {
-    for (let i = 3; i <= 20; i++) {
-      const option = document.createElement("option");
-      option.value = i;
-      option.textContent = i;
-      izbirnik.appendChild(option);
-    }
-  }
-
-  function ustvariPolja() {
-    const poljaContainer = document.getElementById("poljaContainer");
-    const st = parseInt(izbirnik.value);
-    poljaContainer.innerHTML = "";
-
-    for (let i = 0; i < st; i++) {
-      const input = document.createElement("input");
-      input.type = "text";
-      input.name = "crka" + i;
-      input.maxLength = 1;
-      input.classList.add("crka-polje");
-      poljaContainer.appendChild(input);
-    }
-  }
-
-  function isciVzorec() {
-    document.getElementById("vzorecForm").submit();
-  }
-
-  function ponastavi() {
-    window.location.href = "/isci_vzorec";
-  }
-</script>
-
 <body>
   <nav>
     <a href="/">Domov</a>
@@ -141,28 +125,34 @@
     <a href="/prispevaj">Prispevaj</a>
   </nav>
 
-  <div class="container">
-    <div class="instructions">
-      <p>1. Izberi število črk, ki jih vsebuje iskano geslo,</p>
-      <p>2. Klikni na gumb <strong>USTVARI POLJA</strong>,</p>
-      <p>3. Vnesi znane črke,<br><em>* Lahko poskusiš tudi s črkami, za katere predvidevaš, da bi ustrezala</em></p>
-      <p>4. Klikni na gumb <strong>IŠČI</strong>,</p>
-      <p>5. Po končanem iskanju in prikazanem rezultatu, klikni na gumb <strong>PONASTAVI</strong></p>
-    </div>
+  <div class="vsebina">
+    <h1>Iskanje po vzorcu</h1>
 
-    <div class="content">
-      <h1>Iskanje po vzorcu</h1>
-      <form id="vzorecForm">
-        <label for="stevilo_crk">Število črk:</label>
-        <select id="stevilo_crk"></select>
-        <button type="button" class="btn" onclick="ustvariPolja()">Ustvari polja</button>
-      </form>
+    <form id="vzorecForm" method="post" action="/isci_vzorec">
+      <label for="stevilo_crk">Število črk:</label>
+      <select id="stevilo_crk" name="stevilo_crk"></select>
+      <button type="button" class="btn" onclick="ustvariPolja()">Ustvari polja</button>
+
       <div id="poljaContainer" class="vnosno-polje"></div>
-      <button class="btn" onclick="isciVzorec()">IŠČI</button>
-      <button class="btn" onclick="ponastavi()">PONASTAVI</button>
-      <div id="stevecZadetkov"></div>
-      <div id="rezultatiContainer"></div>
-    </div>
+
+      <button type="button" class="btn" onclick="isciVzorec()">Išči</button>
+      <button type="button" class="btn" onclick="ponastavi()">Ponastavi</button>
+    </form>
+
+    {% if rezultati %}
+      <div class="rezultati">
+        <table>
+          <thead>
+            <tr><th>Geslo</th><th>Opis</th></tr>
+          </thead>
+          <tbody>
+            {% for r in rezultati %}
+              <tr><td>{{ r.GESLO }}</td><td>{{ r.OPIS }}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% endif %}
   </div>
 </body>
 </html>
