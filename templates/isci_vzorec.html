@@ -127,11 +127,11 @@
 </head>
 <body>
   <nav>
-  <a href="/">Domov</a>
-  <a href="/isci_vzorec" class="active">Iskanje po vzorcu</a>
-  <a href="/isci_opis">Iskanje po opisu</a>
-  <a href="/prispevaj">Prispevaj geslo</a>
-</nav>
+    <a href="/">Domov</a>
+    <a href="/isci_vzorec" class="active">Iskanje po vzorcu</a>
+    <a href="/isci_opis">Iskanje po opisu</a>
+    <a href="/prispevaj">Prispevaj geslo</a>
+  </nav>
 
   <h1>Iskanje po vzorcu</h1>
 
@@ -149,6 +149,7 @@
     <form id="vzorecForm" method="post" action="/isci_vzorec">
       <label for="stevilo_crk">Število črk:</label>
       <select id="stevilo_crk" name="stevilo_crk"></select>
+      <input type="hidden" id="vzorec" name="vzorec">
       <button type="button" class="btn" onclick="ustvariPolja()">Ustvari polja</button>
       <div id="poljaContainer" class="vnosno-polje"></div>
       <button type="button" class="btn" onclick="isciVzorec()">IŠČI</button>
@@ -205,6 +206,12 @@
     }
 
     function isciVzorec() {
+      let vzorec = "";
+      const polja = document.querySelectorAll(".crka-polje");
+      polja.forEach(input => {
+        vzorec += input.value ? input.value.toUpperCase() : "_";
+      });
+      document.getElementById("vzorec").value = vzorec;
       document.getElementById("vzorecForm").submit();
     }
 
