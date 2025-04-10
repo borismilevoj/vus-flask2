@@ -206,12 +206,20 @@
     }
 
     function isciVzorec() {
-      document.getElementById("vzorecForm").submit();
-    }
+  const polja = document.querySelectorAll('#poljaContainer input');
+  let vzorec = '';
 
-    function ponastavi() {
-      window.location.href = "/isci_vzorec";
-    }
+  polja.forEach(input => {
+    vzorec += input.value ? input.value.toUpperCase() : '_';
+  });
+
+  // posodobi hidden input
+  document.getElementById('vzorec').value = vzorec;
+
+  // pošlji obrazec
+  document.getElementById("vzorecForm").submit();
+}
+
   </script>
 </body>
 </html>
