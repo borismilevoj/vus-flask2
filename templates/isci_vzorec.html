@@ -97,6 +97,42 @@
     }
   </style>
 </head>
+<script>
+  // Napolni izbirnik s številkami od 3 do 20
+  const izbirnik = document.getElementById("stevilo_crk");
+  if (izbirnik) {
+    for (let i = 3; i <= 20; i++) {
+      const option = document.createElement("option");
+      option.value = i;
+      option.textContent = i;
+      izbirnik.appendChild(option);
+    }
+  }
+
+  function ustvariPolja() {
+    const poljaContainer = document.getElementById("poljaContainer");
+    const st = parseInt(izbirnik.value);
+    poljaContainer.innerHTML = "";
+
+    for (let i = 0; i < st; i++) {
+      const input = document.createElement("input");
+      input.type = "text";
+      input.name = "crka" + i;
+      input.maxLength = 1;
+      input.classList.add("crka-polje");
+      poljaContainer.appendChild(input);
+    }
+  }
+
+  function isciVzorec() {
+    document.getElementById("vzorecForm").submit();
+  }
+
+  function ponastavi() {
+    window.location.href = "/isci_vzorec";
+  }
+</script>
+
 <body>
   <nav>
     <a href="/">Domov</a>
