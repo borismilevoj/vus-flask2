@@ -2,42 +2,30 @@
 <html lang="sl">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Iskanje po opisu | VUS</title>
-  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
   <style>
     body {
-      margin: 0;
       font-family: 'Segoe UI', sans-serif;
       background: linear-gradient(to right, #e0eafc, #cfdef3);
-      color: #333;
+      margin: 0;
+      padding: 0;
     }
 
     nav {
       background-color: #0a2342;
       padding: 10px;
-      position: fixed;
-      top: 0;
-      width: 100%;
       display: flex;
       justify-content: center;
       gap: 20px;
-      z-index: 100;
     }
 
     nav a {
       background-color: #fff;
       padding: 6px 12px;
       border-radius: 4px;
-      transition: background-color 0.2s;
       color: #0a2342;
       text-decoration: none;
       font-weight: bold;
-      font-size: 0.95rem;
-    }
-
-    nav a:hover {
-      background-color: #ddd;
     }
 
     nav a.active {
@@ -46,23 +34,32 @@
     }
 
     h1 {
-      font-size: 2.5rem;
       text-align: center;
       color: #004b6b;
-      margin-top: 140px;
+      margin-top: 40px;
+    }
+
+    .navodila-blok {
+      max-width: 700px;
+      margin: 20px auto;
+      padding: 20px;
+      background-color: #ffffffcc;
+      border-radius: 10px;
+      font-size: 1rem;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
 
     .vnos {
       text-align: center;
-      margin-top: 30px;
+      margin-top: 20px;
     }
 
     input[type="text"] {
-      padding: 12px;
-      font-size: 1.2rem;
-      width: 50%;
-      border: 2px solid #007acc;
+      padding: 10px;
+      font-size: 1.1rem;
+      width: 60%;
       border-radius: 6px;
+      border: 1px solid #007acc;
     }
 
     .btn {
@@ -80,16 +77,11 @@
       background-color: #005f99;
     }
 
-    .rezultati {
-      padding: 20px;
-      text-align: center;
-    }
-
     .rezultati-info {
-      font-size: 1.2rem;
+      text-align: center;
       font-weight: bold;
-      color: #004b6b;
       margin-top: 30px;
+      color: #004b6b;
     }
 
     table {
@@ -112,7 +104,7 @@
     }
 
     .fade-in {
-      animation: fadeIn 0.4s ease-in-out;
+      animation: fadeIn 0.5s ease-in-out;
     }
 
     @keyframes fadeIn {
@@ -121,26 +113,34 @@
     }
   </style>
 </head>
-<body>
+<body class="fade-in">
+  <nav>
+    <a href="/">Domov</a>
+    <a href="/isci_vzorec">Iskanje po vzorcu</a>
+    <a href="/isci_opis" class="active">Iskanje po opisu</a>
+    <a href="/prispevaj">Prispevaj geslo</a>
+  </nav>
 
-<nav>
-  <a href="/">Domov</a>
-  <a href="/isci_vzorec">Iskanje po vzorcu</a>
-  <a href="/isci_opis" class="active">Iskanje po opisu</a>
-  <a href="/prispevaj">Prispevaj geslo</a>
-</nav>
+  <h1>Iskanje po opisu</h1>
 
-<h1>Iskanje po opisu</h1>
+  <div class="navodila-blok">
+    <ol>
+      <li>Vnesi besedo ali več besed, ki opisujejo iskano geslo (npr. <em>fotograf</em>, <em>1900</em>, <em>slovenska igralka</em>).</li>
+      <li>Uporabi ključne besede kot so: poklic, kraj, letnica, ime, država, panoga ipd.</li>
+      <li>Klikni na gumb <strong>IŠČI</strong>.</li>
+      <li>Če želiš nov poskus, klikni na <strong>PONASTAVI</strong>.</li>
+      <li>Če gesla ne najdeš, lahko prispevaš novo z gumbom <strong>Prispevaj geslo</strong>.</li>
+    </ol>
+  </div>
 
-<form method="post" action="/isci_opis" class="vnos">
-  <input type="text" name="opis" placeholder="npr. fotograf, 1900, ime" required>
-  <button type="submit" class="btn">IŠČI</button>
-  <a href="/isci_opis"><button type="button" class="btn">PONASTAVI</button></a>
-</form>
+  <form method="post" action="/isci_opis" class="vnos">
+    <input type="text" name="opis" placeholder="npr. fotograf, 1900, ime" required>
+    <button type="submit" class="btn">IŠČI</button>
+    <a href="/isci_opis"><button type="button" class="btn">PONASTAVI</button></a>
+  </form>
 
-{% if gesla %}
-  <div class="rezultati fade-in">
-    <p class="rezultati-info">Najdeno: {{ gesla|length }} zadetkov</p>
+  {% if gesla %}
+    <div class="rezultati-info">Najdeno: {{ gesla|length }} zadetkov</div>
     <table>
       <thead>
         <tr>
@@ -150,19 +150,16 @@
       </thead>
       <tbody>
         {% for g in gesla %}
-        <tr>
+        <tr class="fade-in">
           <td>{{ g.GESLO }}</td>
           <td>{{ g.OPIS }}</td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
-  </div>
-{% else %}
-  <div class="rezultati fade-in">
-    <p class="rezultati-info">Ni zadetkov.</p>
-  </div>
-{% endif %}
+  {% else %}
+    <div class="rezultati-info">Ni zadetkov.</div>
+  {% endif %}
 
 </body>
 </html>
