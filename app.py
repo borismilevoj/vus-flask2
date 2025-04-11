@@ -298,6 +298,58 @@ def prispevaj():
 
     return render_template("prispevaj.html")
 
+@app.route('/admin_prispevki')
+def admin_prispevki():
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM prispevki ORDER BY id DESC")
+    prispevki = cur.fetchall()
+    conn.close()
+    return render_template("admin_prispevki.html", prispevki=prispevki)
+
+
+@app.route('/shrani_prispevek', methods=['POST'])
+def shrani_prispevek():
+    id = request.form['id']
+    uporabnik = request.form['uporabnik']
+    geslo = request.form['geslo'].strip().upper()
+    opis = request.form['opis'].strip()
+
+    if geslo and opis:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("INSERT INTO slovar (GESLO, OPIS) VALUES (?, ?)", (geslo, opis))
+
+        if uporabnik:
+            cur.execute("INSERT INTO prispevki_lestvica (uporabnik, tocke) VALUES (?, 1) "
+                        "ON CONFLICT(uporabnik) DO UPDATE SET tocke = tocke + 1", (uporabnik,))
+
+        cur.execute("DELETE FROM prispevki WHERE id = ?", (id,))
+        conn.commit()
+        conn.close()
+
+    return redirect("/admin_prispevki")
+
+
+@app.route('/zavrni_prispevek', methods=['POST'])
+def zavrni_prispevek():
+    id = request.form['id']
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM prispevki WHERE id = ?", (id,))
+    conn.commit()
+    conn.close()
+    return redirect("/admin_prispevki")
+
+
+@app.route('/lestvica_prispevkov')
+def lestvica_prispevkov():
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT uporabnik, tocke FROM prispevki_lestvica ORDER BY tocke DESC, uporabnik")
+    lestvica = cur.fetchall()
+    conn.close()
+    return render_template("lestvica_prispevkov.html", lestvica=lestvica)
 
 
 if __name__ == '__main__':
