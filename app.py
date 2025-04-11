@@ -60,7 +60,7 @@ def odstrani_sumnike(niz):
     return ''.join(zamenjave.get(c, c) for c in niz)
 
 
-@app.route('/isci_po_opisu', methods=['POST'])
+@app.route('/isci_po_opisu', methods=['GET','POST'])
 def isci_po_opisu():
     surovo = request.form.get('opis', '').strip()
     if not surovo:
@@ -104,24 +104,26 @@ def isci_vzorec():
 
 @app.route('/isci_vzorec', methods=['GET', 'POST'])
 def isci_po_vzorcu():
-    vzorec = request.form['vzorec'].strip()
+    vzorec = request.form.get('vzorec', '').strip()
     vzorec = normaliziraj_geslo(vzorec).replace(" ", "").replace("'", "").replace("’", "").upper()
     dolzina = len(vzorec)
 
     conn = get_db()
     cur = conn.cursor()
-
     cur.execute(
         "SELECT GESLO, OPIS FROM slovar WHERE LENGTH(REPLACE(REPLACE(GESLO, ' ', ''), '''', '')) = ? "
         "AND REPLACE(REPLACE(UPPER(GESLO), ' ', ''), '''', '') LIKE ?",
         (dolzina, vzorec)
     )
-
     rezultati = cur.fetchall()
     conn.close()
 
     gesla = [{'geslo': g, 'opis': o} for g, o in rezultati]
-    return jsonify(gesla)
+
+    return render_template("isci_vzorec.html", gesla=gesla)
+
+
+
 
 
 
@@ -179,7 +181,7 @@ def admin():
     return render_template("admin.html", gesla=gesla, stevilo=stevilo)
 
 
-@app.route('/preveri', methods=['POST'])
+@app.route('/preveri', methods=['GET','POST'])
 def preveri():
     podatki = request.get_json()
     geslo = podatki.get('preveri_geslo', '').strip()
@@ -210,7 +212,7 @@ def preveri():
 
 
 
-@app.route('/uredi_geslo', methods=['POST'])
+@app.route('/uredi_geslo', methods=['GET','POST'])
 def uredi_geslo():
     id = request.form['id']
     novi_opis = request.form['novi_opis'].strip()
@@ -231,7 +233,7 @@ def uredi_geslo():
 
     return redirect("/admin")
 
-@app.route('/izbrisi_geslo', methods=['POST'])
+@app.route('/izbrisi_geslo', methods=['GET','POST'])
 def izbrisi_geslo():
     id = request.form['id']
 
@@ -245,7 +247,7 @@ def izbrisi_geslo():
     return redirect("/admin")
 
 
-@app.route('/stevilo_gesel', methods=['GET'])
+@app.route('/stevilo_gesel', methods=['GET', 'POST'])
 def stevilo_gesel():
     conn = get_db()
     cur = conn.cursor()
@@ -254,7 +256,7 @@ def stevilo_gesel():
     conn.close()
     return jsonify({"stevilo": stevilo})
 
-@app.route('/zamenjaj_opis', methods=['POST'])
+@app.route('/zamenjaj_opis', methods=['GET','POST'])
 def zamenjaj_opis():
     star = request.form.get('star_izraz', '').strip()
     novi = request.form.get('novi_izraz', '').strip()
