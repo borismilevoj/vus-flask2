@@ -126,92 +126,101 @@
   </style>
 </head>
 <body>
-<nav>
-  <a href="/">Domov</a>
-  <a href="/isci_vzorec" class="active">Iskanje po vzorcu</a>
-  <a href="/isci_opis">Iskanje po opisu</a>
-  <a href="/prispevaj">Prispevaj geslo</a>
-</nav>
+  <nav>
+    <a href="/">Domov</a>
+    <a href="/isci_vzorec" class="active">Iskanje po vzorcu</a>
+    <a href="/isci_opis">Iskanje po opisu</a>
+    <a href="/prispevaj">Prispevaj geslo</a>
+  </nav>
 
-<h1>Iskanje po vzorcu</h1>
+  <h1>Iskanje po vzorcu</h1>
 
-<div class="vnos">
-  <form id="vzorecForm" method="post" action="/isci_vzorec">
-    <label for="stevilo_crk">Število črk:</label>
-    <select id="stevilo_crk" name="stevilo_crk"></select>
-    <button type="button" class="btn" onclick="ustvariPolja()">Ustvari polja</button>
-    <div id="poljaContainer" class="vnosno-polje"></div>
-    <input type="hidden" id="vzorec" name="vzorec">
-    <button type="button" class="btn" onclick="isciVzorec()">IŠČI</button>
-    <button type="button" class="btn" onclick="ponastavi()">PONASTAVI</button>
-  </form>
-</div>
+  <div class="vnos">
+    <div class="navodila-blok">
+      <ol>
+        <li>Izberi število črk, ki jih vsebuje iskano geslo</li>
+        <li>Klikni na gumb <strong>USTVARI POLJA</strong></li>
+        <li>Vnesi znane črke<br><em>* Lahko poskusiš tudi s črkami, za katere predvidevaš, da bi ustrezala</em></li>
+        <li>Klikni na gumb <strong>IŠČI</strong></li>
+        <li>Po končanem iskanju klikni na gumb <strong>PONASTAVI</strong></li>
+      </ol>
+    </div>
 
-<div id="rezultatiContainer"></div>
+    <form id="vzorecForm" method="post" action="/isci_vzorec">
+      <label for="stevilo_crk">Število črk:</label>
+      <select id="stevilo_crk" name="stevilo_crk"></select>
+      <input type="hidden" id="vzorec" name="vzorec">
+      <button type="button" class="btn" onclick="ustvariPolja()">Ustvari polja</button>
+      <div id="poljaContainer" class="vnosno-polje"></div>
+      <button type="button" class="btn" onclick="isciVzorec()">IŠČI</button>
+      <button type="button" class="btn" onclick="ponastavi()">PONASTAVI</button>
+    </form>
+  </div>
 
-<script>
-  const izbirnik = document.getElementById("stevilo_crk");
-  if (izbirnik) {
-    for (let i = 3; i <= 20; i++) {
-      const option = document.createElement("option");
-      option.value = i;
-      option.textContent = i;
-      izbirnik.appendChild(option);
+  {% if gesla %}
+    <div class="rezultati">
+      <p style="text-align: center; font-weight: bold; color: green;">
+        Najdeno: {{ gesla|length }} zadetkov
+      </p>
+      <h2>Rezultati iskanja</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>GESLO</th>
+            <th>OPIS</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for g in gesla %}
+          <tr class="fade-in">
+            <td>{{ g.geslo }}</td>
+            <td>{{ g.opis }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% endif %}
+
+  <script>
+    const izbirnik = document.getElementById("stevilo_crk");
+    if (izbirnik) {
+      for (let i = 3; i <= 20; i++) {
+        const option = document.createElement("option");
+        option.value = i;
+        option.textContent = i;
+        izbirnik.appendChild(option);
+      }
     }
-  }
 
-  function ustvariPolja() {
-    const poljaContainer = document.getElementById("poljaContainer");
-    const st = parseInt(izbirnik.value);
-    poljaContainer.innerHTML = "";
+    function ustvariPolja() {
+      const poljaContainer = document.getElementById("poljaContainer");
+      const st = parseInt(izbirnik.value);
+      poljaContainer.innerHTML = "";
 
-    for (let i = 0; i < st; i++) {
-      const input = document.createElement("input");
-      input.type = "text";
-      input.name = "crka" + i;
-      input.maxLength = 1;
-      input.classList.add("crka-polje");
-      poljaContainer.appendChild(input);
+      for (let i = 0; i < st; i++) {
+        const input = document.createElement("input");
+        input.type = "text";
+        input.name = "crka" + i;
+        input.maxLength = 1;
+        input.classList.add("crka-polje");
+        poljaContainer.appendChild(input);
+      }
     }
-  }
 
-  function isciVzorec() {
-    const crke = document.querySelectorAll(".crka-polje");
-    let vzorec = "";
-    crke.forEach(input => {
-      vzorec += input.value.trim() || "_";
-    });
-    document.getElementById("vzorec").value = vzorec;
-
-    fetch("/isci_vzorec", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded"
-      },
-      body: new URLSearchParams({ vzorec })
-    })
-    .then(response => response.json())
-    .then(podatki => prikaziRezultate(podatki))
-    .catch(error => console.error("Napaka pri iskanju po vzorcu:", error));
-  }
-
-  function prikaziRezultate(podatki) {
-    const container = document.getElementById("rezultatiContainer");
-    if (podatki.length === 0) {
-      container.innerHTML = "<p style='color: red;'>Ni zadetkov.</p>";
-      return;
+    function isciVzorec() {
+      const inputs = document.querySelectorAll(".crka-polje");
+      let vzorec = "";
+      inputs.forEach(input => {
+        vzorec += input.value || "_";
+      });
+      document.getElementById("vzorec").value = vzorec;
+      document.getElementById("vzorecForm").submit();
     }
-    let html = `<h2>Rezultati iskanja</h2><table><thead><tr><th>GESLO</th><th>OPIS</th></tr></thead><tbody>`;
-    podatki.forEach(g => {
-      html += `<tr><td>${g.geslo}</td><td>${g.opis}</td></tr>`;
-    });
-    html += `</tbody></table>`;
-    container.innerHTML = html;
-  }
 
-  function ponastavi() {
-    window.location.href = "/isci_vzorec";
-  }
-</script>
+    function ponastavi() {
+      window.location.href = "/isci_vzorec";
+    }
+  </script>
 </body>
 </html>
