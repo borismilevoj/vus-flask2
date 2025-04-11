@@ -5,6 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Iskanje po opisu | VUS</title>
   <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-YB9MEPL26P"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-YB9MEPL26P');
+  </script>
+
   <style>
     body {
       margin: 0;
@@ -97,6 +107,18 @@
       background-color: #005f99;
     }
 
+    .rezultati {
+      padding: 20px;
+      text-align: center;
+    }
+
+    .rezultati-info {
+      margin-top: 30px;
+      font-size: 1.2rem;
+      color: #004b6b;
+      font-weight: bold;
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
@@ -104,7 +126,7 @@
       border-radius: 10px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
       overflow: hidden;
-      margin-top: 30px;
+      margin-top: 20px;
     }
 
     th, td {
@@ -117,6 +139,15 @@
       background-color: #f4f4f4;
     }
 
+    .fade-in {
+      animation: fadeIn 0.4s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
     h1 {
       font-size: 2.5rem;
       text-align: center;
@@ -127,11 +158,11 @@
 </head>
 <body>
   <nav>
-  <a href="/">Domov</a>
-  <a href="/isci_vzorec">Iskanje po vzorcu</a>
-  <a href="/isci_opis" class="active">Iskanje po opisu</a>
-  <a href="/prispevaj">Prispevaj geslo</a>
-</nav>
+    <a href="/">Domov</a>
+    <a href="/isci_vzorec">Iskanje po vzorcu</a>
+    <a href="/isci_opis" class="active">Iskanje po opisu</a>
+    <a href="/prispevaj">Prispevaj geslo</a>
+  </nav>
 
   <h1>Iskanje po opisu</h1>
 
@@ -157,8 +188,8 @@
   </div>
 
   {% if gesla %}
-    <div class="rezultati">
-      <h2>Rezultati iskanja</h2>
+    <div class="rezultati fade-in">
+      <p class="rezultati-info">Najdeno: {{ gesla|length }} zadetkov</p>
       <table>
         <thead>
           <tr>
@@ -168,13 +199,17 @@
         </thead>
         <tbody>
           {% for g in gesla %}
-          <tr class="fade-in">
+          <tr>
             <td>{{ g.GESLO }}</td>
             <td>{{ g.OPIS }}</td>
           </tr>
           {% endfor %}
         </tbody>
       </table>
+    </div>
+  {% else %}
+    <div class="rezultati fade-in">
+      <p class="rezultati-info">Ni zadetkov.</p>
     </div>
   {% endif %}
 
