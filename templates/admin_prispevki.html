@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="sl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pregled prispevkov | VUS admin</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background-color: #f4f4f4;
+    }
+
+    h1 {
+      text-align: center;
+      color: #003366;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: #fff;
+      margin-top: 20px;
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #eee;
+    }
+
+    textarea {
+      width: 100%;
+      height: 60px;
+    }
+
+    .gumbi {
+      display: flex;
+      gap: 10px;
+    }
+
+    .gumbi button {
+      padding: 6px 10px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .shrani {
+      background-color: #007acc;
+      color: white;
+    }
+
+    .zavrni {
+      background-color: #e74c3c;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <h1>Pregled prispevkov</h1>
+
+  {% if prispevki %}
+    <table>
+      <thead>
+        <tr>
+          <th>Uporabnik</th>
+          <th>Geslo</th>
+          <th>Opis</th>
+          <th>Možnosti</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in prispevki %}
+        <tr>
+          <td>{{ p.uporabnik }}</td>
+          <td>{{ p.geslo }}</td>
+          <td>
+            <form method="post" action="/shrani_prispevek">
+              <input type="hidden" name="id" value="{{ p.id }}">
+              <input type="hidden" name="uporabnik" value="{{ p.uporabnik }}">
+              <input type="hidden" name="geslo" value="{{ p.geslo }}">
+              <textarea name="opis">{{ p.opis }}</textarea>
+              <div class="gumbi">
+                <button type="submit" class="shrani">Shrani v bazo</button>
+            </form>
+            <form method="post" action="/zavrni_prispevek">
+              <input type="hidden" name="id" value="{{ p.id }}">
+              <button type="submit" class="zavrni">Zavrni</button>
+            </form>
+              </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p style="text-align: center;">Ni novih prispevkov.</p>
+  {% endif %}
+</body>
+</html>
