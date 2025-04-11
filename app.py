@@ -351,6 +351,15 @@ def lestvica_prispevkov():
     conn.close()
     return render_template("lestvica_prispevkov.html", lestvica=lestvica)
 
+@app.route('/lestvica')
+def lestvica_prispevkov():
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT uporabnik, tocke FROM prispevki_lestvica ORDER BY tocke DESC, uporabnik")
+    lestvica = cur.fetchall()
+    conn.close()
+    return render_template("lestvica_prispevkov.html", lestvica=lestvica)
+
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT",10000))
