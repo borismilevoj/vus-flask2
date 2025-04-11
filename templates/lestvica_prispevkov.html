@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="sl">
+<head>
+  <meta charset="UTF-8">
+  <title>Lestvica prispevkov</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(to right, #e0eafc, #cfdef3);
+    }
+
+    nav {
+      background-color: #0a2342;
+      padding: 10px;
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+    }
+
+    nav a {
+      background-color: #fff;
+      padding: 6px 12px;
+      border-radius: 4px;
+      color: #0a2342;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    nav a:hover {
+      background-color: #ddd;
+    }
+
+    h1 {
+      text-align: center;
+      color: #004b6b;
+      margin-top: 40px;
+    }
+
+    table {
+      width: 80%;
+      margin: 20px auto;
+      border-collapse: collapse;
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    th, td {
+      padding: 12px;
+      text-align: center;
+      border-bottom: 1px solid #eee;
+    }
+
+    th {
+      background-color: #f4f4f4;
+    }
+  </style>
+</head>
+<body>
+<nav>
+  <a href="/">Domov</a>
+  <a href="/isci_vzorec">Iskanje po vzorcu</a>
+  <a href="/isci_opis">Iskanje po opisu</a>
+  <a href="/prispevaj">Prispevaj geslo</a>
+</nav>
+
+<h1>Lestvica prispevkov</h1>
+
+<table>
+  <thead>
+    <tr>
+      <th>Uporabnik</th>
+      <th>Potrjenih prispevkov</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for vrstica in lestvica %}
+    <tr>
+      <td>{{ vrstica[0] }}</td>
+      <td>{{ vrstica[1] }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+</body>
+</html>
