@@ -342,15 +342,6 @@ def zavrni_prispevek():
     return redirect("/admin_prispevki")
 
 
-@app.route('/lestvica_prispevkov')
-def lestvica_prispevkov():
-    conn = get_db()
-    cur = conn.cursor()
-    cur.execute("SELECT uporabnik, tocke FROM prispevki_lestvica ORDER BY tocke DESC, uporabnik")
-    lestvica = cur.fetchall()
-    conn.close()
-    return render_template("lestvica_prispevkov.html", lestvica=lestvica)
-
 @app.route('/lestvica')
 def lestvica_prispevkov():
     conn = get_db()
