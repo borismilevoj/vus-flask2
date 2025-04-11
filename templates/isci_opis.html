@@ -5,16 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Iskanje po opisu | VUS</title>
   <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
-
-  <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-YB9MEPL26P"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-YB9MEPL26P');
-  </script>
-
   <style>
     body {
       margin: 0;
@@ -55,51 +45,34 @@
       color: black;
     }
 
-    .vnos {
-      display: flex;
-      align-items: flex-start;
-      justify-content: center;
-      gap: 30px;
-      padding-top: 100px;
-      flex-wrap: wrap;
-    }
-
-    .navodila-blok {
-      max-width: 300px;
-      font-size: 1rem;
-    }
-
-    .vnosno-polje {
-      margin: 15px 0;
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 8px;
-    }
-
-    .crka-polje {
-      width: 40px;
-      height: 50px;
-      font-size: 24px;
+    h1 {
+      font-size: 2.5rem;
       text-align: center;
-      border: 2px solid #007acc;
-      border-radius: 10px;
-      box-shadow: 2px 2px 4px rgba(0,0,0,0.1);
-      transition: background-color 0.3s;
+      color: #004b6b;
+      margin-top: 140px;
     }
 
-    .crka-polje.filled {
-      background-color: #c6f7e2;
+    .vnos {
+      text-align: center;
+      margin-top: 30px;
+    }
+
+    input[type="text"] {
+      padding: 12px;
+      font-size: 1.2rem;
+      width: 50%;
+      border: 2px solid #007acc;
+      border-radius: 6px;
     }
 
     .btn {
       background-color: #007acc;
       color: white;
       padding: 10px 20px;
+      margin: 10px;
       border: none;
       border-radius: 6px;
       cursor: pointer;
-      margin: 5px;
       font-size: 1rem;
     }
 
@@ -113,20 +86,19 @@
     }
 
     .rezultati-info {
-      margin-top: 30px;
       font-size: 1.2rem;
-      color: #004b6b;
       font-weight: bold;
+      color: #004b6b;
+      margin-top: 30px;
     }
 
     table {
-      width: 100%;
+      width: 90%;
+      margin: 20px auto;
       border-collapse: collapse;
       background-color: white;
       border-radius: 10px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      overflow: hidden;
-      margin-top: 20px;
     }
 
     th, td {
@@ -147,105 +119,50 @@
       from { opacity: 0; }
       to { opacity: 1; }
     }
-
-    h1 {
-      font-size: 2.5rem;
-      text-align: center;
-      color: #004b6b;
-      margin-top: 140px;
-    }
   </style>
 </head>
 <body>
-  <nav>
-    <a href="/">Domov</a>
-    <a href="/isci_vzorec">Iskanje po vzorcu</a>
-    <a href="/isci_opis" class="active">Iskanje po opisu</a>
-    <a href="/prispevaj">Prispevaj geslo</a>
-  </nav>
 
-  <h1>Iskanje po opisu</h1>
+<nav>
+  <a href="/">Domov</a>
+  <a href="/isci_vzorec">Iskanje po vzorcu</a>
+  <a href="/isci_opis" class="active">Iskanje po opisu</a>
+  <a href="/prispevaj">Prispevaj geslo</a>
+</nav>
 
-  <div class="vnos">
-    <div class="navodila-blok">
-      <ol>
-        <li>Izberi število črk, ki jih vsebuje iskano geslo</li>
-        <li>Klikni na gumb <strong>USTVARI POLJA</strong></li>
-        <li>Vnesi znane črke<br><em>* Lahko poskusiš tudi s črkami, za katere predvidevaš, da bi ustrezala</em></li>
-        <li>Klikni na gumb <strong>IŠČI</strong></li>
-        <li>Po končanem iskanju klikni na gumb <strong>PONASTAVI</strong></li>
-      </ol>
-    </div>
+<h1>Iskanje po opisu</h1>
 
-    <form id="vzorecForm" method="post" action="/isci_opis">
-      <label for="stevilo_crk">Število črk:</label>
-      <select id="stevilo_crk" name="stevilo_crk"></select>
-      <button type="button" class="btn" onclick="ustvariPolja()">Ustvari polja</button>
-      <div id="poljaContainer" class="vnosno-polje"></div>
-      <button type="button" class="btn" onclick="isciVzorec()">IŠČI</button>
-      <button type="button" class="btn" onclick="ponastavi()">PONASTAVI</button>
-    </form>
+<form method="post" action="/isci_opis" class="vnos">
+  <input type="text" name="opis" placeholder="npr. fotograf, 1900, ime" required>
+  <button type="submit" class="btn">IŠČI</button>
+  <a href="/isci_opis"><button type="button" class="btn">PONASTAVI</button></a>
+</form>
+
+{% if gesla %}
+  <div class="rezultati fade-in">
+    <p class="rezultati-info">Najdeno: {{ gesla|length }} zadetkov</p>
+    <table>
+      <thead>
+        <tr>
+          <th>GESLO</th>
+          <th>OPIS</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for g in gesla %}
+        <tr>
+          <td>{{ g.GESLO }}</td>
+          <td>{{ g.OPIS }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
+{% else %}
+  <div class="rezultati fade-in">
+    <p class="rezultati-info">Ni zadetkov.</p>
+  </div>
+{% endif %}
 
-  {% if gesla %}
-    <div class="rezultati fade-in">
-      <p class="rezultati-info">Najdeno: {{ gesla|length }} zadetkov</p>
-      <table>
-        <thead>
-          <tr>
-            <th>GESLO</th>
-            <th>OPIS</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for g in gesla %}
-          <tr>
-            <td>{{ g.GESLO }}</td>
-            <td>{{ g.OPIS }}</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  {% else %}
-    <div class="rezultati fade-in">
-      <p class="rezultati-info">Ni zadetkov.</p>
-    </div>
-  {% endif %}
-
-  <script>
-    const izbirnik = document.getElementById("stevilo_crk");
-    if (izbirnik) {
-      for (let i = 3; i <= 20; i++) {
-        const option = document.createElement("option");
-        option.value = i;
-        option.textContent = i;
-        izbirnik.appendChild(option);
-      }
-    }
-
-    function ustvariPolja() {
-      const poljaContainer = document.getElementById("poljaContainer");
-      const st = parseInt(izbirnik.value);
-      poljaContainer.innerHTML = "";
-
-      for (let i = 0; i < st; i++) {
-        const input = document.createElement("input");
-        input.type = "text";
-        input.name = "crka" + i;
-        input.maxLength = 1;
-        input.classList.add("crka-polje");
-        poljaContainer.appendChild(input);
-      }
-    }
-
-    function isciVzorec() {
-      document.getElementById("vzorecForm").submit();
-    }
-
-    function ponastavi() {
-      window.location.href = "/isci_opis";
-    }
-  </script>
 </body>
 </html>
