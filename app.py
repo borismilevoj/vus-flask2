@@ -45,6 +45,9 @@ def extract_ime(opis):
 def index():
     return render_template('index.html')
 
+@app.route('/googlec2a0a98f7a1ae4b3.html')
+def preveri_google():
+    return app.send_static_file('googlec2a0a98f7a1ae4b3.html')
 
 
 @app.route("/isci_opis")
