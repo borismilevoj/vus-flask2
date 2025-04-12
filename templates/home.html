@@ -1,135 +1,74 @@
-<!DOCTYPE html>
-<html lang="sl">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Domov | VUS</title>
-  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+{% extends "base.html" %}
 
-  <!-- Google tag (gtag.js) -->
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-E14XLFV5NS"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-E14XLFV5NS');
-</script>
+{% block title %}Domov | VUS{% endblock %}
 
+{% block styles %}
+<style>
+  .banner-container {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 
+  .banner {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: brightness(50%);
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
+  }
 
-  <style>
-    body {
-      margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-    }
+  .overlay {
+    position: relative;
+    z-index: 2;
+    color: white;
+    text-align: center;
+    top: 40%;
+    transform: translateY(-50%);
+    padding: 0 20px;
+  }
 
-    nav {
-      background-color: #0a2342;
-      padding: 10px;
-      position: fixed;
-      top: 0;
-      width: 100%;
-      display: flex;
-      justify-content: center;
-      gap: 20px;
-      flex-wrap: wrap;
-      z-index: 1000;
-    }
+  .overlay h1 {
+    font-size: 3rem;
+    margin-bottom: 20px;
+  }
 
-    nav a {
-      background-color: #fff;
-      padding: 6px 12px;
-      border-radius: 4px;
-      transition: background-color 0.2s;
-      color: #0a2342;
-      text-decoration: none;
-      font-weight: bold;
-      font-size: 0.95rem;
-    }
+  .overlay p {
+    font-size: 1.2rem;
+    margin-bottom: 30px;
+  }
 
-    nav a:hover {
-      background-color: #ddd;
-    }
+  .overlay button {
+    background-color: #ffc107;
+    color: black;
+    font-size: 1.1rem;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+  }
 
-    nav a.active {
-      background-color: #ffc107;
-      color: black;
-    }
+  .overlay button:hover {
+    background-color: #e0a800;
+  }
 
-    .banner-container {
-      position: relative;
-      width: 100%;
-      height: 100vh;
-      overflow: hidden;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
+  footer {
+    text-align: center;
+    margin-top: 40px;
+    font-size: 0.9rem;
+    color: #555;
+  }
+</style>
+{% endblock %}
 
-    .banner {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      filter: brightness(50%);
-      position: absolute;
-      top: 0;
-      left: 0;
-      z-index: 1;
-    }
-
-    .overlay {
-      position: relative;
-      z-index: 2;
-      color: white;
-      text-align: center;
-      top: 40%;
-      transform: translateY(-50%);
-      padding: 0 20px;
-    }
-
-    .overlay h1 {
-      font-size: 3rem;
-      margin-bottom: 20px;
-    }
-
-    .overlay p {
-      font-size: 1.2rem;
-      margin-bottom: 30px;
-    }
-
-    .overlay button {
-      background-color: #ffc107;
-      color: black;
-      font-size: 1.1rem;
-      padding: 12px 24px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-
-    .overlay button:hover {
-      background-color: #e0a800;
-    }
-
-    footer {
-      text-align: center;
-      margin-top: 40px;
-      font-size: 0.9rem;
-      color: #555;
-    }
-  </style>
-</head>
-
-<body>
-
-<nav>
-  <a href="/" class="active">Domov</a>
-  <a href="/isci_vzorec">Išči po vzorcu</a>
-  <a href="/isci_opis">Išči po opisu</a>
-  <a href="/prispevaj">Prispevaj</a>
-</nav>
-
+{% block content %}
 <div class="banner-container">
   <div class="overlay fade-in">
     <h1>VUS – Veliki ugankarski slovar</h1>
@@ -138,12 +77,10 @@
     <br><br>
     <a href="/prispevaj"><button>Prispevaj geslo</button></a>
   </div>
-  <img src="{{ url_for('static', filename='slika.png') }}" class="banner" alt="Ozadje slovarja">
+  <img src="{{ url_for('static', filename='slika.png') }}" class="banner">
 </div>
 
 <footer>
   © 2025 VUS – Veliki ugankarski slovar
 </footer>
-
-</body>
-</html>
+{% endblock %}
