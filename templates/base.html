@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="sl">
+<meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}VUS{% endblock %}</title>
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-YB9MEPL26P"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-YB9MEPL26P');
+  </script>
+
+  {% block styles %}{% endblock %}
+</head>
+<body class="fade-in">
+  <nav>
+    <a href="/">Domov</a>
+    <a href="/isci_vzorec">Iskanje po vzorcu</a>
+    <a href="/isci_opis">Iskanje po opisu</a>
+    <a href="/prispevaj">Prispevaj geslo</a>
+  </nav>
+
+  {% block content %}{% endblock %}
+
+</body>
+</html>
