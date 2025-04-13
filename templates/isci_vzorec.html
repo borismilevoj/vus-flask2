@@ -171,44 +171,46 @@
 
 {% block scripts %}
 <script>
-const izbirnik = document.getElementById("stevilo_crk");
+document.addEventListener("DOMContentLoaded", function() {
+  const izbirnik = document.getElementById("stevilo_crk");
 
-for (let i = 3; i <= 20; i++) {
-  const option = document.createElement("option");
-  option.value = i;
-  option.textContent = i;
-  izbirnik.appendChild(option);
-}
-
-function ustvariPolja() {
-  const container = document.getElementById("poljaContainer");
-  container.innerHTML = "";
-  const st = parseInt(izbirnik.value);
-
-  for (let i = 0; i < st; i++) {
-    const input = document.createElement("input");
-    input.type = "text";
-    input.maxLength = 1;
-    input.className = "crka-polje";
-    input.name = `crka${i}`;
-
-    input.addEventListener('input', () => {
-      if (input.value && input.nextElementSibling) {
-        input.nextElementSibling.focus();
-      }
-    });
-
-    container.appendChild(input);
+  for (let i = 3; i <= 20; i++) {
+    const option = document.createElement("option");
+    option.value = i;
+    option.textContent = i;
+    izbirnik.appendChild(option);
   }
-  container.firstChild.focus();
-}
 
-function isciVzorec() {
-  document.getElementById("vzorecForm").submit();
-}
+  window.ustvariPolja = function() {
+    const container = document.getElementById("poljaContainer");
+    container.innerHTML = "";
+    const st = parseInt(izbirnik.value);
 
-function ponastavi() {
-  window.location.href = "isci_vzorec";
-}
+    for (let i = 0; i < st; i++) {
+      const input = document.createElement("input");
+      input.type = "text";
+      input.maxLength = 1;
+      input.className = "crka-polje";
+      input.name = `crka${i}`;
+
+      input.addEventListener('input', () => {
+        if (input.value && input.nextElementSibling) {
+          input.nextElementSibling.focus();
+        }
+      });
+
+      container.appendChild(input);
+    }
+    if (container.firstChild) container.firstChild.focus();
+  };
+
+  window.isciVzorec = function() {
+    document.getElementById("vzorecForm").submit();
+  };
+
+  window.ponastavi = function() {
+    window.location.href = "/isci_vzorec";
+  };
+});
 </script>
 {% endblock %}
