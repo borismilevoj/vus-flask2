@@ -1,4 +1,4 @@
-{% extends \"base.html\" %}
+{% extends "base.html" %}
 
 {% block title %}Iskanje po vzorcu | VUS{% endblock %}
 
@@ -121,7 +121,7 @@
 {% block content %}
 <h1>Iskanje po vzorcu</h1>
 
-<div class=\"navodila-blok\">
+<div class="navodila-blok">
   <ol>
     <li>Izberi število črk, ki jih vsebuje iskano geslo</li>
     <li>Klikni na gumb <strong>USTVARI POLJA</strong></li>
@@ -131,23 +131,23 @@
   </ol>
 </div>
 
-<form id=\"vzorecForm\" method=\"post\" action=\"/isci_vzorec\" class=\"vnos\">
-  <div class=\"vrstica-izbira\">
-    <label for=\"stevilo_crk\">Število črk:</label>
-    <select id=\"stevilo_crk\" name=\"stevilo_crk\"></select>
-    <button type=\"button\" class=\"btn\" onclick=\"ustvariPolja()\">Ustvari polja</button>
+<form id="vzorecForm" method="post" action="isci_vzorec" class="vnos">
+  <div class="vrstica-izbira">
+    <label for="stevilo_crk">Število črk:</label>
+    <select id="stevilo_crk" name="stevilo_crk"></select>
+    <button type="button" class="btn" onclick="ustvariPolja()">Ustvari polja</button>
   </div>
 
-  <div id=\"poljaContainer\" class=\"vnosno-polje\"></div>
+  <div id="poljaContainer" class="vnosno-polje"></div>
 
-  <div class=\"vrstica-izbira\">
-    <button type=\"button\" class=\"btn\" onclick=\"isciVzorec()\">IŠČI</button>
-    <button type=\"button\" class=\"btn\" onclick=\"ponastavi()\">PONASTAVI</button>
+  <div class="vrstica-izbira">
+    <button type="button" class="btn" onclick="isciVzorec()">IŠČI</button>
+    <button type="button" class="btn" onclick="ponastavi()">PONASTAVI</button>
   </div>
 </form>
 
 {% if gesla %}
-  <div class=\"rezultati-info\">Najdeno: {{ gesla|length }} zadetkov</div>
+  <div class="rezultati-info">Najdeno: {{ gesla|length }} zadetkov</div>
   <table>
     <thead>
       <tr>
@@ -157,7 +157,7 @@
     </thead>
     <tbody>
       {% for g in gesla %}
-      <tr class=\"fade-in\">
+      <tr class="fade-in">
         <td>{{ g.geslo }}</td>
         <td>{{ g.opis }}</td>
       </tr>
@@ -165,31 +165,31 @@
     </tbody>
   </table>
 {% elif request.method == 'POST' %}
-  <div class=\"rezultati-info\">Ni zadetkov.</div>
+  <div class="rezultati-info">Ni zadetkov.</div>
 {% endif %}
 {% endblock %}
 
 {% block scripts %}
 <script>
-const izbirnik = document.getElementById(\"stevilo_crk\");
+const izbirnik = document.getElementById("stevilo_crk");
 
 for (let i = 3; i <= 20; i++) {
-  const option = document.createElement(\"option\");
+  const option = document.createElement("option");
   option.value = i;
   option.textContent = i;
   izbirnik.appendChild(option);
 }
 
 function ustvariPolja() {
-  const container = document.getElementById(\"poljaContainer\");
-  container.innerHTML = \"\";
+  const container = document.getElementById("poljaContainer");
+  container.innerHTML = "";
   const st = parseInt(izbirnik.value);
 
   for (let i = 0; i < st; i++) {
-    const input = document.createElement(\"input\");
-    input.type = \"text\";
+    const input = document.createElement("input");
+    input.type = "text";
     input.maxLength = 1;
-    input.className = \"crka-polje\";
+    input.className = "crka-polje";
     input.name = `crka${i}`;
 
     input.addEventListener('input', () => {
@@ -204,11 +204,11 @@ function ustvariPolja() {
 }
 
 function isciVzorec() {
-  document.getElementById(\"vzorecForm\").submit();
+  document.getElementById("vzorecForm").submit();
 }
 
 function ponastavi() {
-  window.location.href = \"/isci_vzorec\";
+  window.location.href = "isci_vzorec";
 }
 </script>
 {% endblock %}
