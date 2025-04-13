@@ -37,17 +37,18 @@
     gap: 10px;
   }
 
-select#stevilo_crk {
-  width: auto;
-  height: auto;
-  font-size: 16px;
-  color: black;
-  padding: 4px;
-  border-radius: 4px;
-  border: 1px solid #007acc;
-  cursor: pointer;
-  background-color: white;
-}
+  select#stevilo_crk {
+    width: 120px;
+    height: 35px;
+    font-size: 16px;
+    border-radius: 4px;
+    border: 1px solid #007acc;
+    padding: 4px;
+    cursor: pointer;
+    background: white;
+    color: black;
+  }
+
   .vnosno-polje {
     display: flex;
     justify-content: center;
@@ -135,7 +136,11 @@ select#stevilo_crk {
 <form id="vzorecForm" method="post" action="/isci_vzorec" class="vnos">
   <div class="vrstica-izbira">
     <label for="stevilo_crk">Število črk:</label>
-    <select id="stevilo_crk" name="stevilo_crk" size="1"></select>
+    <select id="stevilo_crk" name="stevilo_crk" size="1">
+      {% for i in range(3, 21) %}
+        <option value="{{i}}">{{i}}</option>
+      {% endfor %}
+    </select>
     <button type="button" class="btn" onclick="ustvariPolja()">Ustvari polja</button>
   </div>
 
@@ -173,18 +178,10 @@ select#stevilo_crk {
 {% block scripts %}
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-  const izbirnik = document.getElementById("stevilo_crk");
-  for (let i = 3; i <= 20; i++) {
-    const option = document.createElement("option");
-    option.value = i;
-    option.textContent = i;
-    izbirnik.appendChild(option);
-  }
-
   window.ustvariPolja = function() {
     const container = document.getElementById("poljaContainer");
     container.innerHTML = "";
-    const st = parseInt(izbirnik.value);
+    const st = parseInt(document.getElementById("stevilo_crk").value);
 
     for (let i = 0; i < st; i++) {
       const input = document.createElement("input");
