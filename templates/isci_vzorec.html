@@ -8,7 +8,7 @@
     font-size: 2.5rem;
     text-align: center;
     color: #004b6b;
-    margin-top: 140px;
+    margin-top: 30px;
   }
 
   .navodila-blok {
@@ -20,6 +20,21 @@
     width: 90%;
     max-width: 600px;
     box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  }
+
+  form.vnos {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 20px;
+  }
+
+  form.vnos label,
+  form.vnos select,
+  form.vnos button {
+    font-size: 1rem;
   }
 
   .vnosno-polje {
@@ -39,10 +54,6 @@
     border-radius: 10px;
     box-shadow: 2px 2px 4px rgba(0,0,0,0.1);
     transition: background-color 0.3s;
-  }
-
-  .crka-polje.filled {
-    background-color: #c6f7e2;
   }
 
   .btn {
@@ -104,7 +115,7 @@
   <ol>
     <li>Izberi število črk, ki jih vsebuje iskano geslo</li>
     <li>Klikni na gumb <strong>USTVARI POLJA</strong></li>
-    <li>Vnesi znane črke<br><em>* Lahko poskusiš tudi s črkami, za katere predvidevaš, da bi ustrezala</em></li>
+    <li>Vnesi znane črke<br><em>* Lahko poskusiš tudi s črkami, za katere predvidevaš, da bi ustrezale</em></li>
     <li>Klikni na gumb <strong>IŠČI</strong></li>
     <li>Po končanem iskanju klikni na gumb <strong>PONASTAVI</strong></li>
   </ol>
@@ -137,44 +148,51 @@
       {% endfor %}
     </tbody>
   </table>
-{% else %}
+{% elif request.method == 'POST' %}
   <div class="rezultati-info">Ni zadetkov.</div>
 {% endif %}
 {% endblock %}
 
 {% block scripts %}
 <script>
-  const izbirnik = document.getElementById("stevilo_crk");
-  if (izbirnik) {
-    for (let i = 3; i <= 20; i++) {
-      const option = document.createElement("option");
-      option.value = i;
-      option.textContent = i;
-      izbirnik.appendChild(option);
-    }
-  }
+const izbirnik = document.getElementById("stevilo_crk");
 
-  function ustvariPolja() {
-    const poljaContainer = document.getElementById("poljaContainer");
-    const st = parseInt(izbirnik.value);
-    poljaContainer.innerHTML = "";
+for (let i = 3; i <= 20; i++) {
+  const option = document.createElement("option");
+  option.value = i;
+  option.textContent = i;
+  izbirnik.appendChild(option);
+}
 
-    for (let i = 0; i < st; i++) {
-      const input = document.createElement("input");
-      input.type = "text";
-      input.name = "crka" + i;
-      input.maxLength = 1;
-      input.classList.add("crka-polje");
-      poljaContainer.appendChild(input);
-    }
-  }
+function ustvariPolja() {
+  const container = document.getElementById("poljaContainer");
+  container.innerHTML = "";
+  const st = parseInt(izbirnik.value);
 
-  function isciVzorec() {
-    document.getElementById("vzorecForm").submit();
-  }
+  for (let i = 0; i < st; i++) {
+    const input = document.createElement("input");
+    input.type = "text";
+    input.maxLength = 1;
+    input.className = "crka-polje";
+    input.name = `crka${i}`;
 
-  function ponastavi() {
-    window.location.href = "/isci_vzorec";
+    input.addEventListener('input', () => {
+      if (input.value && input.nextElementSibling) {
+        input.nextElementSibling.focus();
+      }
+    });
+
+    container.appendChild(input);
   }
+  container.firstChild.focus();
+}
+
+function isciVzorec() {
+  document.getElementById("vzorecForm").submit();
+}
+
+function ponastavi() {
+  window.location.href = "/isci_vzorec";
+}
 </script>
 {% endblock %}
