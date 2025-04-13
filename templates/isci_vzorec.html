@@ -177,37 +177,35 @@
 
 {% block scripts %}
 <script>
-document.addEventListener("DOMContentLoaded", function() {
-  window.ustvariPolja = function() {
-    const container = document.getElementById("poljaContainer");
-    container.innerHTML = "";
-    const st = parseInt(document.getElementById("stevilo_crk").value);
+function ustvariPolja() {
+  const container = document.getElementById("poljaContainer");
+  container.innerHTML = "";
+  const st = parseInt(document.getElementById("stevilo_crk").value);
 
-    for (let i = 0; i < st; i++) {
-      const input = document.createElement("input");
-      input.type = "text";
-      input.maxLength = 1;
-      input.className = "crka-polje";
-      input.name = `crka${i}`;
+  for (let i = 0; i < st; i++) {
+    const input = document.createElement("input");
+    input.type = "text";
+    input.maxLength = 1;
+    input.className = "crka-polje";
+    input.name = `crka${i}`;
 
-      input.addEventListener('input', () => {
-        if (input.value && input.nextElementSibling) {
-          input.nextElementSibling.focus();
-        }
-      });
+    input.addEventListener('input', function() {
+      if (this.value && this.nextElementSibling) {
+        this.nextElementSibling.focus();
+      }
+    });
 
-      container.appendChild(input);
-    }
-    if (container.firstChild) container.firstChild.focus();
-  };
+    container.appendChild(input);
+  }
+  if (container.firstChild) container.firstChild.focus();
+}
 
-  window.isciVzorec = function() {
-    document.getElementById("vzorecForm").submit();
-  };
+function isciVzorec() {
+  document.getElementById("vzorecForm").submit();
+}
 
-  window.ponastavi = function() {
-    window.location.href = "/isci_vzorec";
-  };
-});
+function ponastavi() {
+  window.location.href = "/isci_vzorec";
+}
 </script>
 {% endblock %}
