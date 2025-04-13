@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}VUS{% endblock %}</title>
   <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+
+  <!-- Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-E14XLFV5NS"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
@@ -12,7 +14,57 @@
     gtag('js', new Date());
     gtag('config', 'G-E14XLFV5NS');
   </script>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f4f7fa;
+      color: #333;
+    }
+
+    nav {
+      background-color: #0a2342;
+      padding: 10px;
+      position: fixed;
+      top: 0;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      z-index: 100;
+    }
+
+    nav a {
+      background-color: #fff;
+      padding: 6px 12px;
+      border-radius: 4px;
+      transition: background-color 0.2s;
+      color: #0a2342;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 0.95rem;
+    }
+
+    nav a:hover {
+      background-color: #ddd;
+    }
+
+    nav a.active {
+      background-color: #ffc107;
+      color: black;
+    }
+
+    main {
+      padding-top: 80px;
+      padding-bottom: 40px;
+      max-width: 1200px;
+      margin: auto;
+    }
+  </style>
+
   {% block styles %}{% endblock %}
+
 </head>
 <body>
   <nav>
@@ -21,6 +73,10 @@
     <a href="/isci_opis" class="{% if request.path == '/isci_opis' %}active{% endif %}">Iskanje po opisu</a>
     <a href="/prispevaj" class="{% if request.path == '/prispevaj' %}active{% endif %}">Prispevaj geslo</a>
   </nav>
-  {% block content %}{% endblock %}
+
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+
 </body>
 </html>
