@@ -27,6 +27,7 @@
     flex-direction: column;
     align-items: center;
     gap: 15px;
+    margin-top: 20px;
   }
 
   .vrstica-izbira {
@@ -35,25 +36,24 @@
     justify-content: center;
     gap: 10px;
   }
-select#stevilo_crk {
-  width: 100px !important;
-  height: 40px !important;
-  font-size: 16px !important;
-  color: black !important;
-  background-color: white !important;
-  border: 2px solid #007acc !important;
-  border-radius: 6px !important;
-  padding: 5px !important;
-  -webkit-appearance: menulist !important;
-  appearance: menulist !important;
-  cursor: pointer !important;
-}
 
-select#stevilo_crk option {
-  color: black !important;
-  font-size: 16px !important;
-  background-color: white !important;
-}
+  select#stevilo_crk {
+    width: 100px;
+    height: 40px;
+    font-size: 16px;
+    color: black;
+    background-color: white;
+    border: 2px solid #007acc;
+    border-radius: 6px;
+    padding: 5px;
+    cursor: pointer;
+  }
+
+  select#stevilo_crk option {
+    color: black;
+    font-size: 16px;
+    background-color: white;
+  }
 
   .vnosno-polje {
     display: flex;
@@ -139,13 +139,12 @@ select#stevilo_crk option {
   </ol>
 </div>
 
-<form id="vzorecForm" method="post" action="isci_vzorec" class="vnos">
+<form id="vzorecForm" method="post" action="/isci_vzorec" class="vnos">
   <div class="vrstica-izbira">
     <label for="stevilo_crk">Število črk:</label>
- <select id="stevilo_crk" name="stevilo_crk">
-
+    <select id="stevilo_crk" name="stevilo_crk"></select>
     <button type="button" class="btn" onclick="ustvariPolja()">Ustvari polja</button>
- </div>
+  </div>
 
   <div id="poljaContainer" class="vnosno-polje"></div>
 
@@ -182,8 +181,6 @@ select#stevilo_crk option {
 <script>
 document.addEventListener("DOMContentLoaded", function() {
   const izbirnik = document.getElementById("stevilo_crk");
-  izbirnik.innerHTML = ""; // to počisti vse prejšnje vrednosti
-
   for (let i = 3; i <= 20; i++) {
     const option = document.createElement("option");
     option.value = i;
@@ -211,7 +208,6 @@ document.addEventListener("DOMContentLoaded", function() {
 
       container.appendChild(input);
     }
-
     if (container.firstChild) container.firstChild.focus();
   };
 
