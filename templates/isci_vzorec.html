@@ -48,6 +48,7 @@ select#stevilo_crk {
   appearance: menulist !important;
   cursor: pointer !important;
 }
+
 select#stevilo_crk option {
   color: black !important;
   font-size: 16px !important;
@@ -142,13 +143,9 @@ select#stevilo_crk option {
   <div class="vrstica-izbira">
     <label for="stevilo_crk">Število črk:</label>
  <select id="stevilo_crk" name="stevilo_crk">
-  <option value="3">3</option>
-  <option value="4">4</option>
-  <option value="5">5</option>
-</select>
 
     <button type="button" class="btn" onclick="ustvariPolja()">Ustvari polja</button>
-  </div>
+ </div>
 
   <div id="poljaContainer" class="vnosno-polje"></div>
 
@@ -185,6 +182,7 @@ select#stevilo_crk option {
 <script>
 document.addEventListener("DOMContentLoaded", function() {
   const izbirnik = document.getElementById("stevilo_crk");
+  izbirnik.innerHTML = ""; // to počisti vse prejšnje vrednosti
 
   for (let i = 3; i <= 20; i++) {
     const option = document.createElement("option");
@@ -213,6 +211,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
       container.appendChild(input);
     }
+
     if (container.firstChild) container.firstChild.focus();
   };
 
