@@ -99,16 +99,31 @@
     box-shadow: 0 2px 6px rgba(0,0,0,0.1);
   }
 .vnosno-polje {
-  min-height: 60px;
-  background-color: #f0f8ff;
-  border: 1px dashed #007acc;
-  padding: 10px;
-  border-radius: 6px;
-  display: flex;
-  flex-direction: row !important;  /* ta vrstica zagotavlja vodoravno poravnavo */
-  flex-wrap: wrap !important;      /* ta omogoči ovijanje na novo vrstico, če je polj veliko */
-  justify-content: center;
-  gap: 6px;
+  min-height: 60px !important;
+  background-color: #f0f8ff !important;
+  border: 1px dashed #007acc !important;
+  padding: 10px !important;
+  border-radius: 6px !important;
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: wrap !important;
+  justify-content: center !important;
+  gap: 6px !important;
+}
+
+.vnosno-polje input.crka-polje {
+  width: 40px !important;
+  height: 50px !important;
+  font-size: 24px !important;
+  text-align: center !important;
+  border: 2px solid #007acc !important;
+  border-radius: 10px !important;
+  background-color: white !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
 }
 
   th, td {
