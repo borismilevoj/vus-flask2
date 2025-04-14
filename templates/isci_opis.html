@@ -8,123 +8,120 @@
     font-size: 2.5rem;
     text-align: center;
     color: #004b6b;
-    margin-top: 140px;
+    margin-top: 30px;
   }
 
-  .navodila-blok {
-    background: linear-gradient(to right, #e0eafc, #cfdef3);
-    border-radius: 10px;
+  form.iskanje-opis {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+    gap: 10px;
+  }
+
+  form.iskanje-opis input[type="text"] {
+    width: 250px;
+    height: 40px;
     font-size: 1rem;
-    padding: 20px;
-    margin: 30px auto;
-    width: 90%;
-    max-width: 600px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-  }
-
-  .vnos {
-    text-align: center;
-    margin-top: 10px;
-  }
-
-  input[type="text"] {
-    padding: 10px;
-    font-size: 1.1rem;
-    width: 60%;
+    padding: 6px;
     border-radius: 6px;
     border: 1px solid #007acc;
   }
 
-  .btn {
+  form.iskanje-opis button {
     background-color: #007acc;
     color: white;
-    padding: 10px 20px;
-    margin: 10px;
     border: none;
     border-radius: 6px;
+    padding: 8px 20px;
     cursor: pointer;
     font-size: 1rem;
   }
 
-  .btn:hover {
+  form.iskanje-opis button:hover {
     background-color: #005f99;
   }
 
-  .rezultati-info {
-    text-align: center;
-    font-weight: bold;
+  #rezultatiOpis {
     margin-top: 30px;
-    color: #004b6b;
+    width: 90%;
+    margin-left: auto;
+    margin-right: auto;
   }
 
   table {
-    width: 90%;
-    margin: 20px auto;
+    width: 100%;
     border-collapse: collapse;
-    background-color: white;
-    border-radius: 10px;
+    margin-top: 10px;
     box-shadow: 0 2px 6px rgba(0,0,0,0.1);
   }
 
   th, td {
     padding: 12px;
+    border-bottom: 1px solid #ddd;
     text-align: left;
-    border-bottom: 1px solid #eee;
   }
 
   th {
     background-color: #f4f4f4;
   }
 
-  .fade-in {
-    animation: fadeIn 0.5s ease-in-out;
-  }
-
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
 </style>
 {% endblock %}
 
 {% block content %}
 <h1>Iskanje po opisu</h1>
 
-<div class="navodila-blok">
-  <ol>
-    <li>Vnesi besedo ali več besed, ki opisujejo iskano geslo (npr. <em>fotograf</em>, <em>1900</em>, <em>slovenska igralka</em>).</li>
-    <li>Uporabi ključne besede kot so: poklic, kraj, letnica, ime, država, panoga ipd.</li>
-    <li>Klikni na gumb <strong>IŠČI</strong>.</li>
-    <li>Če želiš nov poskus, klikni na <strong>PONASTAVI</strong>.</li>
-    <li>Če gesla ne najdeš, lahko prispevaš novo z gumbom <strong>Prispevaj geslo</strong>.</li>
-  </ol>
-</div>
-
-<form method="post" action="/isci_opis" class="vnos">
-  <input type="text" name="opis" placeholder="npr. fotograf, 1900, ime" required>
-  <button type="submit" class="btn">IŠČI</button>
-  <a href="/isci_opis"><button type="button" class="btn">PONASTAVI</button></a>
+<form class="iskanje-opis" onsubmit="isciOpis(event)">
+  <input type="text" id="opis" name="opis" placeholder="Išči po opisu...">
+  <button type="submit">Išči</button>
 </form>
 
-{% if gesla %}
-  <div class="rezultati-info">Najdeno: {{ gesla|length }} zadetkov</div>
-  <table>
-    <thead>
-      <tr>
-        <th>GESLO</th>
-        <th>OPIS</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for g in gesla %}
-      <tr class="fade-in">
-        <td>{{ g.GESLO }}</td>
-        <td>{{ g.OPIS }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-{% else %}
-  <div class="rezultati-info">Ni zadetkov.</div>
-{% endif %}
+<div id="rezultatiOpis"></div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function isciOpis(event) {
+  event.preventDefault();
+  let opis = document.getElementById("opis").value;
+
+  fetch('/isci_po_opisu', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+    body: 'opis=' + encodeURIComponent(opis)
+  })
+  .then(response => {
+    if (!response.ok) {
+      throw new Error('Napaka pri iskanju.');
+    }
+    return response.json();
+  })
+  .then(data => {
+    prikaziRezultate(data);
+  })
+  .catch(err => {
+    alert(err);
+  });
+}
+
+function prikaziRezultate(data) {
+  let container = document.getElementById("rezultatiOpis");
+  container.innerHTML = "";
+
+  if (data.length === 0) {
+    container.innerHTML = "<p>Ni zadetkov.</p>";
+    return;
+  }
+
+  let tabela = "<table><tr><th>GESLO</th><th>OPIS</th></tr>";
+  data.forEach(item => {
+    tabela += `<tr><td>${item.geslo}</td><td>${item.opis}</td></tr>`;
+  });
+  tabela += "</table>";
+
+  container.innerHTML = tabela;
+}
+</script>
 {% endblock %}
