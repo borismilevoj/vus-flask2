@@ -110,8 +110,11 @@ function prikaziRezultate(data) {
   let container = document.getElementById("rezultatiOpis");
   container.innerHTML = "";
 
-  if (data.length === 0) {
-    container.innerHTML = "<p>Ni zadetkov.</p>";
+  let steviloZadetkov = data.length;
+  let infoZadetkov = `<p><strong>Najdeno: ${steviloZadetkov} zadetkov.</strong></p>`;
+
+  if (steviloZadetkov === 0) {
+    container.innerHTML = infoZadetkov + "<p>Ni zadetkov.</p>";
     return;
   }
 
@@ -121,7 +124,8 @@ function prikaziRezultate(data) {
   });
   tabela += "</table>";
 
-  container.innerHTML = tabela;
+  container.innerHTML = infoZadetkov + tabela;
 }
+
 </script>
 {% endblock %}
