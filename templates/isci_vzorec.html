@@ -125,17 +125,28 @@
   min-height: 60px !important;
 }
 
-.vnosno-polje input.crka-polje {
-  width: 40px !important;
-  height: 50px !important;
-  font-size: 24px !important;
-  color: black !important;
-  background-color: white !important;
-  border: 2px solid #007acc !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-  margin: 0 !important;
+.vnosno-polje {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-height: 60px;
+  margin: 20px auto;
 }
+
+.crka-polje {
+  width: 40px;
+  height: 50px;
+  text-align: center;
+  font-size: 24px;
+  border-radius: 6px;
+  border: 2px solid #007acc;
+  background-color: white;
+  color: black;
+  margin: 2px;
+}
+
 
 
   th, td {
@@ -216,37 +227,27 @@
 
 {% block scripts %}
 <script>
-document.addEventListener("DOMContentLoaded", function() {
-  window.ustvariPolja = function() {
-    const container = document.getElementById("poljaContainer");
-    container.innerHTML = "";
-    const st = parseInt(document.getElementById("stevilo_crk").value);
+function ustvariPolja() {
+  let st = parseInt(document.getElementById("stevilo_crk").value);
+  let container = document.getElementById("poljaContainer");
+  container.innerHTML = "";
 
-    for (let i = 0; i < st; i++) {
-      const input = document.createElement("input");
-      input.type = "text";
-      input.maxLength = 1;
-      input.classList.add("crka-polje");
-      input.name = "crka" + i;
+  for (let i = 0; i < st; i++) {
+    let input = document.createElement("input");
+    input.setAttribute("type", "text");
+    input.setAttribute("maxlength", "1");
+    input.setAttribute("name", "crka" + i);
+    input.className = "crka-polje";
+    container.appendChild(input);
+  }
+}
 
-      input.addEventListener('input', function() {
-        if (this.value && this.nextElementSibling) {
-          this.nextElementSibling.focus();
-        }
-      });
+function isciVzorec() {
+  document.getElementById("vzorecForm").submit();
+}
 
-      container.appendChild(input);
-    }
-    if (container.firstChild) container.firstChild.focus();
-  };
-
-  window.isciVzorec = function() {
-    document.getElementById("vzorecForm").submit();
-  };
-
-  window.ponastavi = function() {
-    window.location.href = "/isci_vzorec";
-  };
-});
+function ponastavi() {
+  window.location.href = "/isci_vzorec";
+}
 </script>
 {% endblock %}
