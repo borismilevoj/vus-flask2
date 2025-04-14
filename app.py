@@ -113,10 +113,7 @@ def isci_po_vzorcu():
         vzorec = ''
         for i in range(stevilo_crk):
             crka = request.form.get(f'crka{i}', '').strip().upper()
-            if crka == '':
-                vzorec += '_'
-            else:
-                vzorec += crka
+            vzorec += crka if crka else '_'
 
         vzorec_db = vzorec.replace('_', '%')
 
@@ -129,10 +126,13 @@ def isci_po_vzorcu():
         )
         rezultati = cur.fetchall()
         conn.close()
-
         gesla = [{'geslo': g, 'opis': o} for g, o in rezultati]
 
-    return render_template("isci_vzorec.html", gesla=gesla)
+        return render_template("isci_vzorec.html", gesla=gesla, stevilo_crk=stevilo_crk)
+
+    # Privzeto pri GET zahtevku (prvič ali po ponastavitvi):
+    return render_template("isci_vzorec.html", gesla=None, stevilo_crk=3)
+
 
 
 def sortiraj_gesla(gesla):
