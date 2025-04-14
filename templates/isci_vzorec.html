@@ -98,6 +98,17 @@
     border-radius: 10px;
     box-shadow: 0 2px 6px rgba(0,0,0,0.1);
   }
+.vnosno-polje {
+  min-height: 60px;
+  background-color: #f0f8ff;
+  border: 1px dashed #007acc;
+  padding: 10px;
+  border-radius: 6px;
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+
 
   th, td {
     padding: 12px;
@@ -177,35 +188,37 @@
 
 {% block scripts %}
 <script>
-function ustvariPolja() {
-  const container = document.getElementById("poljaContainer");
-  container.innerHTML = "";
-  const st = parseInt(document.getElementById("stevilo_crk").value);
+document.addEventListener("DOMContentLoaded", function() {
+  window.ustvariPolja = function() {
+    const container = document.getElementById("poljaContainer");
+    container.innerHTML = "";
+    const st = parseInt(document.getElementById("stevilo_crk").value);
 
-  for (let i = 0; i < st; i++) {
-    const input = document.createElement("input");
-    input.type = "text";
-    input.maxLength = 1;
-    input.className = "crka-polje";
-    input.name = `crka${i}`;
+    for (let i = 0; i < st; i++) {
+      const input = document.createElement("input");
+      input.type = "text";
+      input.maxLength = 1;
+      input.classList.add("crka-polje");
+      input.name = "crka" + i;
 
-    input.addEventListener('input', function() {
-      if (this.value && this.nextElementSibling) {
-        this.nextElementSibling.focus();
-      }
-    });
+      input.addEventListener('input', function() {
+        if (this.value && this.nextElementSibling) {
+          this.nextElementSibling.focus();
+        }
+      });
 
-    container.appendChild(input);
-  }
-  if (container.firstChild) container.firstChild.focus();
-}
+      container.appendChild(input);
+    }
+    if (container.firstChild) container.firstChild.focus();
+  };
 
-function isciVzorec() {
-  document.getElementById("vzorecForm").submit();
-}
+  window.isciVzorec = function() {
+    document.getElementById("vzorecForm").submit();
+  };
 
-function ponastavi() {
-  window.location.href = "/isci_vzorec";
-}
+  window.ponastavi = function() {
+    window.location.href = "/isci_vzorec";
+  };
+});
 </script>
 {% endblock %}
