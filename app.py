@@ -107,27 +107,32 @@ def isci_vzorec():
 
 @app.route('/isci_vzorec', methods=['GET', 'POST'])
 def isci_po_vzorcu():
-    vzorec = request.form.get('vzorec', '').strip()
-    vzorec = normaliziraj_geslo(vzorec).replace(" ", "").replace("'", "").replace("’", "").upper()
-    dolzina = len(vzorec)
+    gesla = []
+    if request.method == 'POST':
+        stevilo_crk = int(request.form.get('stevilo_crk'))
+        vzorec = ''
+        for i in range(stevilo_crk):
+            crka = request.form.get(f'crka{i}', '').strip().upper()
+            if crka == '':
+                vzorec += '_'
+            else:
+                vzorec += crka
 
-    conn = get_db()
-    cur = conn.cursor()
-    cur.execute(
-        "SELECT GESLO, OPIS FROM slovar WHERE LENGTH(REPLACE(REPLACE(GESLO, ' ', ''), '''', '')) = ? "
-        "AND REPLACE(REPLACE(UPPER(GESLO), ' ', ''), '''', '') LIKE ?",
-        (dolzina, vzorec)
-    )
-    rezultati = cur.fetchall()
-    conn.close()
+        vzorec_db = vzorec.replace('_', '%')
 
-    gesla = [{'geslo': g, 'opis': o} for g, o in rezultati]
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT GESLO, OPIS FROM slovar WHERE LENGTH(REPLACE(REPLACE(GESLO, ' ', ''), '''', '')) = ? "
+            "AND REPLACE(REPLACE(UPPER(GESLO), ' ', ''), '''', '') LIKE ?",
+            (stevilo_crk, vzorec_db)
+        )
+        rezultati = cur.fetchall()
+        conn.close()
+
+        gesla = [{'geslo': g, 'opis': o} for g, o in rezultati]
 
     return render_template("isci_vzorec.html", gesla=gesla)
-
-
-
-
 
 
 def sortiraj_gesla(gesla):
