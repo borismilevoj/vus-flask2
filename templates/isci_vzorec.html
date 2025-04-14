@@ -105,10 +105,11 @@
   padding: 10px;
   border-radius: 6px;
   display: flex;
+  flex-direction: row !important;  /* ta vrstica zagotavlja vodoravno poravnavo */
+  flex-wrap: wrap !important;      /* ta omogoči ovijanje na novo vrstico, če je polj veliko */
   justify-content: center;
   gap: 6px;
 }
-
 
   th, td {
     padding: 12px;
