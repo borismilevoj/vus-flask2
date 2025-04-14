@@ -241,10 +241,26 @@ function ustvariPolja() {
     container.appendChild(input);
   }
 }
+document.addEventListener("DOMContentLoaded", function() {
+  {% if gesla %}
+    document.querySelector('.rezultati-info').scrollIntoView({ behavior: 'smooth' });
+  {% endif %}
+});
 
 function isciVzorec() {
   document.getElementById("vzorecForm").submit();
 }
+document.addEventListener("DOMContentLoaded", function() {
+  let stevilo_crk = {{ stevilo_crk or 3 }};
+  let selectCrk = document.getElementById("stevilo_crk");
+  selectCrk.value = stevilo_crk;
+
+  ustvariPolja();  // avtomatsko generira začetna polja ob nalaganju strani
+
+  {% if gesla %}
+    document.querySelector('.rezultati-info').scrollIntoView({ behavior: 'smooth' });
+  {% endif %}
+});
 
 function ponastavi() {
   window.location.href = "/isci_vzorec";
