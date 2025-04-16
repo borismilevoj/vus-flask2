@@ -189,20 +189,26 @@ def admin():
     return render_template("admin.html", gesla=gesla, stevilo=stevilo)
 
 
-@app.route('/preveri', methods=['GET','POST'])
+@app.route('/preveri', methods=['GET', 'POST'])
 def preveri():
     podatki = request.get_json()
     geslo = podatki.get('preveri_geslo', '').strip()
     if not geslo:
         return jsonify({"sporocilo": "Vnesi geslo za preverjanje.", "rezultati": []}), 400
 
-    # Uporabi normalizacijo za primerjavo
-    normalizirano_geslo = normaliziraj_geslo(geslo).upper()
+    # Uporabi normalizacijo, odstrani presledke, pomišljaje in apostrofe
+    normalizirano_geslo = normaliziraj_geslo(geslo).replace(" ", "").replace("-", "").replace("'", "").replace("’",
+                                                                                                               "").upper()
 
     conn = get_db()
     cur = conn.cursor()
 
-    cur.execute("SELECT ID, GESLO, OPIS FROM slovar WHERE UPPER(GESLO) = ?", (normalizirano_geslo,))
+    # Tudi gesla iz baze normaliziraj na isti način, da bodo enaka
+    cur.execute("""
+        SELECT ID, GESLO, OPIS FROM slovar
+        WHERE REPLACE(REPLACE(REPLACE(REPLACE(UPPER(GESLO), ' ', ''), '-', ''), '''', ''), '’', '') = ?
+    """, (normalizirano_geslo,))
+
     rezultat = cur.fetchall()
     conn.close()
 
@@ -217,7 +223,6 @@ def preveri():
             "sporocilo": "Gesla ni v bazi!",
             "rezultati": []
         }), 200
-
 
 
 @app.route('/uredi_geslo', methods=['GET','POST'])
