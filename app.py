@@ -69,34 +69,34 @@ def isci_po_opisu():
     if not surovo:
         return jsonify({'error': 'Vnesi ključno besedo za iskanje po opisu.'}), 400
 
-    # Če uporabljaš normalizacijo
+    # Normalizacija vnosnega iskalnega niza
     from pretvornik import normaliziraj_geslo
     normalizirano = normaliziraj_geslo(surovo).upper()
     besede = normalizirano.split()
 
-    pogoji = []
-    params = []
-
-    for beseda in besede:
-        if beseda.isdigit():
-            # številke iščemo povsod
-            pogoji.append("UPPER(OPIS) LIKE ?")
-            params.append(f"%{beseda}%")
-        else:
-            # cele besede – uporabimo presledke levo in desno
-            pogoji.append("(' ' || UPPER(OPIS) || ' ') LIKE ?")
-            params.append(f"% {beseda} %")
-
-    sql = "SELECT GESLO, OPIS FROM slovar WHERE " + " AND ".join(pogoji)
-
+    # Povežemo se z bazo
     conn = get_db()
     cur = conn.cursor()
-    cur.execute(sql, params)
-    rezultati = cur.fetchall()
+
+    # Poberemo vse vnose iz baze
+    cur.execute("SELECT GESLO, OPIS FROM slovar")
+    vsi_rezultati = cur.fetchall()
     conn.close()
 
-    gesla = [{'geslo': g, 'opis': o} for g, o in rezultati]
-    return jsonify(gesla)
+    # Dodatno filtriranje po normaliziranem opisu
+    filtrirani_rezultati = []
+    for geslo, opis in vsi_rezultati:
+        normaliziran_opis = normaliziraj_geslo(opis).upper()
+        # Vsaka vpisana beseda mora biti v opisu
+        if all(
+            (beseda in normaliziran_opis if beseda.isdigit()
+             else f" {beseda} " in f" {normaliziran_opis} ")
+            for beseda in besede
+        ):
+            filtrirani_rezultati.append({'geslo': geslo, 'opis': opis})
+
+    return jsonify(filtrirani_rezultati)
+
 
 
 
