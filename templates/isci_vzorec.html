@@ -69,65 +69,21 @@
 
 <script>
 function ustvariPolja() {
-    let dolzina = parseInt(document.getElementById("dolzina").value);
-    let poljaDiv = document.getElementById("polja");
-    poljaDiv.innerHTML = "";
+    const stCrk = parseInt(document.getElementById('dolzinaGesla').value);
+    const poljaDiv = document.getElementById('poljaZaCrke');
+    poljaDiv.innerHTML = '';
 
-    if (!isNaN(dolzina) && dolzina > 0 && dolzina <= 20) {
-        for (let i = 0; i < dolzina; i++) {
-            let input = document.createElement("input");
-            input.type = "text";
-            input.maxLength = 1;
-            input.classList.add("polje");
-            input.id = "crka" + i;
-            poljaDiv.appendChild(input);
-        }
+    for (let i = 0; i < stCrk; i++) {
+        const polje = document.createElement('input');
+        polje.type = 'text';
+        polje.name = 'crka' + (i + 1);
+        polje.maxLength = 1;
+        polje.classList.add('crka-polje');  // Dodaj CSS razred za oblikovanje
+        poljaDiv.appendChild(polje);
     }
 }
 
-function isciGesla() {
-    let dolzina = parseInt(document.getElementById("dolzina").value);
-    let vzorec = "";
-
-    for (let i = 0; i < dolzina; i++) {
-        let crka = document.getElementById("crka" + i).value;
-        vzorec += crka ? crka : '_';
-    }
-
-    fetch('/isci_vzorec', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({vzorec: vzorec})
-    })
-    .then(response => response.json())
-    .then(data => prikaziRezultate(data));
-}
-
-function prikaziRezultate(data) {
-    let rezultatiDiv = document.getElementById("rezultati");
-    rezultatiDiv.innerHTML = '';
-
-    if (data.length === 0) {
-        rezultatiDiv.innerHTML = '<div class="rezultati-info">Ni zadetkov.</div>';
-        return;
-    }
-
-    rezultatiDiv.innerHTML = `<div class="rezultati-info">Najdeno: ${data.length} zadetkov</div>`;
-
-    let tabela = '<table border="1"><tr><th>GESLO</th><th>OPIS</th></tr>';
-    data.forEach(geslo => {
-        tabela += `<tr><td>${geslo.geslo}</td><td>${geslo.opis}</td></tr>`;
-    });
-    tabela += '</table>';
-
-    rezultatiDiv.innerHTML += tabela;
-}
-
-function ponastaviPolja() {
-    document.getElementById("dolzina").value = '';
-    document.getElementById("polja").innerHTML = '';
-    document.getElementById("rezultati").innerHTML = '';
-}
+document.getElementById('dolzinaGesla').addEventListener('input', ustvariPolja);
 </script>
 
 </body>
