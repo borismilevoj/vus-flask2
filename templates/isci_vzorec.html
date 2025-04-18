@@ -65,7 +65,6 @@
     border: 2px solid #007acc;
     border-radius: 10px;
     box-shadow: 2px 2px 4px rgba(0,0,0,0.1);
-    transition: background-color 0.3s;
   }
 
   .btn {
@@ -98,56 +97,6 @@
     border-radius: 10px;
     box-shadow: 0 2px 6px rgba(0,0,0,0.1);
   }
-.vnosno-polje {
-  min-height: 60px !important;
-  background-color: #f0f8ff !important;
-  border: 1px dashed #007acc !important;
-  padding: 10px !important;
-  border-radius: 6px !important;
-  display: flex !important;
-  flex-direction: row !important;
-  flex-wrap: wrap !important;
-  justify-content: center !important;
-  gap: 6px !important;
-}
-
-.vnosno-polje {
-  display: flex !important;
-  flex-direction: row !important;
-  flex-wrap: wrap !important;
-  justify-content: center !important;
-  align-items: center !important;
-  gap: 6px !important;
-  background-color: #f0f8ff !important;
-  padding: 10px !important;
-  border-radius: 6px !important;
-  border: 1px dashed #007acc !important;
-  min-height: 60px !important;
-}
-
-.vnosno-polje {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 6px;
-  min-height: 60px;
-  margin: 20px auto;
-}
-
-.crka-polje {
-  width: 40px;
-  height: 50px;
-  text-align: center;
-  font-size: 24px;
-  border-radius: 6px;
-  border: 2px solid #007acc;
-  background-color: white;
-  color: black;
-  margin: 2px;
-}
-
-
 
   th, td {
     padding: 12px;
@@ -177,9 +126,9 @@
   <ol>
     <li>Izberi število črk, ki jih vsebuje iskano geslo</li>
     <li>Klikni na gumb <strong>USTVARI POLJA</strong></li>
-    <li>Vnesi znane črke<br><em>* Lahko poskusiš tudi s črkami, za katere predvidevaš, da bi ustrezale</em></li>
+    <li>Vnesi znane črke</li>
     <li>Klikni na gumb <strong>IŠČI</strong></li>
-    <li>Po končanem iskanju klikni na gumb <strong>PONASTAVI</strong></li>
+    <li>Za dodatno filtriranje klikni na gumb <strong>ASISTENT</strong></li>
   </ol>
 </div>
 
@@ -203,67 +152,65 @@
 </form>
 
 {% if gesla %}
-  <div class="rezultati-info">Najdeno: {{ gesla|length }} zadetkov</div>
-  <table>
-    <thead>
-      <tr>
-        <th>GESLO</th>
-        <th>OPIS</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for g in gesla %}
-      <tr class="fade-in">
-        <td>{{ g.geslo }}</td>
-        <td>{{ g.opis }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-{% elif request.method == 'POST' %}
-  <div class="rezultati-info">Ni zadetkov.</div>
+<div class="rezultati-info">Najdeno: {{ gesla|length }} zadetkov</div>
+<table>
+  <thead>
+    <tr>
+      <th>GESLO</th>
+      <th>OPIS</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for g in gesla %}
+    <tr class="fade-in">
+      <td>{{ g.geslo }}</td>
+      <td>{{ g.opis }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<div id="dodatno-filtriranje" style="text-align:center; margin-top:20px;">
+  <input type="text" id="dodatniKriterij" placeholder="Vpiši dodatno ključno besedo (npr. letnica, poklic)"
+         style="padding:8px; width:300px; border-radius:6px; border:1px solid #007acc;">
+  <button class="btn" onclick="filtrirajRezultate()">ASISTENT</button>
+</div>
 {% endif %}
 {% endblock %}
+{% endblock %}  <!-- konec bloka content -->
 
 {% block scripts %}
 <script>
-function ustvariPolja() {
-  let st = parseInt(document.getElementById("stevilo_crk").value);
-  let container = document.getElementById("poljaContainer");
-  container.innerHTML = "";
+function filtrirajRezultate() {
+    const kriterij = document.getElementById("dodatniKriterij").value.trim();
+    if (!kriterij) {
+        alert("Najprej vpiši dodatno ključno besedo za filtriranje!");
+        return;
+    }
 
-  for (let i = 0; i < st; i++) {
-    let input = document.createElement("input");
-    input.setAttribute("type", "text");
-    input.setAttribute("maxlength", "1");
-    input.setAttribute("name", "crka" + i);
-    input.className = "crka-polje";
-    container.appendChild(input);
-  }
+    fetch('/filtriraj_rezultate', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({'kriterij': kriterij})
+    })
+    .then(response => response.json())
+    .then(data => {
+        posodobiTabeloRezultatov(data);
+    });
 }
-document.addEventListener("DOMContentLoaded", function() {
-  {% if gesla %}
-    document.querySelector('.rezultati-info').scrollIntoView({ behavior: 'smooth' });
-  {% endif %}
-});
 
-function isciVzorec() {
-  document.getElementById("vzorecForm").submit();
-}
-document.addEventListener("DOMContentLoaded", function() {
-  let stevilo_crk = {{ stevilo_crk or 3 }};
-  let selectCrk = document.getElementById("stevilo_crk");
-  selectCrk.value = stevilo_crk;
+function posodobiTabeloRezultatov(data) {
+    const tbody = document.querySelector("table tbody");
+    tbody.innerHTML = "";
 
-  ustvariPolja();  // avtomatsko generira začetna polja ob nalaganju strani
+    data.forEach(item => {
+        let tr = document.createElement("tr");
+        tr.innerHTML = `<td>${item.geslo}</td><td>${item.opis}</td>`;
+        tbody.appendChild(tr);
+    });
 
-  {% if gesla %}
-    document.querySelector('.rezultati-info').scrollIntoView({ behavior: 'smooth' });
-  {% endif %}
-});
-
-function ponastavi() {
-  window.location.href = "/isci_vzorec";
+    document.querySelector(".rezultati-info").innerText = `Najdeno: ${data.length} zadetkov`;
 }
 </script>
 {% endblock %}
+
