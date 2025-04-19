@@ -1,231 +1,133 @@
 <!DOCTYPE html>
 <html lang="sl">
 <head>
-  <style>
-  /* Tabela: osvetlitev vrstice */
-  tr:hover {
-    background-color: #f0f8ff;
-    cursor: pointer;
-  }
-
-  /* Gumbi: rahla rast ob hoverju */
-  button:hover {
-    transform: scale(1.05);
-    transition: transform 0.2s ease-in-out;
-    animation: bounce 0.3s;
-  }
-
-  @keyframes bounce {
-    0%   { transform: scale(1); }
-    50%  { transform: scale(1.1); }
-    100% { transform: scale(1); }
-  }
-
-  /* Fade-in učinek */
-  .fade-in {
-    animation: fadeIn 0.5s ease-in;
-  }
-
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-
-  /* Tipkarski učinek za naslov */
-  .typing {
-    overflow: hidden;
-    white-space: nowrap;
-    border-right: 3px solid #007acc;
-    animation: typing 2.5s steps(30) 1s 1 normal both, blink 0.7s infinite;
-  }
-
-  @keyframes typing {
-    from { width: 0 }
-    to   { width: 100% }
-  }
-
-  @keyframes blink {
-    50% { border-color: transparent; }
-  }
-</style>
-
-  <meta charset="UTF-8">
-  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
-  <title>Administracija slovarja</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f4f4f4;
-      padding: 20px;
-    }
-
-    h1 {
-      color: #333;
-    }
-
-    input[type="text"], textarea {
-      padding: 6px;
-      font-size: 14px;
-      margin-bottom: 10px;
-      width: 100%;
-    }
-
-    button {
-      background-color: green;
-      color: white;
-      padding: 6px 12px;
-      font-size: 14px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      margin-top: 5px;
-    }
-
-    button:hover {
-      background-color: darkgreen;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-      background: white;
-    }
-
-    th, td {
-      padding: 4px 6px;
-      border: 1px solid #ddd;
-      font-size: 14px;
-      vertical-align: middle;
-    }
-
-    th {
-      background-color: #eee;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <title>Administracija gesel VUS</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .opis-gesla {
+            height: 100px;
+        }
+    </style>
 </head>
-<body>
-  <h1>Administracija slovarja</h1>
-<a href="/admin_prispevki"><button style="margin-bottom: 20px;">Uredi prispevke uporabnikov</button></a>
-  <!-- PREVERI -->
-  <div>
-    <label for="preveri_geslo">Preveri geslo:</label>
-    <input type="text" id="preveri_geslo" required>
-    <button type="button" onclick="preveriGeslo()">Preveri</button>
-    <a href="/admin"><button type="button">Ponastavi</button></a>
-  </div>
+<body class="container py-4">
 
-    <!-- DODAJANJE -->
-  <form method="post" action="/admin">
-    <label for="geslo">Novo geslo:</label>
-    <input type="text" id="geslo" name="geslo" required>
+    <h2 class="mb-4 text-center">Administracija gesel VUS</h2>
 
-    <label for="opis">Opis gesla:</label>
-    <textarea name="opis" id="opis" rows="3" required></textarea>
+    <div class="card mb-3">
+        <div class="card-body">
+            <input type="text" id="preveriGeslo" class="form-control" placeholder="Vnesi geslo za preverjanje">
+            <button class="btn btn-primary mt-2" onclick="preveriGeslo()">PREVERI</button>
+        </div>
+    </div>
 
-    <button type="submit">Dodaj</button>
-  </form>
+    <div class="card mb-3">
+        <div class="card-body">
+            <input type="text" id="novoGeslo" class="form-control" placeholder="Novo geslo">
+            <textarea id="novOpis" class="form-control opis-gesla mt-2" placeholder="Opis novega gesla"></textarea>
+            <button class="btn btn-success mt-2" onclick="dodajGeslo()">DODAJ</button>
+        </div>
+    </div>
 
-  <p>V bazi je trenutno <strong>{{ stevilo }}</strong> gesel.</p>
- <div id="rezultat_preverjanja"></div>
-<div id="tabela_rezultatov" style="margin-top: 20px;"></div>
-
-<h2>Zamenjaj izraz v opisih</h2>
-<form method="post" action="/zamenjaj_opis">
-  <label for="star_izraz">Stari izraz:</label>
-  <input type="text" id="star_izraz" name="star_izraz" required>
-
-  <label for="novi_izraz">Novi izraz:</label>
-  <input type="text" id="novi_izraz" name="novi_izraz" required>
-
-  <button type="submit">Zamenjaj</button>
-</form>
+    <div class="alert alert-info" id="stevec">Gesel v bazi: XX</div>
+    <div id="rezultatiPreverjanja" class="mt-3"></div>
 
 <script>
 function preveriGeslo() {
-  const geslo = document.getElementById('preveri_geslo').value.trim();
+    let geslo = document.getElementById('preveriGeslo').value;
+    fetch('/preveri', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({geslo: geslo})
+    })
+    .then(response => response.json())
+    .then(data => {
+        let rezultatiDiv = document.getElementById('rezultatiPreverjanja');
+        rezultatiDiv.innerHTML = '';
 
-  fetch('/preveri', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ preveri_geslo: geslo })
-  })
-  .then(response => response.json())
-  .then(data => {
-    const divSporocilo = document.getElementById('rezultat_preverjanja');
-    const divTabela = document.getElementById('tabela_rezultatov');
-
-    if (!data.rezultati || data.rezultati.length === 0) {
-      divSporocilo.innerHTML = `<p style="color: red;">${data.sporocilo}</p>`;
-      divTabela.innerHTML = '';
-      return;
-    }
-
-    divSporocilo.innerHTML = `<p style="color: blue;">${data.sporocilo}</p>`;
-
-    // 🔽 Sortiranje po tvoji logiki
-    data.rezultati.sort((a, b) => {
-      const splitA = a.opis.split('-');
-      const splitB = b.opis.split('-');
-      const kljucA = (splitA[1] && /^[A-ZČŠŽ]/.test(splitA[1].trim())) ? splitA[1].trim().toUpperCase() : a.opis.toUpperCase();
-      const kljucB = (splitB[1] && /^[A-ZČŠŽ]/.test(splitB[1].trim())) ? splitB[1].trim().toUpperCase() : b.opis.toUpperCase();
-      return kljucA.localeCompare(kljucB);
+        if (data.rezultati && data.rezultati.length > 0) {
+            data.rezultati.forEach(geslo => {
+                rezultatiDiv.innerHTML += `
+                <div class="card mt-2">
+                    <div class="card-body">
+                        <strong>${geslo.geslo}</strong>: ${geslo.opis}<br>
+                        <button class="btn btn-warning btn-sm" onclick="urediGeslo(${geslo.id})">UREDI</button>
+                        <button class="btn btn-danger btn-sm" onclick="brisiGeslo(${geslo.id})">BRIŠI</button>
+                    </div>
+                </div>`;
+            });
+        } else {
+            rezultatiDiv.innerHTML = '<div class="alert alert-warning">Ni zadetkov.</div>';
+        }
+    })
+    .catch(err => {
+        console.error(err);
     });
-
-    let html = `
-      <table>
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Geslo</th>
-            <th>Opis</th>
-            <th>Uredi</th>
-            <th>Izbriši</th>
-          </tr>
-        </thead>
-        <tbody>
-    `;
-
-    data.rezultati.forEach(r => {
-      html += `
-        <tr>
-          <td>${r.id}</td>
-          <td>${r.geslo}</td>
-          <td>${r.opis}</td>
-          <td>
-            <form method="post" action="/uredi_geslo">
-              <input type="hidden" name="id" value="${r.id}">
-              <input type="text" name="novi_opis" value="${r.opis}" required>
-              <button type="submit">Shrani</button>
-            </form>
-          </td>
-          <td>
-            <form method="post" action="/izbrisi_geslo">
-              <input type="hidden" name="id" value="${r.id}">
-              <button type="submit" onclick="return confirm('Res želiš izbrisati to geslo?')">Izbriši</button>
-            </form>
-          </td>
-        </tr>
-      `;
-    });
-
-    html += '</tbody></table>';
-    divTabela.innerHTML = html;
-  })
-  .catch(err => {
-    console.error("Napaka pri preverjanju:", err);
-  });
 }
-</script>
-</body>
-{% with messages = get_flashed_messages(with_categories=true) %}
-  {% if messages %}
-    {% for category, message in messages %}
-      <p style="color: green;"><strong>{{ message }}</strong></p>
-    {% endfor %}
-  {% endif %}
-{% endwith %}
 
+function dodajGeslo() {
+    const geslo = document.getElementById('novoGeslo').value;
+    const opis = document.getElementById('novOpis').value;
+
+    fetch('/dodaj_geslo', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({geslo: geslo, opis: opis})
+    })
+    .then(response => response.json())
+    .then(data => {
+        alert(data.sporocilo);
+        document.getElementById('novoGeslo').value = '';
+        document.getElementById('novOpis').value = '';
+        window.location.reload();
+    })
+    .catch(error => alert("Prišlo je do napake: " + error));
+}
+
+function urediGeslo(id) {
+    let novOpis = prompt("Vnesi nov opis gesla:");
+    if (novOpis === null) return;
+
+    fetch('/uredi_geslo/' + id, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({opis: novOpis})
+    })
+    .then(response => response.json())
+    .then(data => {
+        alert(data.sporocilo);
+        window.location.reload();
+    })
+    .catch(error => alert("Napaka pri urejanju gesla: " + error));
+}
+
+function brisiGeslo(id) {
+    if (!confirm("Ali res želiš izbrisati to geslo?")) return;
+
+    fetch('/brisi_geslo/' + id, {
+        method: 'DELETE',
+        headers: {'Content-Type': 'application/json'}
+    })
+    .then(response => response.json())
+    .then(data => {
+        alert(data.sporocilo);
+        window.location.reload();
+    })
+    .catch(error => {
+        console.error('Napaka pri brisanju gesla:', error);
+        alert("Prišlo je do napake: " + error);
+    });
+}
+
+// Pridobitev števca gesel ob nalaganju strani
+document.addEventListener("DOMContentLoaded", function(){
+    fetch('/stevec_gesel')
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('stevec').textContent = "Gesel v bazi: " + data.steviloGesel;
+    });
+});
+</script>
+
+</body>
 </html>
