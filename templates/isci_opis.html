@@ -87,7 +87,7 @@ function isciOpis(event) {
   event.preventDefault();
   let opis = document.getElementById("opis").value;
 
-  fetch('/isci_po_opisu', {
+  fetch('/isci_opis', {
     method: 'POST',
     headers: {'Content-Type': 'application/x-www-form-urlencoded'},
     body: 'opis=' + encodeURIComponent(opis)
