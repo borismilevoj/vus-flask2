@@ -7,57 +7,64 @@
   .search-container {
     max-width: 800px;
     margin: 0 auto;
-    padding: 25px;
+    padding: 20px;
     background-color: #ffffff;
-    border-radius: 10px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   }
 
-  .search-container h2 {
+.search-container h2 {
     text-align: center;
-    margin-bottom: 25px;
-    color: #004b6b;
+    margin-bottom: 20px;
+}
+
+#steviloCrk {
+    max-width: 100px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+  .navodila {
+    font-size: 1rem;
+    margin-bottom: 15px;
+    padding: 10px;
+    background-color: #f9f9f9;
+    border-left: 5px solid #ffc107;
+    border-radius: 4px;
   }
 
   .search-inputs {
     display: flex;
-    justify-content: center;
     flex-wrap: wrap;
-    gap: 8px;
+    justify-content: center;
+    gap: 10px;
   }
 
   .search-inputs input[type="text"] {
-    width: 50px;
-    height: 50px;
-    font-size: 1.5rem;
+    width: 45px;
+    height: 45px;
     text-align: center;
-    border-radius: 5px;
-    border: 2px solid #007acc;
-    transition: border-color 0.2s;
-  }
-
-  .search-inputs input[type="text"]:focus {
-    border-color: #ffc107;
-    outline: none;
+    font-size: 1.5rem;
+    border-radius: 4px;
+    border: 1px solid #ccc;
   }
 
   .btn-group {
-    margin-top: 25px;
+    margin-top: 20px;
     text-align: center;
   }
 
   .result-container {
-    margin-top: 25px;
-    padding: 15px;
+    margin-top: 20px;
   }
 
   .navigation-links {
-    margin-top: 30px;
+    margin-top: 20px;
     text-align: center;
   }
 
   .navigation-links a {
-    margin: 0 5px;
+    margin: 5px;
   }
 </style>
 {% endblock %}
@@ -66,15 +73,17 @@
 <div class="search-container">
   <h2>Iskanje po vzorcu</h2>
 
+  <div class="navodila">
+    Vnesi število črk v geslu in nato vpiši črke, ki jih že poznaš. Če črke ne poznaš, pusti polje prazno. Rezultate lahko dodatno zožiš z vpisom letnice, poklica, imena ipd.
+  </div>
+
   <div class="form-group text-center">
     <label for="steviloCrk">Število črk v geslu:</label>
     <input type="number" id="steviloCrk" class="form-control" min="1" max="20" value="5">
   </div>
 
-  <div class="search-inputs" id="inputsContainer"></div>
-
-  <div class="form-group text-center mt-3">
-    <input type="text" id="dodatno" class="form-control" placeholder="Zoži rezultate (letnica, poklic, ime...)">
+  <div class="search-inputs" id="inputsContainer">
+    <!-- polja se generirajo dinamično -->
   </div>
 
   <div class="btn-group">
@@ -82,20 +91,24 @@
     <button class="btn btn-warning" onclick="ponastaviIskanje()">PONASTAVI</button>
   </div>
 
+  <div class="form-group mt-3">
+    <input type="text" id="dodatno" class="form-control" placeholder="Zoži rezultate (letnica, poklic, ime...)">
+  </div>
+
   <div class="result-container" id="rezultati"></div>
 
-<div class="navigation-links">
+  <div class="navigation-links">
     <a href="{{ url_for('home') }}" class="btn btn-secondary">Domov</a>
     <a href="{{ url_for('isci_po_opisu') }}" class="btn btn-secondary">Išči po opisu</a>
     <a href="{{ url_for('prispevaj_geslo') }}" class="btn btn-secondary">Prispevaj geslo</a>
-</div>
-
+  </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
 document.getElementById('steviloCrk').addEventListener('input', generirajPolja);
+
 document.addEventListener('DOMContentLoaded', generirajPolja);
 
 function generirajPolja() {

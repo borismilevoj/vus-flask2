@@ -104,25 +104,22 @@ def isci_po_opisu():
 
 @app.route('/preveri', methods=['POST'])
 def preveri():
-    podatki = request.json
-    geslo = podatki.get('geslo', '').upper().replace(' ', '').replace('-', '')
+    data = request.get_json()
+    geslo = data.get('geslo', '').upper().replace(' ', '')
 
     conn = get_db()
     cur = conn.cursor()
     cur.execute("""
-        SELECT GESLO, OPIS FROM slovar
-        WHERE UPPER(REPLACE(REPLACE(GESLO,' ',''),'-','')) = ?
+        SELECT GESLO, OPIS FROM slovar 
+        WHERE UPPER(REPLACE(GESLO,' ','')) = ?
     """, (geslo,))
-    rezultat = cur.fetchall()
+    rezultat = cur.fetchone()
     conn.close()
 
     if rezultat:
-        return jsonify({'sporocilo': f"Geslo '{geslo}' je že v bazi.", 'rezultati': [dict(g) for g in rezultat]})
+        return jsonify({"obstaja": True, "geslo": rezultat[0], "opis": rezultat[1]})
     else:
-        return jsonify({'sporocilo': f"Geslo '{geslo}' še ni v bazi.", 'rezultati': []})
-
-
-
+        return jsonify({"obstaja": False})
 
 
 
@@ -184,6 +181,26 @@ def stevec_gesel():
 
 
 # Primer postavitve v app.py (kamorkoli pred if __name__ == '__main__'):
+
+@app.route('/zamenjaj', methods=['POST'])
+def zamenjaj():
+    data = request.get_json()
+    original = data.get('original', '')
+    zamenjava = data.get('zamenjava', '')
+
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("""
+        UPDATE slovar
+        SET OPIS = REPLACE(OPIS, ?, ?)
+        WHERE OPIS LIKE ?
+    """, (original, zamenjava, f"%{original}%"))
+    conn.commit()
+    spremembe = cur.rowcount
+    conn.close()
+
+    return jsonify({"spremembe": spremembe})
+
 
 @app.route('/admin')
 def admin():
