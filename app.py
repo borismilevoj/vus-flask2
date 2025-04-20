@@ -105,21 +105,22 @@ def isci_po_opisu():
 @app.route('/preveri', methods=['POST'])
 def preveri():
     podatki = request.json
-    geslo = podatki.get('geslo')
+    geslo = podatki.get('geslo', '').upper().replace(' ', '').replace('-', '')
 
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("SELECT ID, GESLO, OPIS FROM slovar WHERE GESLO LIKE ?", (geslo,))
-    rezultati = cur.fetchall()
+    cur.execute("""
+        SELECT GESLO, OPIS FROM slovar
+        WHERE UPPER(REPLACE(REPLACE(GESLO,' ',''),'-','')) = ?
+    """, (geslo,))
+    rezultat = cur.fetchall()
     conn.close()
 
-    if rezultati:
-        return jsonify({
-            "sporocilo": "Geslo že obstaja!",
-            "rezultati": [{"id": r["ID"], "geslo": r["GESLO"], "opis": r["OPIS"]} for r in rezultati]
-        }), 200
+    if rezultat:
+        return jsonify({'sporocilo': f"Geslo '{geslo}' je že v bazi.", 'rezultati': [dict(g) for g in rezultat]})
     else:
-        return jsonify({"sporocilo": "Gesla ni v bazi!", "rezultati": []}), 200
+        return jsonify({'sporocilo': f"Geslo '{geslo}' še ni v bazi.", 'rezultati': []})
+
 
 
 
