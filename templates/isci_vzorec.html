@@ -1,97 +1,146 @@
-<!DOCTYPE html>
-<html lang="sl">
-<head>
-  <meta charset="UTF-8">
-  <title>Iskanje po vzorcu | VUS</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 40px; }
-    .polje { width: 40px; height: 40px; text-align: center; font-size: 20px; margin: 5px; }
-    .gumb { padding: 8px 15px; font-weight: bold; border: none; cursor: pointer; }
-    .isci { background-color: #198754; color: white; }
-    .ponastavi { background-color: #ffc107; color: black; }
-    .asistent { background-color: #0dcaf0; color: black; }
-    .rezultati-info { background-color: #cff4fc; padding: 10px; margin-top: 10px; }
-  </style>
-</head>
-<body>
+{% extends "base.html" %}
 
-<h2>Iskanje po vzorcu</h2>
+{% block title %}Iskanje po vzorcu | VUS{% endblock %}
 
-<div>
-  <label>Število črk v geslu:</label>
-  <input type="number" id="stevilo_crk" min="1" max="20" oninput="ustvariPolja(this.value)">
+{% block styles %}
+<style>
+  .search-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 25px;
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  }
+
+  .search-container h2 {
+    text-align: center;
+    margin-bottom: 25px;
+    color: #004b6b;
+  }
+
+  .search-inputs {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .search-inputs input[type="text"] {
+    width: 50px;
+    height: 50px;
+    font-size: 1.5rem;
+    text-align: center;
+    border-radius: 5px;
+    border: 2px solid #007acc;
+    transition: border-color 0.2s;
+  }
+
+  .search-inputs input[type="text"]:focus {
+    border-color: #ffc107;
+    outline: none;
+  }
+
+  .btn-group {
+    margin-top: 25px;
+    text-align: center;
+  }
+
+  .result-container {
+    margin-top: 25px;
+    padding: 15px;
+  }
+
+  .navigation-links {
+    margin-top: 30px;
+    text-align: center;
+  }
+
+  .navigation-links a {
+    margin: 0 5px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="search-container">
+  <h2>Iskanje po vzorcu</h2>
+
+  <div class="form-group text-center">
+    <label for="steviloCrk">Število črk v geslu:</label>
+    <input type="number" id="steviloCrk" class="form-control" min="1" max="20" value="5">
+  </div>
+
+  <div class="search-inputs" id="inputsContainer"></div>
+
+  <div class="form-group text-center mt-3">
+    <input type="text" id="dodatno" class="form-control" placeholder="Zoži rezultate (letnica, poklic, ime...)">
+  </div>
+
+  <div class="btn-group">
+    <button class="btn btn-success" onclick="isciVzorec()">IŠČI</button>
+    <button class="btn btn-warning" onclick="ponastaviIskanje()">PONASTAVI</button>
+  </div>
+
+  <div class="result-container" id="rezultati"></div>
+
+<div class="navigation-links">
+    <a href="{{ url_for('home') }}" class="btn btn-secondary">Domov</a>
+    <a href="{{ url_for('isci_po_opisu') }}" class="btn btn-secondary">Išči po opisu</a>
+    <a href="{{ url_for('prispevaj_geslo') }}" class="btn btn-secondary">Prispevaj geslo</a>
 </div>
 
-<form id="isciVzorecForm" method="post">
-  <div id="polja-container"></div>
+</div>
+{% endblock %}
 
-  <input type="hidden" id="vzorec_hidden" name="vzorec">
-  <input type="hidden" id="asistent_hidden" name="asistent">
-
-  <button type="button" class="gumb isci" onclick="isciRezultate()">IŠČI</button>
-  <button type="button" class="gumb ponastavi" onclick="location.reload()">PONASTAVI</button>
-
-  <div style="margin-top:10px;">
-    <input type="text" id="asistent_vnos" placeholder="Zoži rezultate (letnica, poklic, ime...)">
-      </div>
-</form>
-
-<div class="rezultati-info" id="rezultati-info" style="display:none;"></div>
-
+{% block scripts %}
 <script>
-function ustvariPolja(stevilo) {
-  let poljaContainer = document.getElementById('polja-container');
-  poljaContainer.innerHTML = '';
+document.getElementById('steviloCrk').addEventListener('input', generirajPolja);
+document.addEventListener('DOMContentLoaded', generirajPolja);
+
+function generirajPolja() {
+  let stevilo = document.getElementById('steviloCrk').value;
+  let container = document.getElementById('inputsContainer');
+  container.innerHTML = '';
+
   for (let i = 0; i < stevilo; i++) {
     let input = document.createElement('input');
     input.type = 'text';
-    input.maxLength = 1;
-    input.className = 'polje';
-    poljaContainer.appendChild(input);
+    input.maxLength = '1';
+    container.appendChild(input);
   }
 }
 
-function isciRezultate() {
-  let crke = document.querySelectorAll('.polje');
-  let vzorec = '';
-  crke.forEach(polje => {
-    vzorec += polje.value ? polje.value : '_';
+function isciVzorec() {
+  let crke = Array.from(document.querySelectorAll('#inputsContainer input')).map(input => input.value || '_').join('');
+  let dodatno = document.getElementById('dodatno').value;
+
+  fetch('/isci_vzorec', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({vzorec: crke, dodatno: dodatno})
+  })
+  .then(response => response.json())
+  .then(data => {
+    let container = document.getElementById('rezultati');
+    container.innerHTML = '';
+
+    if (data.length > 0) {
+      container.innerHTML = `<div class="alert alert-info">Najdeno: ${data.length} zadetkov</div>`;
+      let tabela = `<table class="table table-bordered"><thead><tr><th>Geslo</th><th>Opis</th></tr></thead><tbody>`;
+      data.forEach(r => tabela += `<tr><td>${r.GESLO}</td><td>${r.OPIS}</td></tr>`);
+      tabela += '</tbody></table>';
+      container.innerHTML += tabela;
+    } else {
+      container.innerHTML = '<div class="alert alert-warning">Ni najdenih rezultatov.</div>';
+    }
   });
-
-  let asistent = document.getElementById('asistent_vnos').value;
-
-  document.getElementById('vzorec_hidden').value = vzorec;
-  document.getElementById('asistent_hidden').value = asistent;
-
-  document.getElementById('isciVzorecForm').submit();
 }
 
-function asistent() {
-  isciRezultate();
+function ponastaviIskanje() {
+  document.getElementById('dodatno').value = '';
+  generirajPolja();
+  document.getElementById('rezultati').innerHTML = '';
 }
 </script>
-
-{% if gesla %}
-  <div class="rezultati-info">Najdeno: {{ gesla|length }} zadetkov</div>
-  <table>
-    <thead>
-      <tr>
-        <th>GESLO</th>
-        <th>OPIS</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for g in gesla %}
-      <tr>
-        <td>{{ g.geslo }}</td>
-        <td>{{ g.opis }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-{% elif request.method == 'POST' %}
-  <div class="rezultati-info">Ni zadetkov.</div>
-{% endif %}
-
-</body>
-</html>
+{% endblock %}

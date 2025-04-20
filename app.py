@@ -15,15 +15,25 @@ def get_db():
 def index():
     return render_template('home.html')
 
+@app.route('/')
+def home():
+    return render_template('home.html')
+
+@app.route('/prispevaj')
+def prispevaj_geslo():
+    return render_template('prispevaj.html')
+
+
 @app.route('/isci_vzorec', methods=['GET', 'POST'])
 def isci_vzorec():
     gesla = []
     vzorec = ''
-    asistent = ''
+    dodatno = ''
 
     if request.method == 'POST':
-        vzorec = request.form.get('vzorec', '').upper()
-        asistent = request.form.get('asistent', '').upper()
+        podatki = request.json
+        vzorec = podatki.get('vzorec', '').upper()
+        dodatno = podatki.get('dodatno', '').upper()
 
         dolzina = len(vzorec)
 
@@ -37,9 +47,9 @@ def isci_vzorec():
 
         params = [dolzina, sql_vzorec]
 
-        if asistent:
+        if dodatno:
             sql += " AND UPPER(OPIS) LIKE ?"
-            params.append(f"%{asistent}%")
+            params.append(f"%{dodatno}%")
 
         conn = get_db()
         cur = conn.cursor()
@@ -47,13 +57,12 @@ def isci_vzorec():
         rezultati = cur.fetchall()
         conn.close()
 
-        gesla = [{'geslo': g, 'opis': o} for g, o in rezultati]
+        gesla = [{'GESLO': r['GESLO'], 'OPIS': r['OPIS']} for r in rezultati]
 
-    return render_template("isci_vzorec.html",
-                           gesla=gesla,
-                           stevilo=len(gesla),
-                           vzorec=vzorec,
-                           asistent=asistent)
+        return jsonify(gesla)
+
+    return render_template("isci_vzorec.html")
+
 
 
 

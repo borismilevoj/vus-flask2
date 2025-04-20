@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Domov | VUS{% endblock %}
+{% block title %}VUS – Veliki ugankarski slovar{% endblock %}
 
 {% block styles %}
 <style>
@@ -65,6 +65,17 @@
     font-size: 0.9rem;
     color: #555;
   }
+
+  #stevec {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    z-index: 3;
+    background-color: rgba(255, 255, 255, 0.9);
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-weight: bold;
+  }
 </style>
 {% endblock %}
 
@@ -78,9 +89,24 @@
     <a href="/prispevaj"><button>Prispevaj geslo</button></a>
   </div>
   <img src="{{ url_for('static', filename='slika.png') }}" class="banner">
+
+  <div id="stevec">Gesel v bazi: nalaganje...</div>
 </div>
 
 <footer>
   © 2025 VUS – Veliki ugankarski slovar
 </footer>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function(){
+    fetch('/stevec_gesel')
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('stevec').textContent = "Gesel v bazi: " + data.steviloGesel;
+    })
+    .catch(err => console.error("Napaka pri pridobivanju števca:", err));
+});
+</script>
 {% endblock %}
