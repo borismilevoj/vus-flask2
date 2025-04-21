@@ -109,65 +109,86 @@ def preveri():
 
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("""
-        SELECT GESLO, OPIS FROM slovar 
-        WHERE UPPER(REPLACE(GESLO,' ','')) = ?
-    """, (geslo,))
-    rezultat = cur.fetchone()
+    cur.execute(
+        "SELECT GESLO, OPIS FROM slovar WHERE UPPER(REPLACE(GESLO,' ','')) = ?",
+        (geslo,)
+    )
+    rezultati = cur.fetchall()
     conn.close()
 
-    if rezultat:
-        return jsonify({"obstaja": True, "geslo": rezultat[0], "opis": rezultat[1]})
+    if rezultati:
+        gesla = [{"geslo": rez[0], "opis": rez[1]} for rez in rezultati]
+        return jsonify({"obstaja": True, "gesla": gesla})
     else:
         return jsonify({"obstaja": False})
 
 
 
+
+
+
 @app.route('/dodaj_geslo', methods=['POST'])
 def dodaj_geslo():
-    podatki = request.json
-    geslo = podatki.get('geslo')
-    opis = podatki.get('opis')
+    data = request.get_json()
+    geslo = data['geslo']
+    opis = data['opis']
 
-    if not geslo or not opis:
-        return jsonify({"sporocilo": "Geslo in opis sta obvezna!"}), 400
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("INSERT INTO slovar (GESLO, OPIS) VALUES (?, ?)", (geslo, opis))
+        conn.commit()
+        conn.close()
 
-    conn = get_db()
-    cur = conn.cursor()
-    cur.execute(
-        "INSERT INTO slovar (GESLO, OPIS, NORMALIZIRAN_OPIS) VALUES (?, ?, ?)",
-        (geslo, opis, normaliziraj_geslo(opis))
-    )
-    conn.commit()
-    steviloGesel = cur.execute("SELECT COUNT(*) FROM slovar").fetchone()[0]
-    conn.close()
+        return jsonify({"status": "uspesno", "sporocilo": "Geslo uspešno dodano!"})
 
-    return jsonify({"sporocilo": f"Geslo '{geslo}' dodano!", "steviloGesel": steviloGesel})
+    except sqlite3.IntegrityError:
+        return jsonify({"status": "napaka", "sporocilo": "Geslo že obstaja v bazi."})
 
-
-
-@app.route('/uredi_geslo/<int:id>', methods=['POST'])
-def uredi_geslo(id):
-    nov_opis = request.json.get('opis')
-    conn = get_db()
-    cur = conn.cursor()
-    cur.execute("UPDATE slovar SET OPIS = ?, NORMALIZIRAN_OPIS = ? WHERE ID = ?",
-                (nov_opis, normaliziraj_geslo(nov_opis), id))
-    conn.commit()
-    conn.close()
-    return jsonify({"sporocilo": "Geslo je uspešno posodobljeno."})
+    except Exception as e:
+        print(e)  # če je napaka, izpiši za lažje reševanje težav
+        return jsonify({"status": "napaka", "sporocilo": "Prišlo je do napake."})
 
 
-@app.route('/brisi_geslo/<int:id>', methods=['DELETE'])
-def brisi_geslo(id):
-    conn = get_db()
-    cur = conn.cursor()
-    cur.execute("DELETE FROM slovar WHERE ID = ?", (id,))
-    conn.commit()
-    conn.close()
-    return jsonify({"sporocilo": "Geslo uspešno izbrisano!"})
 
 
+
+@app.route('/uredi_geslo', methods=['POST'])
+def uredi_geslo():
+    data = request.get_json()
+    geslo = data['geslo']
+    novi_opis = data['opis']
+
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("UPDATE slovar SET OPIS=? WHERE GESLO=?", (novi_opis, geslo))
+        conn.commit()
+        conn.close()
+
+        return jsonify({"status": "uspesno", "sporocilo": "Geslo uspešno urejeno!"})
+    except Exception as e:
+        print(e)
+        return jsonify({"status": "napaka", "sporocilo": "Prišlo je do napake pri urejanju."})
+
+
+@app.route('/brisi_geslo', methods=['POST'])
+def brisi_geslo():
+    data = request.get_json()
+    geslo = data['geslo']
+    opis = data['opis']
+
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("DELETE FROM slovar WHERE GESLO=? AND OPIS=?", (geslo, opis))
+        conn.commit()
+        conn.close()
+
+        return jsonify({"status": "uspesno", "sporocilo": "Geslo uspešno izbrisano!"})
+    except Exception as e:
+        print(e)
+        return jsonify({"status": "napaka", "sporocilo": "Napaka pri brisanju."})
 
 
 
