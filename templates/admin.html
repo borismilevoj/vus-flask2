@@ -1,63 +1,95 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="sl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administracija VUS</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
-{% block title %}Administracija gesel | VUS{% endblock %}
+    <style>
+        body {
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+        .container-admin {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            max-width: 900px;
+            margin: auto;
+        }
+        .column {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        textarea.raztegljivo {
+            resize: none;
+            overflow: hidden;
+            font-size: 0.9rem;
+            padding: 5px;
+            height: auto;
+            min-height: 40px;
+        }
+        .stevec {
+            color: red;
+            font-weight: bold;
+        }
+        .prispevaj-btn {
+            grid-column: span 2;
+            background-color: gray;
+            color: white;
+            font-size: 1.2rem;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
 
-{% block content %}
-<div class="container my-4">
-    <h2 class="text-center mb-4">Administracija gesel VUS</h2>
+<div class="container-admin">
 
-    <!-- Preverjanje gesel -->
-    <div class="card mb-4">
-        <div class="card-body">
-            <div class="input-group">
-                <input type="text" id="gesloPreveri" class="form-control" placeholder="Vnesi geslo za preverjanje">
-                <button class="btn btn-primary" onclick="preveriGeslo()">PREVERI</button>
-            </div>
-            <div id="rezultatiPreverjanja" class="mt-3"></div>
-        </div>
+    <h2 class="text-center" style="grid-column: span 2;">ADMINISTRACIJA VUS</h2>
+
+    <!-- PREVERI -->
+    <div class="column">
+        <button class="btn btn-outline-info btn-sm" onclick="preveriGeslo()">PREVERI</button>
+        <input type="text" id="gesloPreveri" class="form-control form-control-sm" placeholder="Vnesi geslo za preverjanje">
+        <div id="rezultatPreverjanja" class="border p-2 rounded" style="min-height:150px; overflow:auto;"></div>
     </div>
 
-    <!-- Dodajanje novih gesel -->
-    <div class="card mb-4">
-        <div class="card-body">
-            <input type="text" id="novoGeslo" class="form-control mb-2" placeholder="Novo geslo">
-            <textarea id="opisNovegaGesla" class="form-control mb-2" placeholder="Opis novega gesla" rows="4"></textarea>
-            <button class="btn btn-success" onclick="dodajGeslo()">DODAJ</button>
-        </div>
+    <!-- DODAJ, ŠTEVEC, ZAMENJAJ -->
+    <div class="column">
+        <button class="btn btn-outline-success btn-sm" onclick="dodajGeslo()">DODAJ</button>
+        <input type="text" id="novoGeslo" class="form-control form-control-sm" placeholder="Novo geslo">
+        <textarea id="opisNovegaGesla" class="form-control raztegljivo" placeholder="Opis novega gesla"></textarea>
+
+        <div class="stevec">ŠTEVEC: nalaganje...</div>
+
+        <button class="btn btn-outline-warning btn-sm">ZAMENJAJ</button>
+        <textarea class="form-control raztegljivo" placeholder="Stari izraz"></textarea>
+        <textarea class="form-control raztegljivo" placeholder="Novi izraz"></textarea>
     </div>
 
-    <!-- Zamenjava izraza v opisih -->
-    <div class="card mb-4">
-        <div class="card-body">
-            <h5>Zamenjaj izraz v opisih</h5>
-            <input type="text" id="original" class="form-control mb-2" placeholder="Izvirni izraz">
-            <input type="text" id="zamenjava" class="form-control mb-2" placeholder="Nov izraz">
-            <button class="btn btn-warning" onclick="zamenjajIzraz()">ZAMENJAJ</button>
-            <div id="rezultatZamenjave" class="mt-2"></div>
-        </div>
-    </div>
-<div class="text-center mb-4">
-  <a href="{{ url_for('prispevaj_geslo') }}" class="btn btn-info">Prispevaj geslo</a>
+    <!-- Prispevaj geslo -->
+    <button class="btn prispevaj-btn">PRISPEVAJ GESLO</button>
+
+
 </div>
 
-    <!-- Števec gesel v bazi -->
-    <div class="alert alert-info text-center" id="stevec">
-        Gesel v bazi: nalaganje...
-    </div>
-</div>
-
-{% endblock %}
-
-{% block scripts %}
 <script>
 document.addEventListener("DOMContentLoaded", function(){
     fetch('/stevec_gesel')
     .then(response => response.json())
     .then(data => {
-        document.getElementById('stevec').textContent = "Gesel v bazi: " + data.steviloGesel;
+        document.querySelector('.stevec').textContent = "Gesel v bazi: " + data.steviloGesel;
     })
-    .catch(err => console.error("Napaka pri pridobivanju števca:", err));
+    .catch(err => console.error("Napaka pri števcu:", err));
 });
+
+function autoResize(textarea) {
+    textarea.style.height = 'auto';
+    textarea.style.height = textarea.scrollHeight + 'px';
+}
 
 function preveriGeslo() {
     const geslo = document.getElementById('gesloPreveri').value;
@@ -68,14 +100,66 @@ function preveriGeslo() {
     })
     .then(response => response.json())
     .then(data => {
-        const rezultat = document.getElementById('rezultatiPreverjanja');
+        const rezultat = document.getElementById('rezultatPreverjanja');
+        rezultat.innerHTML = '';
+
         if(data.obstaja){
-            rezultat.innerHTML = `<div class="alert alert-success">Geslo obstaja: <b>${data.geslo}</b> - ${data.opis}</div>`;
+            data.gesla.forEach(function(g, index){
+                const uniqueId = `geslo-${index}`;
+                rezultat.innerHTML += `
+                <div id="${uniqueId}" class="p-2 border-bottom">
+                    <strong>${g.geslo}</strong><br>
+                    <textarea oninput="autoResize(this)" id="opis-${uniqueId}" class="form-control raztegljivo">${g.opis}</textarea>
+                    <div class="mt-1">
+                        <button class="btn btn-warning btn-sm me-1" onclick="urediGeslo('${uniqueId}', '${g.geslo}')">UREDI</button>
+                        <button class="btn btn-danger btn-sm" onclick="brisiGeslo('${uniqueId}', '${g.geslo}')">BRIŠI</button>
+                    </div>
+                </div>`;
+            });
+            document.querySelectorAll('.raztegljivo').forEach(autoResize);
         } else {
-            rezultat.innerHTML = `<div class="alert alert-danger">Geslo <b>${geslo}</b> ne obstaja v bazi.</div>`;
+            rezultat.textContent = 'Ni zadetkov.';
         }
     });
 }
+
+function urediGeslo(uniqueId, geslo) {
+    const noviOpis = document.getElementById(`opis-${uniqueId}`).value;
+
+    fetch('/uredi_geslo', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({geslo: geslo, opis: noviOpis})
+    })
+    .then(response => response.json())
+    .then(data => {
+        alert(data.sporocilo);
+    });
+}
+
+function brisiGeslo(uniqueId, geslo) {
+    const opis = document.getElementById(`opis-${uniqueId}`).value;
+
+    if (confirm(`Res želiš izbrisati geslo: ${geslo}?`)){
+        fetch('/brisi_geslo', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({geslo: geslo, opis: opis})
+        })
+        .then(response => response.json())
+        .then(data => {
+            alert(data.sporocilo);
+            if (data.status === "uspesno"){
+                document.getElementById(uniqueId).remove();
+            }
+        })
+        .catch(err => {
+            console.error("Napaka:", err);
+            alert("Napaka pri brisanju gesla.");
+        });
+    }
+}
+
 
 function dodajGeslo() {
     const novoGeslo = document.getElementById('novoGeslo').value;
@@ -89,25 +173,14 @@ function dodajGeslo() {
     .then(response => response.json())
     .then(data => {
         alert(data.sporocilo);
-        location.reload();
+        if (data.status === "uspesno"){
+            document.getElementById('novoGeslo').value = '';
+            document.getElementById('opisNovegaGesla').value = '';
+            location.reload();
+        }
     });
 }
-
-function zamenjajIzraz() {
-    const original = document.getElementById('original').value;
-    const zamenjava = document.getElementById('zamenjava').value;
-
-    fetch('/zamenjaj', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({original, zamenjava})
-    })
-    .then(response => response.json())
-    .then(data => {
-        document.getElementById('rezultatZamenjave').innerHTML =
-            `<div class="alert alert-info">Število zamenjanih opisov: ${data.spremembe}</div>`;
-    })
-    .catch(err => console.error("Napaka pri zamenjavi izraza:", err));
-}
 </script>
-{% endblock %}
+
+</body>
+</html>
