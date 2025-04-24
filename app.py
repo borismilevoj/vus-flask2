@@ -17,7 +17,7 @@ def get_db():
 @app.route('/krizanka')
 def prikazi_krizanko():
     podatki = pridobi_podatke_iz_xml('1.xml')
-    print("Preverjanje podatkov pred pošiljanjem v predlogo:", podatki)
+    # print("Preverjanje podatkov pred pošiljanjem v predlogo:", podatki)
     return render_template('krizanka.html', podatki=podatki)
 
 @app.route('/preveri_crko', methods=['POST'])
