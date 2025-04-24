@@ -1,15 +1,52 @@
 from flask import Flask, request, jsonify, render_template, session
 from pretvornik import normaliziraj_geslo
 import sqlite3
+from krizanka import pridobi_podatke_iz_xml
 
 app = Flask(__name__)
 app.secret_key = 'tvoja_skrivna_koda'
+
 
 # Povezava z bazo
 def get_db():
     conn = sqlite3.connect('VUS.db')
     conn.row_factory = sqlite3.Row
     return conn
+
+
+@app.route('/krizanka')
+def prikazi_krizanko():
+    podatki = pridobi_podatke_iz_xml('1.xml')
+    print("Preverjanje podatkov pred pošiljanjem v predlogo:", podatki)
+    return render_template('krizanka.html', podatki=podatki)
+
+@app.route('/preveri_crko', methods=['POST'])
+def preveri_crko():
+    data = request.json
+    x = data['x']
+    y = data['y']
+    crka = data['crka'].upper()
+
+    podatki = pridobi_podatke_iz_xml('1.xml')
+
+    for geslo in podatki['gesla_opisi']:
+        gx, gy, smer, dolzina = geslo['x'], geslo['y'], geslo['smer'], geslo['dolzina']
+
+        if smer == 'across' and y == gy and gx <= x < gx + dolzina:
+            index = x - gx
+            pravilna_crka = geslo['solution'][index].upper()
+            return jsonify({'pravilno': crka == pravilna_crka})
+
+        if smer == 'down' and x == gx and gy <= y < gy + dolzina:
+            index = y - gy
+            pravilna_crka = geslo['solution'][index].upper()
+            return jsonify({'pravilno': crka == pravilna_crka})
+
+    return jsonify({'pravilno': False})
+
+
+# tu naprej so še ostale tvoje route...
+
 
 @app.route('/')
 def index():
@@ -109,18 +146,19 @@ def preveri():
 
     conn = get_db()
     cur = conn.cursor()
-    cur.execute(
-        "SELECT GESLO, OPIS FROM slovar WHERE UPPER(REPLACE(GESLO,' ','')) = ?",
-        (geslo,)
-    )
-    rezultati = cur.fetchall()
+    cur.execute("""
+        SELECT GESLO, OPIS FROM slovar 
+        WHERE UPPER(REPLACE(GESLO,' ','')) = ?
+    """, (geslo,))
+    rezultat = cur.fetchall()
     conn.close()
 
-    if rezultati:
-        gesla = [{"geslo": rez[0], "opis": rez[1]} for rez in rezultati]
+    if rezultat:
+        gesla = [{"geslo": r[0], "opis": r[1]} for r in rezultat]
         return jsonify({"obstaja": True, "gesla": gesla})
     else:
         return jsonify({"obstaja": False})
+
 
 
 
@@ -199,6 +237,32 @@ def stevec_gesel():
     steviloGesel = cur.execute("SELECT COUNT(*) FROM slovar").fetchone()[0]
     conn.close()
     return jsonify({"steviloGesel": steviloGesel})
+
+@app.route('/pretvori_crke', methods=['POST'])
+def pretvori_crke():
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+
+        cur.execute("SELECT GESLO, OPIS FROM slovar")
+        gesla = cur.fetchall()
+
+        spremembe = 0
+
+        for geslo, opis in gesla:
+            nov_opis = opis.swapcase()
+            if nov_opis != opis:
+                cur.execute("UPDATE slovar SET OPIS=? WHERE GESLO=? AND OPIS=?", (nov_opis, geslo, opis))
+                spremembe += 1
+
+        conn.commit()
+        conn.close()
+
+        return jsonify({"sporocilo": f"Uspešno pretvorjenih opisov: {spremembe}"})
+
+    except Exception as e:
+        print("NAPAKA:", e)  # Dodaj to vrstico
+        return jsonify({"sporocilo": f"Napaka pri pretvorbi črk: {str(e)}"})
 
 
 # Primer postavitve v app.py (kamorkoli pred if __name__ == '__main__'):

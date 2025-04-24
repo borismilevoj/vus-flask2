@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="sl">
+<head>
+    <meta charset="UTF-8">
+    <title>Križanka VUS</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        #grid {
+            display: grid;
+            grid-template-columns: repeat({{ podatki.sirina }}, 30px);
+            grid-gap: 2px;
+        }
+
+        .cell {
+            width: 30px;
+            height: 30px;
+            border: 1px solid #999;
+            position: relative;
+            box-sizing: border-box;
+        }
+
+        .black {
+            background-color: #000;
+        }
+
+        .cell-number {
+            position: absolute;
+            top: 0;
+            left: 0;
+            font-size: 9px;
+            color: #00f;
+        }
+
+        .cell input {
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            text-transform: uppercase;
+            font-size: 16px;
+            border: none;
+            outline: none;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        .opis {
+            margin-left: 10px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            width: 300px;
+            height: fit-content;
+        }
+
+        .selected {
+            border: 2px solid red;
+        }
+
+        .correct {
+            background-color: #c8f7c5;
+        }
+
+        .incorrect {
+            background-color: #f7c5c5;
+        }
+
+        .arrow-right::after,
+        .arrow-down::after {
+            content: '';
+            position: absolute;
+            border-style: solid;
+        }
+
+        .arrow-right::after {
+            border-width: 5px 0 5px 8px;
+            border-color: transparent transparent transparent #000;
+            top: 50%;
+            right: -6px;
+            transform: translateY(-50%);
+        }
+
+        .arrow-down::after {
+            border-width: 8px 5px 0 5px;
+            border-color: #000 transparent transparent transparent;
+            bottom: -6px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .highlight-across {
+            border-left: 3px solid black;
+            border-top: 3px solid black;
+            border-bottom: 3px solid black;
+        }
+
+        .highlight-down {
+            border-left: 3px solid black;
+            border-top: 3px solid black;
+            border-right: 3px solid black;
+        }
+
+    </style>
+</head>
+<body>
+
+<div style="display: flex;">
+    <div id="grid"></div>
+    <div class="opis" id="opisPolje">Klikni na polje v križanki za prikaz opisa.</div>
+</div>
+
+<script>
+    const width = {{ podatki.sirina }};
+    const height = {{ podatki.visina }};
+    const crna_polja = {{ podatki.crna_polja | tojson }};
+    const gesla_opisi = {{ podatki.gesla_opisi | tojson }};
+
+    let trenutnaSmer = 'across';
+    let zadnjeKliknjenoPolje = null;
+
+    const grid = document.getElementById('grid');
+    const opisPolje = document.getElementById('opisPolje');
+
+    for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+            const cell = document.createElement('div');
+            cell.classList.add('cell');
+
+            if (crna_polja.some(polje => polje[0] === x && polje[1] === y)) {
+                cell.classList.add('black');
+            } else {
+                const input = document.createElement('input');
+                input.setAttribute('maxlength', '1');
+                input.dataset.x = x;
+                input.dataset.y = y;
+
+                input.addEventListener('input', (e) => {
+                    preveriCrko(input);
+                    premakniNaprej(e.target);
+                });
+                input.addEventListener('click', () => prikaziOpis(x, y));
+
+                cell.appendChild(input);
+
+                const geslo = gesla_opisi.find(g => g.x === x && g.y === y);
+                if (geslo && geslo.stevilka !== '?') {
+                    const numberDiv = document.createElement('div');
+                    numberDiv.classList.add('cell-number');
+                    numberDiv.textContent = geslo.stevilka;
+                    cell.appendChild(numberDiv);
+                }
+            }
+
+            grid.appendChild(cell);
+        }
+    }
+
+    function prikaziOpis(x, y) {
+        if (zadnjeKliknjenoPolje === `${x}-${y}`) {
+            trenutnaSmer = trenutnaSmer === 'across' ? 'down' : 'across';
+        }
+
+        zadnjeKliknjenoPolje = `${x}-${y}`;
+
+        const geslo = gesla_opisi.find(g => g.smer === trenutnaSmer && (trenutnaSmer === 'across' && g.y === y && x >= g.x && x < g.x + g.dolzina || trenutnaSmer === 'down' && g.x === x && y >= g.y && y < g.y + g.dolzina));
+
+        opisPolje.textContent = geslo ? `${geslo.stevilka}. ${geslo.opis}` : 'Ni opisa.';
+        oznaciPolje(geslo);
+    }
+
+    function oznaciPolje(geslo) {
+        document.querySelectorAll('.cell').forEach(c => c.classList.remove('selected', 'arrow-right', 'arrow-down', 'highlight-across', 'highlight-down'));
+        if (geslo) {
+            const polje = document.querySelector(`.cell input[data-x='${geslo.x}'][data-y='${geslo.y}']`).parentElement;
+            polje.classList.add('selected', geslo.smer === 'across' ? 'highlight-across' : 'highlight-down');
+        }
+    }
+
+ function preveriCrko(input) {
+    const x = +input.dataset.x;
+    const y = +input.dataset.y;
+
+    const geslo = gesla_opisi.find(g =>
+        (g.smer === 'across' && g.y === y && x >= g.x && x < g.x + g.dolzina) ||
+        (g.smer === 'down' && g.x === x && y >= g.y && y < g.y + g.dolzina)
+    );
+
+    if (!geslo) return;
+
+    const index = geslo.smer === 'across' ? x - geslo.x : y - geslo.y;
+    const pravilnaCrka = geslo.solution[index];
+
+    if (input.value.toUpperCase() === pravilnaCrka) {
+        input.classList.add('correct');
+        input.classList.remove('incorrect');
+    } else {
+        input.classList.add('incorrect');
+        input.classList.remove('correct');
+    }
+}
+
+
+    function premakniNaprej(input) {
+        const x = +input.dataset.x;
+        const y = +input.dataset.y;
+        const nextX = trenutnaSmer === 'across' ? x + 1 : x;
+        const nextY = trenutnaSmer === 'down' ? y + 1 : y;
+        const nextInput = document.querySelector(`.cell input[data-x='${nextX}'][data-y='${nextY}']`);
+        if (nextInput) nextInput.focus();
+    }
+</script>
+</body>
+</html>
