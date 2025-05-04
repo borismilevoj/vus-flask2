@@ -1,112 +1,39 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="sl">
+<head>
+    <meta charset="UTF-8">
+    <title>VUS – Veliki ugankarski slovar</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-image: url("{{ url_for('static', filename='slika.png') }}");
+            background-size: cover;
+            background-position: center;
+            font-family: 'Arial', sans-serif;
+            color: #fff;
+            text-align: center;
+            padding-top: 20vh;
+        }
+        .btn-custom {
+            background-color: #ffc107;
+            border: none;
+            color: black;
+            padding: 10px 20px;
+            margin: 10px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>VUS – Veliki ugankarski slovar</h1>
+        <p>Slovar za križanke in uganke. Poišči gesla po vzorcu ali opisu.</p>
 
-{% block title %}VUS – Veliki ugankarski slovar{% endblock %}
-
-{% block styles %}
-<style>
-  .banner-container {
-    position: relative;
-    width: 100%;
-    height: 100vh;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .banner {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    filter: brightness(50%);
-    position: absolute;
-    top: 0;
-    left: 0;
-    z-index: 1;
-  }
-
-  .overlay {
-    position: relative;
-    z-index: 2;
-    color: white;
-    text-align: center;
-    top: 40%;
-    transform: translateY(-50%);
-    padding: 0 20px;
-  }
-
-  .overlay h1 {
-    font-size: 3rem;
-    margin-bottom: 20px;
-  }
-
-  .overlay p {
-    font-size: 1.2rem;
-    margin-bottom: 30px;
-  }
-
-  .overlay button {
-    background-color: #ffc107;
-    color: black;
-    font-size: 1.1rem;
-    padding: 12px 24px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-  }
-
-  .overlay button:hover {
-    background-color: #e0a800;
-  }
-
-  footer {
-    text-align: center;
-    margin-top: 40px;
-    font-size: 0.9rem;
-    color: #555;
-  }
-
-  #stevec {
-    position: absolute;
-    bottom: 10px;
-    right: 10px;
-    z-index: 3;
-    background-color: rgba(255, 255, 255, 0.9);
-    padding: 5px 10px;
-    border-radius: 5px;
-    font-weight: bold;
-  }
-</style>
-{% endblock %}
-
-{% block content %}
-<div class="banner-container">
-  <div class="overlay fade-in">
-    <h1>VUS – Veliki ugankarski slovar</h1>
-    <p>Slovar za križanke in uganke. Poišči gesla po vzorcu ali opisu.</p>
-    <a href="/isci_opis"><button>ZAČNI ISKATI</button></a>
-    <br><br>
-    <a href="/prispevaj"><button>Prispevaj geslo</button></a>
-  </div>
-  <img src="{{ url_for('static', filename='slika.png') }}" class="banner">
-
-  <div id="stevec">Gesel v bazi: nalaganje...</div>
-</div>
-
-<footer>
-  © 2025 VUS – Veliki ugankarski slovar
-</footer>
-{% endblock %}
-
-{% block scripts %}
-<script>
-document.addEventListener("DOMContentLoaded", function(){
-    fetch('/stevec_gesel')
-    .then(response => response.json())
-    .then(data => {
-        document.getElementById('stevec').textContent = "Gesel v bazi: " + data.steviloGesel;
-    })
-    .catch(err => console.error("Napaka pri pridobivanju števca:", err));
-});
-</script>
-{% endblock %}
+        <a href="{{ url_for('isci_vzorec') }}" class="btn btn-custom">Išči po vzorcu</a>
+        <a href="{{ url_for('isci_po_opisu') }}" class="btn btn-custom">Išči po opisu</a>
+        <a href="{{ url_for('prikazi_krizanko') }}">Križanke</a>
+        <a href="{{ url_for('sudoku') }}" class="btn btn-custom">Sudoku</a>
+        <a href="{{ url_for('prispevaj_geslo') }}" class="btn btn-custom">Prispevaj geslo</a>
+    </div>
+</body>
+</html>

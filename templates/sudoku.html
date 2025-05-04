@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="sl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sudoku - VUS</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+        }
+        .sudoku-container {
+            text-align: center;
+            margin-top: 30px;
+        }
+        select, button {
+            margin-top: 15px;
+        }
+        iframe {
+            width: 100%;
+            height: 600px;
+            border: none;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1 class="text-center">Sudoku uganke</h1>
+
+    <form method="post" action="{{ url_for('sudoku') }}">
+        <select name="tezavnost">
+            {% for ime, datoteka in tezavnosti.items() %}
+            <option value="{{ ime }}" {% if ime == izbrana_tezavnost %}selected{% endif %}>
+                {{ ime }}
+            </option>
+            {% endfor %}
+        </select>
+        <button type="submit">Izberi težavnost</button>
+    </form>
+
+    {% if tezavnost_datoteka %}
+    <p>Izbrali ste težavnost: {{ izbrana_tezavnost }}</p>
+    <iframe src="{{ url_for('static', filename='sudoku_' + tezavnost_datoteka + '.html') }}"></iframe>
+    {% endif %}
+</div>
+
+</body>
+</html>

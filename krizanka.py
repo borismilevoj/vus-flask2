@@ -1,6 +1,39 @@
 import xml.etree.ElementTree as ET
 import re
 
+def popravi_sumnike(besedilo):
+    return (besedilo
+            .replace('ÄŤ', 'č')
+            .replace('Ä‡', 'ć')
+            .replace('Å¡', 'š')
+            .replace('Ĺˇ', 'š')
+            .replace('Ĺľ', 'ž')
+            .replace('Ĺ˝', 'Ž')
+            .replace('Ä‘', 'đ')
+            .replace('Ă©', 'é')
+            .replace('Ă¨', 'è')
+            .replace('Ă¶', 'ö')
+            .replace('Ăź', 'ü')
+            .replace('Ă¤', 'ä')
+            .replace('Ă¸', 'ø')
+            .replace('ĂŚ', 'Ć')
+            .replace('Ă', 'Á')
+            .replace('Ã', 'à')
+            .replace('Ăˇ', 'á')
+            .replace('Ăł', 'ó')
+            .replace('Ăş', 'ú')
+            .replace('Ă±', 'ñ')
+            .replace('Ă§', 'ç')
+            .replace('ĂŹ', 'í')
+            .replace('Ăł', 'ó')
+            .replace('Ă©', 'é')
+            .replace('Ă', 'í')
+            .replace('Ă', 'à')
+            .replace('Ă', 'è')
+            .replace('Ă', 'ì'))
+
+
+
 def pridobi_podatke_iz_xml(xml_pot):
     tree = ET.parse(xml_pot)
     root = tree.getroot()
@@ -43,12 +76,12 @@ def pridobi_podatke_iz_xml(xml_pot):
             dolzina = 1
 
         clue = root.find(f".//ns:clue[@word='{geslo_id}']", ns)
-        opis = clue.text.strip() if clue is not None else "Ni opisa"
-        stevilka = clue.get('number') if clue is not None else "?"
+        opis = popravi_sumnike(clue.text.strip()) if clue is not None else "Ni opisa"
+        opis = popravi_sumnike(opis)  # Uporaba funkcije
 
         # Pridobimo solution (rešitev) za geslo
         solution = word.get('solution', '').upper()
-
+        stevilka = clue.get('number') if clue is not None else "?"
         gesla_opisi.append({
             'geslo_id': geslo_id,
             'opis': opis,

@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify, render_template, session
 from pretvornik import normaliziraj_geslo
 import sqlite3
 from krizanka import pridobi_podatke_iz_xml
+from datetime import datetime
 
 app = Flask(__name__)
 app.secret_key = 'tvoja_skrivna_koda'
@@ -52,9 +53,19 @@ def preveri_crko():
 def index():
     return render_template('home.html')
 
+
 @app.route('/')
 def home():
+    import os
+    pot = os.path.abspath("templates/home.html")
+    print("Trenutna pot do home.html:", pot)
+
+    with open(pot, "r", encoding="utf-8") as f:
+        vsebina = f.read()
+        print("Vsebina home.html:\n", vsebina[:500])  # prvih 500 znakov
+
     return render_template('home.html')
+
 
 @app.route('/prispevaj')
 def prispevaj_geslo():
@@ -161,10 +172,6 @@ def preveri():
 
 
 
-
-
-
-
 @app.route('/dodaj_geslo', methods=['POST'])
 def dodaj_geslo():
     data = request.get_json()
@@ -228,6 +235,26 @@ def brisi_geslo():
         print(e)
         return jsonify({"status": "napaka", "sporocilo": "Napaka pri brisanju."})
 
+@app.route('/zamenjaj_geslo', methods=['POST'])
+def zamenjaj_geslo():
+    data = request.get_json()
+    original = data.get('original', '').strip()
+    zamenjava = data.get('zamenjava', '').strip()
+
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("""
+        UPDATE slovar
+        SET GESLO = REPLACE(GESLO, ?, ?)
+        WHERE GESLO LIKE ?
+    """, (original, zamenjava, f"%{original}%"))
+    conn.commit()
+    spremembe = cur.rowcount
+    conn.close()
+
+    return jsonify({"spremembe": spremembe})
+
+
 
 
 @app.route('/stevec_gesel', methods=['GET'])
@@ -287,10 +314,43 @@ def zamenjaj():
     return jsonify({"spremembe": spremembe})
 
 
+@app.route('/sudoku', methods=['GET', 'POST'])
+def sudoku():
+    tezavnosti = {
+        'lažja': 'easy',
+        'srednja': 'medium',
+        'težka': 'hard',
+        'najtežja': 'very_hard'
+    }
+    izbrana_tezavnost = None
+    tezavnost_datoteka = None
+
+    if request.method == 'POST':
+        izbrana_tezavnost = request.form.get('tezavnost')
+        tezavnost_datoteka = tezavnosti[izbrana_tezavnost]
+
+    return render_template('sudoku.html',
+                           tezavnosti=tezavnosti,
+                           izbrana_tezavnost=izbrana_tezavnost,
+                           tezavnost_datoteka=tezavnost_datoteka)
+
+
+
+# Stran za posamezno težavnost Sudoku
+@app.route('/sudoku/<stopnja>')
+def sudoku_tezavnost(stopnja):
+    dovoljene_tezavnosti = ['lažja', 'srednja', 'težka', 'najtežja']
+    if stopnja not in dovoljene_tezavnosti:
+        return "Neveljavna težavnost.", 404
+
+    # ime datoteke HTML naj bo recimo sudoku_lazja.html, sudoku_srednja.html itd.
+    ime_datoteke = f'sudoku_{stopnja}.html'
+    return render_template(ime_datoteke, stopnja=stopnja)
+
+
 @app.route('/admin')
 def admin():
     return render_template('admin.html')
 
 if __name__ == '__main__':
     app.run(debug=True, port=10000)
-
