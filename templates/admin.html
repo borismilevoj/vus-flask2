@@ -2,257 +2,53 @@
 <html lang="sl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Administracija VUS</title>
+    <title>Sudoku - VUS</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-
     <style>
         body {
-            padding: 20px;
             font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+            padding: 20px;
         }
-        .container-admin {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            max-width: 900px;
+        .container {
+            max-width: 800px;
             margin: auto;
+            text-align: center;
         }
-        .column {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
+        iframe {
+            width: 100%;
+            height: 650px;
+            border: none;
+            margin-top: 20px;
         }
-        textarea.raztegljivo {
-            resize: none;
-            overflow: hidden;
-            font-size: 0.9rem;
-            padding: 5px;
-            height: auto;
-            min-height: 40px;
-        }
-        .stevec {
-            color: red;
-            font-weight: bold;
-        }
-        .prispevaj-btn {
-            grid-column: span 2;
-            background-color: gray;
-            color: white;
-            font-size: 1.2rem;
-            padding: 10px;
+        select, button {
+            margin-top: 15px;
+            padding: 8px;
+            font-size: 16px;
         }
     </style>
 </head>
 <body>
 
-<div class="container-admin">
+<div class="container">
+    <h1 class="mb-4">Sudoku uganke</h1>
 
-    <h2 class="text-center" style="grid-column: span 2;">ADMINISTRACIJA VUS</h2>
+    <form method="post">
+        <select name="tezavnost">
+            {% for tezavnost in tezavnosti %}
+            <option value="{{ tezavnost }}" {% if tezavnost == izbrana_tezavnost %}selected{% endif %}>
+                {{ tezavnost }}
+            </option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-primary">Izberi težavnost</button>
+    </form>
 
-    <!-- PREVERI -->
-    <div class="column">
-        <button class="btn btn-outline-info btn-sm" onclick="preveriGeslo()">PREVERI</button>
-        <input type="text" id="gesloPreveri" class="form-control form-control-sm" placeholder="Vnesi geslo za preverjanje">
-        <div id="rezultatPreverjanja" class="border p-2 rounded" style="min-height:150px; overflow:auto;"></div>
-    </div>
-
-    <!-- DODAJ, ŠTEVEC, ZAMENJAJ -->
-    <div class="column">
-        <button class="btn btn-outline-success btn-sm" onclick="dodajGeslo()">DODAJ</button>
-        <input type="text" id="novoGeslo" class="form-control form-control-sm" placeholder="Novo geslo">
-        <textarea id="opisNovegaGesla" class="form-control raztegljivo" placeholder="Opis novega gesla"></textarea>
-
-        <div class="stevec">ŠTEVEC: nalaganje...</div>
-
-        <button class="btn btn-secondary btn-sm" onclick="pretvoriOznaceno()" onmousedown="event.preventDefault();">PRETVORI OZNAČENO</button>
-        <button class="btn btn-secondary btn-sm" onclick="pretvoriCrke()">PRETVORI MALE ↔ VELIKE</button>
-        <button class="btn btn-outline-warning btn-sm">ZAMENJAJ</button>
-        <textarea class="form-control raztegljivo" placeholder="Stari izraz"></textarea>
-        <textarea class="form-control raztegljivo" placeholder="Novi izraz"></textarea>
-    </div>
-
-    <!-- Prispevaj geslo -->
-    <button class="btn prispevaj-btn">PRISPEVAJ GESLO</button>
-
+    {% if sudoku_datoteka %}
+    <iframe src="{{ url_for('static', filename=sudoku_datoteka) }}"></iframe>
+    {% endif %}
 
 </div>
-
-<script>
-document.addEventListener("DOMContentLoaded", function(){
-    fetch('/stevec_gesel')
-    .then(response => response.json())
-    .then(data => {
-        document.querySelector('.stevec').textContent = "Gesel v bazi: " + data.steviloGesel;
-    })
-    .catch(err => console.error("Napaka pri števcu:", err));
-});
-
-function autoResize(textarea) {
-    textarea.style.height = 'auto';
-    textarea.style.height = textarea.scrollHeight + 'px';
-}
-
-function preveriGeslo() {
-    const geslo = document.getElementById('gesloPreveri').value;
-    fetch('/preveri', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({geslo: geslo})
-    })
-    .then(response => response.json())
-    .then(data => {
-        const rezultat = document.getElementById('rezultatPreverjanja');
-        rezultat.innerHTML = '';
-
-        if(data.obstaja){
-            data.gesla.forEach(function(g, index){
-                const uniqueId = `geslo-${index}`;
-                rezultat.innerHTML += `
-                <div id="${uniqueId}" class="p-2 border-bottom">
-                    <strong>${g.geslo}</strong><br>
-                    <textarea oninput="autoResize(this)" id="opis-${uniqueId}" class="form-control raztegljivo">${g.opis}</textarea>
-                    <div class="mt-1">
-                        <button class="btn btn-warning btn-sm me-1" onclick="urediGeslo('${uniqueId}', '${g.geslo}')">UREDI</button>
-                        <button class="btn btn-danger btn-sm" onclick="brisiGeslo('${uniqueId}', '${g.geslo}')">BRIŠI</button>
-                    </div>
-                </div>`;
-            });
-            document.querySelectorAll('.raztegljivo').forEach(autoResize);
-        } else {
-            rezultat.textContent = 'Ni zadetkov.';
-        }
-    });
-}
-
-function urediGeslo(uniqueId, geslo) {
-    const noviOpis = document.getElementById(`opis-${uniqueId}`).value;
-
-    fetch('/uredi_geslo', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({geslo: geslo, opis: noviOpis})
-    })
-    .then(response => response.json())
-    .then(data => {
-        alert(data.sporocilo);
-    });
-}
-
-function brisiGeslo(uniqueId, geslo) {
-    const opis = document.getElementById(`opis-${uniqueId}`).value;
-
-    if (confirm(`Res želiš izbrisati geslo: ${geslo}?`)){
-        fetch('/brisi_geslo', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({geslo: geslo, opis: opis})
-        })
-        .then(response => response.json())
-        .then(data => {
-            alert(data.sporocilo);
-            if (data.status === "uspesno"){
-                document.getElementById(uniqueId).remove();
-            }
-        })
-        .catch(err => {
-            console.error("Napaka:", err);
-            alert("Napaka pri brisanju gesla.");
-        });
-    }
-}
-
-
-function dodajGeslo() {
-    const novoGeslo = document.getElementById('novoGeslo').value;
-    const opis = document.getElementById('opisNovegaGesla').value;
-
-    fetch('/dodaj_geslo', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({geslo: novoGeslo, opis: opis})
-    })
-    .then(response => response.json())
-    .then(data => {
-        alert(data.sporocilo);
-        if (data.status === "uspesno"){
-            document.getElementById('novoGeslo').value = '';
-            document.getElementById('opisNovegaGesla').value = '';
-            location.reload();
-        }
-    });
-}
-function pretvoriCrke() {
-    if (confirm("Res želiš pretvoriti male črke v VELIKE in obratno v vseh opisih?")) {
-        fetch('/pretvori_crke', { method: 'POST' })
-        .then(response => response.json())
-        .then(data => {
-            alert(data.sporocilo);
-        })
-        .catch(err => {
-            console.error("Napaka:", err);
-            alert("Napaka pri pretvorbi črk.");
-        });
-    }
-}
-function pretvoriOznaceno() {
-    const activeEl = document.activeElement;
-    console.log("Aktivni element:", activeEl);
-
-    if (activeEl && (activeEl.tagName === 'TEXTAREA' || activeEl.tagName === 'INPUT')) {
-        const start = activeEl.selectionStart;
-        const end = activeEl.selectionEnd;
-        console.log("Izbor teksta od:", start, "do:", end);
-
-        if (start !== end) {
-            const original = activeEl.value;
-            const izbrano = original.substring(start, end);
-            console.log("Izbrano besedilo:", izbrano);
-
-            const pretvorjeno = swapCase(izbrano);
-            console.log("Pretvorjeno besedilo:", pretvorjeno);
-
-            activeEl.value = original.substring(0, start) + pretvorjeno + original.substring(end);
-            activeEl.focus();
-            activeEl.setSelectionRange(start, end);
-        } else {
-            alert("Prosim označi besedilo, ki ga želiš pretvoriti.");
-        }
-    } else {
-        alert("Najprej klikni v polje z besedilom in označi želeno besedilo.");
-    }
-}
-
-function swapCase(str) {
-    return str.split('').map(function(c) {
-        return c === c.toUpperCase() ? c.toLowerCase() : c.toUpperCase();
-    }).join('');
-}
-
-
-function swapCase(str) {
-    return str.split('').map(function(c) {
-        return c === c.toUpperCase() ? c.toLowerCase() : c.toUpperCase();
-    }).join('');
-}
-
-// Funkcija za menjavo malih/velikih črk (swapcase)
-function swapCase(str) {
-    return str.split('').map(function(c) {
-        return c === c.toUpperCase() ? c.toLowerCase() : c.toUpperCase();
-    }).join('');
-}
-
-
-// Funkcija za menjavo malih/velikih črk (swapcase)
-function swapCase(str) {
-    return str.split('').map(function(c) {
-        return c === c.toUpperCase() ? c.toLowerCase() : c.toUpperCase();
-    }).join('');
-}
-
-
-</script>
 
 </body>
 </html>
