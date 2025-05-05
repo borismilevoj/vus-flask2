@@ -9,8 +9,12 @@ from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
-os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
+if not os.path.exists(app.config['UPLOAD_FOLDER']):
+    os.makedirs(app.config['UPLOAD_FOLDER'])
+
 app.secret_key = 'tvoja_skrivna_koda'
+
 
 # Funkcija, ki preveri dovoljene končnice slik
 def allowed_file(filename):
@@ -155,9 +159,9 @@ def isci_po_opisu():
 
 
 
-@app.route('/preveri', methods=['POST'])
 @app.route('/preveri', methods=['GET', 'POST'])
 def preveri():
+    gesla = []
     geslo = opis = ime_slike = None
     if request.method == 'POST':
         geslo = request.form['geslo_za_preverjanje']
@@ -168,22 +172,20 @@ def preveri():
             ime_slike = secure_filename(slika.filename)
             slika.save(os.path.join(app.config['UPLOAD_FOLDER'], ime_slike))
 
-        # shrani sliko ali preveri geslo
         conn = sqlite3.connect('VUS.db')
-        c = conn.cursor()
-        c.execute("SELECT * FROM slovar WHERE GESLO = ?", (geslo,))
-        rezultat = c.fetchone()
+        cur = conn.cursor()
+        cur.execute("SELECT rowid, GESLO, OPIS, SLIKA FROM slovar WHERE GESLO = ?", (geslo,))
+        gesla = cur.fetchall()
 
-        if rezultat:
-            opis = rezultat[1]  # ali ustrezen indeks za opis
-            # po potrebi shrani sliko obstoječemu geslu
-            if ime_slike:
-                c.execute("UPDATE slovar SET SLIKA = ? WHERE GESLO = ?", (ime_slike, geslo))
-                conn.commit()
+        # če obstaja geslo, shrani sliko obstoječemu geslu (prvi zapis)
+        if gesla and ime_slike:
+            cur.execute("UPDATE slovar SET SLIKA = ? WHERE rowid = ?", (ime_slike, gesla[0][0]))
+            conn.commit()
 
         conn.close()
 
-    return render_template('preveri.html', geslo=geslo, opis=opis, slika=ime_slike)
+    return render_template('preveri.html', gesla=gesla, iskano_geslo=geslo)
+
 
 
 
@@ -217,39 +219,36 @@ def dodaj_geslo():
 @app.route('/uredi_geslo', methods=['POST'])
 def uredi_geslo():
     data = request.get_json()
-    geslo = data['geslo']
+    geslo_id = data['id']
     novi_opis = data['opis']
 
     try:
         conn = get_db()
         cur = conn.cursor()
-        cur.execute("UPDATE slovar SET OPIS=? WHERE GESLO=?", (novi_opis, geslo))
+        cur.execute("UPDATE slovar SET OPIS=? WHERE rowid=?", (novi_opis, geslo_id))
         conn.commit()
         conn.close()
 
         return jsonify({"status": "uspesno", "sporocilo": "Geslo uspešno urejeno!"})
     except Exception as e:
-        print(e)
-        return jsonify({"status": "napaka", "sporocilo": "Prišlo je do napake pri urejanju."})
-
+        return jsonify({"status": "napaka", "sporocilo": f"Napaka: {str(e)}"})
 
 @app.route('/brisi_geslo', methods=['POST'])
 def brisi_geslo():
     data = request.get_json()
-    geslo = data['geslo']
-    opis = data['opis']
+    geslo_id = data['id']
 
     try:
         conn = get_db()
         cur = conn.cursor()
-        cur.execute("DELETE FROM slovar WHERE GESLO=? AND OPIS=?", (geslo, opis))
+        cur.execute("DELETE FROM slovar WHERE rowid=?", (geslo_id,))
         conn.commit()
         conn.close()
 
         return jsonify({"status": "uspesno", "sporocilo": "Geslo uspešno izbrisano!"})
     except Exception as e:
-        print(e)
-        return jsonify({"status": "napaka", "sporocilo": "Napaka pri brisanju."})
+        return jsonify({"status": "napaka", "sporocilo": f"Napaka: {str(e)}"})
+
 
 @app.route('/zamenjaj_geslo', methods=['POST'])
 def zamenjaj_geslo():
@@ -366,6 +365,7 @@ def sudoku_tezavnost(stopnja):
 
 @app.route('/admin', methods=['GET', 'POST'])
 def admin():
+    gesla = []
     if request.method == 'POST':
         geslo = request.form['geslo']
         opis = request.form['opis']
@@ -380,15 +380,14 @@ def admin():
         cur = conn.cursor()
         cur.execute("INSERT INTO slovar (GESLO, OPIS, SLIKA) VALUES (?, ?, ?)", (geslo, opis, ime_slike))
         conn.commit()
+
+        # Prikaži samo pravkar dodano geslo
+        cur.execute("SELECT rowid, GESLO, OPIS, SLIKA FROM slovar WHERE GESLO=? ORDER BY rowid DESC", (geslo,))
+        gesla = cur.fetchall()
         conn.close()
 
-    conn = sqlite3.connect('VUS.db')
-    cur = conn.cursor()
-    cur.execute("SELECT rowid, GESLO, OPIS, SLIKA FROM slovar ORDER BY rowid DESC")
-    gesla = cur.fetchall()
-    conn.close()
-
     return render_template('admin.html', gesla=gesla)
+
 
 
 if __name__ == '__main__':
