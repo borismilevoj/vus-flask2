@@ -29,11 +29,17 @@
         <h1>VUS – Veliki ugankarski slovar</h1>
         <p>Slovar za križanke in uganke. Poišči gesla po vzorcu ali opisu.</p>
 
-        <a href="{{ url_for('isci_vzorec') }}" class="btn btn-custom">Išči po vzorcu</a>
-        <a href="{{ url_for('isci_po_opisu') }}" class="btn btn-custom">Išči po opisu</a>
-        <a href="{{ url_for('prikazi_krizanko') }}">Križanke</a>
-        <a href="{{ url_for('sudoku') }}" class="btn btn-custom">Sudoku</a>
-        <a href="{{ url_for('prispevaj_geslo') }}" class="btn btn-custom">Prispevaj geslo</a>
+        <div class="d-flex flex-wrap justify-content-center">
+            <a href="{{ url_for('isci_vzorec') }}" class="btn btn-custom">Išči po vzorcu</a>
+            <a href="{{ url_for('isci_po_opisu') }}" class="btn btn-custom">Išči po opisu</a>
+            <a href="{{ url_for('prikazi_krizanko') }}" class="btn btn-custom">Križanke</a>
+            <a href="{{ url_for('sudoku') }}" class="btn btn-custom">Sudoku</a>
+        </div>
+
+        <!-- Prispevaj geslo v svoji vrstici -->
+        <div class="d-flex justify-content-center mt-2">
+            <a href="{{ url_for('prispevaj_geslo') }}" class="btn btn-custom">Prispevaj geslo</a>
+        </div>
     </div>
 </body>
 </html>
