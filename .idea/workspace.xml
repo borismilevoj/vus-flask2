@@ -5,22 +5,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="7b096a74-7ed9-4344-af5e-d7be2fa85ca4" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/popravi_kodiranje.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/pretvori.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/puz_v_xml.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/static/sudoku_easy.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/static/sudoku_hard.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/static/sudoku_medium.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/static/sudoku_very_hard.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/krizanka_stran.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/sudoku.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/zdruzi_baze.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/VUS.db" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/krizanka.py" beforeDir="false" afterPath="$PROJECT_DIR$/krizanka.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/sudoku_easy.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/sudoku_hard.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/sudoku_medium.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/sudoku_very_hard.html" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/templates/admin.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/admin.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/base.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/base.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/templates/home.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/home.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
