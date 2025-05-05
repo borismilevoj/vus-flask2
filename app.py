@@ -3,10 +3,19 @@ from pretvornik import normaliziraj_geslo
 import sqlite3
 from krizanka import pridobi_podatke_iz_xml
 from datetime import datetime
+import os
+from werkzeug.utils import secure_filename
+
 
 app = Flask(__name__)
+app.config['UPLOAD_FOLDER'] = 'static/uploads'
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 app.secret_key = 'tvoja_skrivna_koda'
 
+# Funkcija, ki preveri dovoljene končnice slik
+def allowed_file(filename):
+    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 # Povezava z bazo
 def get_db():
@@ -48,10 +57,6 @@ def preveri_crko():
 
 # tu naprej so še ostale tvoje route...
 
-
-@app.route('/')
-def index():
-    return render_template('home.html')
 
 
 @app.route('/')
@@ -151,24 +156,35 @@ def isci_po_opisu():
 
 
 @app.route('/preveri', methods=['POST'])
+@app.route('/preveri', methods=['GET', 'POST'])
 def preveri():
-    data = request.get_json()
-    geslo = data.get('geslo', '').upper().replace(' ', '')
+    geslo = opis = ime_slike = None
+    if request.method == 'POST':
+        geslo = request.form['geslo_za_preverjanje']
+        slika = request.files.get('slika_za_preverjanje')
 
-    conn = get_db()
-    cur = conn.cursor()
-    cur.execute("""
-        SELECT GESLO, OPIS FROM slovar 
-        WHERE UPPER(REPLACE(GESLO,' ','')) = ?
-    """, (geslo,))
-    rezultat = cur.fetchall()
-    conn.close()
+        ime_slike = None
+        if slika and allowed_file(slika.filename):
+            ime_slike = secure_filename(slika.filename)
+            slika.save(os.path.join(app.config['UPLOAD_FOLDER'], ime_slike))
 
-    if rezultat:
-        gesla = [{"geslo": r[0], "opis": r[1]} for r in rezultat]
-        return jsonify({"obstaja": True, "gesla": gesla})
-    else:
-        return jsonify({"obstaja": False})
+        # shrani sliko ali preveri geslo
+        conn = sqlite3.connect('VUS.db')
+        c = conn.cursor()
+        c.execute("SELECT * FROM slovar WHERE GESLO = ?", (geslo,))
+        rezultat = c.fetchone()
+
+        if rezultat:
+            opis = rezultat[1]  # ali ustrezen indeks za opis
+            # po potrebi shrani sliko obstoječemu geslu
+            if ime_slike:
+                c.execute("UPDATE slovar SET SLIKA = ? WHERE GESLO = ?", (ime_slike, geslo))
+                conn.commit()
+
+        conn.close()
+
+    return render_template('preveri.html', geslo=geslo, opis=opis, slika=ime_slike)
+
 
 
 
@@ -348,9 +364,32 @@ def sudoku_tezavnost(stopnja):
     return render_template(ime_datoteke, stopnja=stopnja)
 
 
-@app.route('/admin')
+@app.route('/admin', methods=['GET', 'POST'])
 def admin():
-    return render_template('admin.html')
+    if request.method == 'POST':
+        geslo = request.form['geslo']
+        opis = request.form['opis']
+        slika = request.files['slika']
+
+        ime_slike = None
+        if slika and allowed_file(slika.filename):
+            ime_slike = secure_filename(slika.filename)
+            slika.save(os.path.join(app.config['UPLOAD_FOLDER'], ime_slike))
+
+        conn = sqlite3.connect('VUS.db')
+        cur = conn.cursor()
+        cur.execute("INSERT INTO slovar (GESLO, OPIS, SLIKA) VALUES (?, ?, ?)", (geslo, opis, ime_slike))
+        conn.commit()
+        conn.close()
+
+    conn = sqlite3.connect('VUS.db')
+    cur = conn.cursor()
+    cur.execute("SELECT rowid, GESLO, OPIS, SLIKA FROM slovar ORDER BY rowid DESC")
+    gesla = cur.fetchall()
+    conn.close()
+
+    return render_template('admin.html', gesla=gesla)
+
 
 if __name__ == '__main__':
     app.run(debug=True, port=10000)
