@@ -66,6 +66,13 @@
     background-color: #f4f4f4;
   }
 
+  .stevecRezultatov {
+    font-weight: bold;
+    margin-top: 20px;
+    text-align: center;
+    color: #004b6b;
+  }
+
 </style>
 {% endblock %}
 
@@ -77,6 +84,7 @@
   <button type="submit">Išči</button>
 </form>
 
+<div id="stevecRezultatov" class="stevecRezultatov"></div>
 <div id="rezultatiOpis"></div>
 
 {% endblock %}
@@ -89,8 +97,8 @@ function isciOpis(event) {
 
   fetch('/isci_opis', {
     method: 'POST',
-    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-    body: 'opis=' + encodeURIComponent(opis)
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({iskalni_niz: opis})
   })
   .then(response => {
     if (!response.ok) {
@@ -110,21 +118,21 @@ function prikaziRezultate(data) {
   let container = document.getElementById("rezultatiOpis");
   container.innerHTML = "";
 
-  let steviloZadetkov = data.length;
-  let infoZadetkov = `<p><strong>Najdeno: ${steviloZadetkov} zadetkov.</strong></p>`;
+  let steviloZadetkov = data.rezultati.length;
+  document.getElementById("stevecRezultatov").innerHTML = `Najdeno: ${steviloZadetkov} zadetkov.`;
 
   if (steviloZadetkov === 0) {
-    container.innerHTML = infoZadetkov + "<p>Ni zadetkov.</p>";
+    container.innerHTML = "<p>Ni zadetkov.</p>";
     return;
   }
 
   let tabela = "<table><tr><th>GESLO</th><th>OPIS</th></tr>";
-  data.forEach(item => {
+  data.rezultati.forEach(item => {
     tabela += `<tr><td>${item.geslo}</td><td>${item.opis}</td></tr>`;
   });
   tabela += "</table>";
 
-  container.innerHTML = infoZadetkov + tabela;
+  container.innerHTML = tabela;
 }
 
 </script>
