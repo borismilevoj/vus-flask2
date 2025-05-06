@@ -22,6 +22,12 @@
             margin: 10px;
             font-weight: bold;
         }
+        .stevec-home {
+            font-size: 1.4rem;
+            font-weight: bold;
+            margin-top: 20px;
+            color: #ffc107;
+        }
     </style>
 </head>
 <body>
@@ -36,10 +42,29 @@
             <a href="{{ url_for('sudoku') }}" class="btn btn-custom">Sudoku</a>
         </div>
 
-        <!-- Prispevaj geslo v svoji vrstici -->
         <div class="d-flex justify-content-center mt-2">
             <a href="{{ url_for('prispevaj_geslo') }}" class="btn btn-custom">Prispevaj geslo</a>
         </div>
+
+        <!-- Dodan števec tukaj -->
+        <div id="stevecHome" class="stevec-home">
+            Nalaganje števila gesel...
+        </div>
     </div>
+
+    <!-- JavaScript za števec -->
+    <script>
+document.addEventListener("DOMContentLoaded", function(){
+    fetch('/stevec_gesel')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('stevecHome').innerText = "Gesel v bazi: " + data.steviloGesel;
+        })
+        .catch(err => {
+            document.getElementById('stevecHome').innerText = "Napaka pri nalaganju števila gesel.";
+        });
+});
+</script>
+
 </body>
 </html>
