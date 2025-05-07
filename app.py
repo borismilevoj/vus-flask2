@@ -103,17 +103,24 @@ def brisi_geslo():
 def isci_vzorec():
     if request.method == 'POST':
         data = request.get_json()
-        if not data:
-            return jsonify({"error": "Manjkajo JSON podatki"}), 400
-
-        vzorec = data.get('vzorec')
+        vzorec = data.get('vzorec').replace('_', '%')
         dodatno = data.get('dodatno')
 
-        # Primer iskanja v bazi (prilagodi svoji bazi in logiki):
+        # To je rešitev, ki upošteva natančno dolžino gesla:
+        dolzina_vzorca = len(data.get('vzorec'))
+
         conn = get_db()
         cursor = conn.cursor()
-        query = "SELECT GESLO, OPIS FROM slovar WHERE GESLO LIKE ? AND OPIS LIKE ? LIMIT 100"
-        cursor.execute(query, (vzorec.replace('_', '%'), f'%{dodatno}%'))
+
+        # Točno določena dolžina gesla
+        query = """
+            SELECT GESLO, OPIS FROM slovar 
+            WHERE GESLO LIKE ? 
+            AND LENGTH(GESLO) = ? 
+            AND OPIS LIKE ? LIMIT 100
+        """
+
+        cursor.execute(query, (vzorec, dolzina_vzorca, f'%{dodatno}%'))
         results = cursor.fetchall()
         conn.close()
 
