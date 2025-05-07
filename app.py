@@ -103,7 +103,7 @@ def brisi_geslo():
 def isci_vzorec():
     if request.method == 'POST':
         data = request.get_json()
-        vzorec = data.get('vzorec').replace('_', '_')  # tukaj ne spreminjaš nič
+        vzorec = data.get('vzorec').replace('_', '_').upper()
         dodatno = data.get('dodatno')
         dolzina_vzorca = len(data.get('vzorec'))
 
@@ -112,8 +112,8 @@ def isci_vzorec():
 
         query = """
             SELECT GESLO, OPIS FROM slovar 
-            WHERE GESLO LIKE ? 
-            AND LENGTH(GESLO) = ? 
+            WHERE TRIM(GESLO) LIKE ? 
+            AND LENGTH(TRIM(GESLO)) = ? 
             AND OPIS LIKE ? LIMIT 100
         """
 
@@ -121,10 +121,11 @@ def isci_vzorec():
         results = cursor.fetchall()
         conn.close()
 
-        return jsonify([{"GESLO": row["GESLO"], "OPIS": row["OPIS"]} for row in results])
+        return jsonify([{"GESLO": row["GESLO"].strip(), "OPIS": row["OPIS"]} for row in results])
 
     else:
         return render_template('isci_vzorec.html')
+
 
 
 
