@@ -1,332 +1,171 @@
 from flask import Flask, request, jsonify, render_template, session
 from pretvornik import normaliziraj_geslo
 import sqlite3
-from krizanka import pridobi_podatke_iz_xml
-from datetime import datetime
 import os
 from werkzeug.utils import secure_filename
+from krizanka import pridobi_podatke_iz_xml
 
 
 app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = 'static/uploads'
+app.config['PROPAGATE_EXCEPTIONS'] = True
+app.secret_key = 'tvoja_skrivna_koda'
 
+app.config['UPLOAD_FOLDER'] = 'static/uploads'
 if not os.path.exists(app.config['UPLOAD_FOLDER']):
     os.makedirs(app.config['UPLOAD_FOLDER'])
 
-app.secret_key = 'tvoja_skrivna_koda'
 
-
-# Funkcija, ki preveri dovoljene končnice slik
-def allowed_file(filename):
-    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-# Povezava z bazo
+# Database connection
 def get_db():
     conn = sqlite3.connect('VUS.db')
     conn.row_factory = sqlite3.Row
     return conn
 
 
-@app.route('/krizanka')
-def prikazi_krizanko():
-    podatki = pridobi_podatke_iz_xml('1.xml')
-    # print("Preverjanje podatkov pred pošiljanjem v predlogo:", podatki)
-    return render_template('krizanka.html', podatki=podatki)
-
-@app.route('/preveri_crko', methods=['POST'])
-def preveri_crko():
-    data = request.json
-    x = data['x']
-    y = data['y']
-    crka = data['crka'].upper()
-
-    podatki = pridobi_podatke_iz_xml('1.xml')
-
-    for geslo in podatki['gesla_opisi']:
-        gx, gy, smer, dolzina = geslo['x'], geslo['y'], geslo['smer'], geslo['dolzina']
-
-        if smer == 'across' and y == gy and gx <= x < gx + dolzina:
-            index = x - gx
-            pravilna_crka = geslo['solution'][index].upper()
-            return jsonify({'pravilno': crka == pravilna_crka})
-
-        if smer == 'down' and x == gx and gy <= y < gy + dolzina:
-            index = y - gy
-            pravilna_crka = geslo['solution'][index].upper()
-            return jsonify({'pravilno': crka == pravilna_crka})
-
-    return jsonify({'pravilno': False})
-
-
-# tu naprej so še ostale tvoje route...
-
-
+@app.route('/admin')
+def admin():
+    return render_template('admin.html')
 
 @app.route('/')
 def home():
-    import os
-    pot = os.path.abspath("templates/home.html")
-    print("Trenutna pot do home.html:", pot)
-
-    with open(pot, "r", encoding="utf-8") as f:
-        vsebina = f.read()
-        print("Vsebina home.html:\n", vsebina[:500])  # prvih 500 znakov
-
     return render_template('home.html')
 
 
-@app.route('/prispevaj')
-def prispevaj_geslo():
-    return render_template('prispevaj.html')
+@app.route('/preveri', methods=['POST'])
+def preveri_geslo():
+    data = request.get_json()
+    geslo = data['geslo'].strip().upper()
 
+    conn = sqlite3.connect('VUS.db')
+    cur = conn.cursor()
 
-@app.route('/isci_vzorec', methods=['GET', 'POST'])
-def isci_vzorec():
-    gesla = []
-    vzorec = ''
-    dodatno = ''
+    # Dodan TRIM(), da odstrani presledke iz baze
+    cur.execute("SELECT geslo, opis FROM slovar WHERE TRIM(UPPER(geslo)) = ?", (geslo,))
+    vrstice = cur.fetchall()
 
-    if request.method == 'POST':
-        podatki = request.json
-        vzorec = podatki.get('vzorec', '').upper()
-        dodatno = podatki.get('dodatno', '').upper()
+    conn.close()
 
-        dolzina = len(vzorec)
-
-        sql_vzorec = vzorec.replace('_', '%')
-        sql = """
-            SELECT GESLO, OPIS 
-            FROM slovar 
-            WHERE LENGTH(REPLACE(GESLO,' ','')) = ?
-            AND REPLACE(REPLACE(GESLO,' ',''), '-', '') LIKE ?
-        """
-
-        params = [dolzina, sql_vzorec]
-
-        if dodatno:
-            sql += " AND UPPER(OPIS) LIKE ?"
-            params.append(f"%{dodatno}%")
-
-        conn = get_db()
-        cur = conn.cursor()
-        cur.execute(sql, params)
-        rezultati = cur.fetchall()
-        conn.close()
-
-        gesla = [{'GESLO': r['GESLO'], 'OPIS': r['OPIS']} for r in rezultati]
-
-        return jsonify(gesla)
-
-    return render_template("isci_vzorec.html")
-
-
-
-
-@app.route('/isci_opis', methods=['GET', 'POST'])
-def isci_po_opisu():
-    if request.method == 'POST':
-        opis = request.form.get('opis', '').strip()
-        if not opis:
-            return jsonify({'error': "Vnesi opis za iskanje."}), 400
-
-        normaliziran_opis = normaliziraj_geslo(opis).upper()
-        besede = normaliziran_opis.split()
-
-        pogoji = []
-        params = []
-
-        for beseda in besede:
-            pogoji.append("UPPER(NORMALIZIRAN_OPIS) LIKE ?")
-            params.append(f"%{beseda}%")
-
-        sql = "SELECT GESLO, OPIS FROM slovar WHERE " + " AND ".join(pogoji)
-
-        conn = get_db()
-        cur = conn.cursor()
-        try:
-            cur.execute(sql, params)
-            rezultati = cur.fetchall()
-            gesla = [{"geslo": geslo, "opis": opis} for geslo, opis in rezultati]
-            return jsonify(gesla)
-        except Exception as e:
-            print("Napaka pri izvajanju SQL:", e)
-            return jsonify({'error': str(e)}), 500
-        finally:
-            conn.close()
-
-    return render_template("isci_opis.html")
-
-
-
-@app.route('/preveri', methods=['GET', 'POST'])
-def preveri():
-    gesla = []
-    geslo = opis = ime_slike = None
-    if request.method == 'POST':
-        geslo = request.form['geslo_za_preverjanje']
-        slika = request.files.get('slika_za_preverjanje')
-
-        ime_slike = None
-        if slika and allowed_file(slika.filename):
-            ime_slike = secure_filename(slika.filename)
-            slika.save(os.path.join(app.config['UPLOAD_FOLDER'], ime_slike))
-
-        conn = sqlite3.connect('VUS.db')
-        cur = conn.cursor()
-        cur.execute("SELECT rowid, GESLO, OPIS, SLIKA FROM slovar WHERE GESLO = ?", (geslo,))
-        gesla = cur.fetchall()
-
-        # če obstaja geslo, shrani sliko obstoječemu geslu (prvi zapis)
-        if gesla and ime_slike:
-            cur.execute("UPDATE slovar SET SLIKA = ? WHERE rowid = ?", (ime_slike, gesla[0][0]))
-            conn.commit()
-
-        conn.close()
-
-    return render_template('preveri.html', gesla=gesla, iskano_geslo=geslo)
-
+    if vrstice:
+        return jsonify({"obstaja": True, "gesla": [{"geslo": v[0].strip(), "opis": v[1]} for v in vrstice]})
+    else:
+        return jsonify({"obstaja": False})
 
 
 
 
 @app.route('/dodaj_geslo', methods=['POST'])
 def dodaj_geslo():
-    data = request.get_json()
-    geslo = data['geslo']
-    opis = data['opis']
+    data = request.json
+    geslo = data.get('geslo')
+    opis = data.get('opis')
 
-    try:
-        conn = get_db()
-        cur = conn.cursor()
-        cur.execute("INSERT INTO slovar (GESLO, OPIS) VALUES (?, ?)", (geslo, opis))
-        conn.commit()
-        conn.close()
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("INSERT INTO slovar (GESLO, OPIS) VALUES (?, ?)", (geslo, opis))
+    conn.commit()
+    conn.close()
 
-        return jsonify({"status": "uspesno", "sporocilo": "Geslo uspešno dodano!"})
+    return jsonify({"status": "uspesno", "sporocilo": "Geslo uspešno dodano!"})
 
-    except sqlite3.IntegrityError:
-        return jsonify({"status": "napaka", "sporocilo": "Geslo že obstaja v bazi."})
-
-    except Exception as e:
-        print(e)  # če je napaka, izpiši za lažje reševanje težav
-        return jsonify({"status": "napaka", "sporocilo": "Prišlo je do napake."})
-
-
-
-
+# UREJANJE GESLA
 
 @app.route('/uredi_geslo', methods=['POST'])
 def uredi_geslo():
     data = request.get_json()
-    geslo_id = data['id']
-    novi_opis = data['opis']
+    geslo = data['geslo']
+    nov_opis = data['opis']
 
-    try:
-        conn = get_db()
-        cur = conn.cursor()
-        cur.execute("UPDATE slovar SET OPIS=? WHERE rowid=?", (novi_opis, geslo_id))
-        conn.commit()
-        conn.close()
+    conn = sqlite3.connect('VUS.db')
+    cur = conn.cursor()
+    cur.execute("UPDATE slovar SET opis = ? WHERE TRIM(UPPER(geslo)) = ?", (nov_opis, geslo.upper()))
+    conn.commit()
+    conn.close()
 
-        return jsonify({"status": "uspesno", "sporocilo": "Geslo uspešno urejeno!"})
-    except Exception as e:
-        return jsonify({"status": "napaka", "sporocilo": f"Napaka: {str(e)}"})
+    return jsonify({"sporocilo": f"Geslo '{geslo}' je uspešno posodobljeno."})
 
+
+# BRISANJE
 @app.route('/brisi_geslo', methods=['POST'])
 def brisi_geslo():
     data = request.get_json()
-    geslo_id = data['id']
+    geslo = data['geslo']
 
-    try:
-        conn = get_db()
-        cur = conn.cursor()
-        cur.execute("DELETE FROM slovar WHERE rowid=?", (geslo_id,))
-        conn.commit()
-        conn.close()
-
-        return jsonify({"status": "uspesno", "sporocilo": "Geslo uspešno izbrisano!"})
-    except Exception as e:
-        return jsonify({"status": "napaka", "sporocilo": f"Napaka: {str(e)}"})
-
-
-@app.route('/zamenjaj_geslo', methods=['POST'])
-def zamenjaj_geslo():
-    data = request.get_json()
-    original = data.get('original', '').strip()
-    zamenjava = data.get('zamenjava', '').strip()
-
-    conn = get_db()
+    conn = sqlite3.connect('VUS.db')
     cur = conn.cursor()
-    cur.execute("""
-        UPDATE slovar
-        SET GESLO = REPLACE(GESLO, ?, ?)
-        WHERE GESLO LIKE ?
-    """, (original, zamenjava, f"%{original}%"))
+    cur.execute("DELETE FROM slovar WHERE TRIM(UPPER(geslo)) = ?", (geslo.upper(),))
     conn.commit()
-    spremembe = cur.rowcount
     conn.close()
 
-    return jsonify({"spremembe": spremembe})
+    return jsonify({"sporocilo": f"Geslo '{geslo}' je bilo uspešno izbrisano."})
 
 
+@app.route('/isci_vzorec', methods=['GET', 'POST'])
+def isci_vzorec():
+    if request.method == 'POST':
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "Manjkajo JSON podatki"}), 400
+
+        vzorec = data.get('vzorec')
+        dodatno = data.get('dodatno')
+
+        # Primer iskanja v bazi (prilagodi svoji bazi in logiki):
+        conn = get_db()
+        cursor = conn.cursor()
+        query = "SELECT GESLO, OPIS FROM slovar WHERE GESLO LIKE ? AND OPIS LIKE ? LIMIT 100"
+        cursor.execute(query, (vzorec.replace('_', '%'), f'%{dodatno}%'))
+        results = cursor.fetchall()
+        conn.close()
+
+        return jsonify([{"GESLO": row["GESLO"], "OPIS": row["OPIS"]} for row in results])
+
+    else:
+        return render_template('isci_vzorec.html')
 
 
-@app.route('/stevec_gesel', methods=['GET'])
+@app.route('/isci_opis', methods=['GET', 'POST'])
+def isci_opis():
+    if request.method == 'POST':
+        podatki = request.get_json()
+        opis = podatki.get('opis', '')
+
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT GESLO, OPIS FROM slovar WHERE OPIS LIKE ? LIMIT 100", (f"%{opis}%",))
+        rezultat = cursor.fetchall()
+        conn.close()
+
+        return jsonify([{'GESLO': r['GESLO'], 'OPIS': r['OPIS']} for r in rezultat])
+
+    return render_template('isci_opis.html')
+
+
+@app.route('/prispevaj_geslo')
+def prispevaj_geslo():
+    return render_template('prispevaj.html')
+
+
+@app.route('/stevec_gesel')
 def stevec_gesel():
-    conn = get_db()
+    conn = sqlite3.connect('VUS.db')
     cur = conn.cursor()
-    steviloGesel = cur.execute("SELECT COUNT(*) FROM slovar").fetchone()[0]
+    cur.execute("SELECT COUNT(*) FROM slovar")
+    steviloGesel = cur.fetchone()[0]
     conn.close()
     return jsonify({"steviloGesel": steviloGesel})
 
-@app.route('/pretvori_crke', methods=['POST'])
-def pretvori_crke():
-    try:
-        conn = get_db()
-        cur = conn.cursor()
-
-        cur.execute("SELECT GESLO, OPIS FROM slovar")
-        gesla = cur.fetchall()
-
-        spremembe = 0
-
-        for geslo, opis in gesla:
-            nov_opis = opis.swapcase()
-            if nov_opis != opis:
-                cur.execute("UPDATE slovar SET OPIS=? WHERE GESLO=? AND OPIS=?", (nov_opis, geslo, opis))
-                spremembe += 1
-
-        conn.commit()
-        conn.close()
-
-        return jsonify({"sporocilo": f"Uspešno pretvorjenih opisov: {spremembe}"})
-
-    except Exception as e:
-        print("NAPAKA:", e)  # Dodaj to vrstico
-        return jsonify({"sporocilo": f"Napaka pri pretvorbi črk: {str(e)}"})
 
 
-# Primer postavitve v app.py (kamorkoli pred if __name__ == '__main__'):
 
-@app.route('/zamenjaj', methods=['POST'])
-def zamenjaj():
-    data = request.get_json()
-    original = data.get('original', '')
-    zamenjava = data.get('zamenjava', '')
 
-    conn = get_db()
-    cur = conn.cursor()
-    cur.execute("""
-        UPDATE slovar
-        SET OPIS = REPLACE(OPIS, ?, ?)
-        WHERE OPIS LIKE ?
-    """, (original, zamenjava, f"%{original}%"))
-    conn.commit()
-    spremembe = cur.rowcount
-    conn.close()
+@app.route('/krizanka')
+def prikazi_krizanko():
+    podatki = pridobi_podatke_iz_xml('1.xml')
+    return render_template('krizanka.html', podatki=podatki)
 
-    return jsonify({"spremembe": spremembe})
+@app.route('/krizanke')
+def krizanke():
+    return render_template('krizanke.html')
 
 
 @app.route('/sudoku', methods=['GET', 'POST'])
@@ -342,7 +181,7 @@ def sudoku():
 
     if request.method == 'POST':
         izbrana_tezavnost = request.form.get('tezavnost')
-        tezavnost_datoteka = tezavnosti[izbrana_tezavnost]
+        tezavnost_datoteka = tezavnosti.get(izbrana_tezavnost)
 
     return render_template('sudoku.html',
                            tezavnosti=tezavnosti,
@@ -350,45 +189,21 @@ def sudoku():
                            tezavnost_datoteka=tezavnost_datoteka)
 
 
+@app.route('/zamenjaj', methods=['POST'])
+def zamenjaj():
+    data = request.json
+    original = data.get('original')
+    zamenjava = data.get('zamenjava')
 
-# Stran za posamezno težavnost Sudoku
-@app.route('/sudoku/<stopnja>')
-def sudoku_tezavnost(stopnja):
-    dovoljene_tezavnosti = ['lažja', 'srednja', 'težka', 'najtežja']
-    if stopnja not in dovoljene_tezavnosti:
-        return "Neveljavna težavnost.", 404
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("UPDATE slovar SET OPIS = REPLACE(OPIS, ?, ?) WHERE OPIS LIKE ?",
+                (original, zamenjava, f"%{original}%"))
+    spremembe = cur.rowcount
+    conn.commit()
+    conn.close()
 
-    # ime datoteke HTML naj bo recimo sudoku_lazja.html, sudoku_srednja.html itd.
-    ime_datoteke = f'sudoku_{stopnja}.html'
-    return render_template(ime_datoteke, stopnja=stopnja)
-
-
-@app.route('/admin', methods=['GET', 'POST'])
-def admin():
-    gesla = []
-    if request.method == 'POST':
-        geslo = request.form['geslo']
-        opis = request.form['opis']
-        slika = request.files['slika']
-
-        ime_slike = None
-        if slika and allowed_file(slika.filename):
-            ime_slike = secure_filename(slika.filename)
-            slika.save(os.path.join(app.config['UPLOAD_FOLDER'], ime_slike))
-
-        conn = sqlite3.connect('VUS.db')
-        cur = conn.cursor()
-        cur.execute("INSERT INTO slovar (GESLO, OPIS, SLIKA) VALUES (?, ?, ?)", (geslo, opis, ime_slike))
-        conn.commit()
-
-        # Prikaži samo pravkar dodano geslo
-        cur.execute("SELECT rowid, GESLO, OPIS, SLIKA FROM slovar WHERE GESLO=? ORDER BY rowid DESC", (geslo,))
-        gesla = cur.fetchall()
-        conn.close()
-
-    return render_template('admin.html', gesla=gesla)
-
-
+    return jsonify({"spremembe": spremembe})
 
 if __name__ == '__main__':
     app.run(debug=True, port=10000)
