@@ -198,18 +198,26 @@ def sudoku():
 @app.route('/zamenjaj', methods=['POST'])
 def zamenjaj():
     data = request.json
-    original = data.get('original')
-    zamenjava = data.get('zamenjava')
+    original = data.get('original').strip()
+    zamenjava = data.get('zamenjava').strip()
 
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("UPDATE slovar SET OPIS = REPLACE(OPIS, ?, ?) WHERE OPIS LIKE ?",
-                (original, zamenjava, f"%{original}%"))
-    spremembe = cur.rowcount
-    conn.commit()
+
+    # Najprej preštej, koliko zapisov se ujema z originalnim izrazom
+    cur.execute("SELECT COUNT(*) FROM slovar WHERE OPIS LIKE ?", (f"%{original}%",))
+    stevilo_zadetkov = cur.fetchone()[0]
+
+    if stevilo_zadetkov > 0:
+        cur.execute("UPDATE slovar SET OPIS = REPLACE(OPIS, ?, ?) WHERE OPIS LIKE ?",
+                    (original, zamenjava, f"%{original}%"))
+        conn.commit()
+
     conn.close()
 
-    return jsonify({"spremembe": spremembe})
+    # Vrni število dejanskih sprememb
+    return jsonify({"spremembe": stevilo_zadetkov})
+
 
 if __name__ == '__main__':
     app.run(debug=True, port=10000)
