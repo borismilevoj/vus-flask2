@@ -103,16 +103,13 @@ def brisi_geslo():
 def isci_vzorec():
     if request.method == 'POST':
         data = request.get_json()
-        vzorec = data.get('vzorec').replace('_', '%')
+        vzorec = data.get('vzorec').replace('_', '_')  # tukaj ne spreminjaš nič
         dodatno = data.get('dodatno')
-
-        # To je rešitev, ki upošteva natančno dolžino gesla:
         dolzina_vzorca = len(data.get('vzorec'))
 
         conn = get_db()
         cursor = conn.cursor()
 
-        # Točno določena dolžina gesla
         query = """
             SELECT GESLO, OPIS FROM slovar 
             WHERE GESLO LIKE ? 
@@ -128,6 +125,7 @@ def isci_vzorec():
 
     else:
         return render_template('isci_vzorec.html')
+
 
 
 @app.route('/isci_opis', methods=['GET', 'POST'])
