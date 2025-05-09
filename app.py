@@ -4,6 +4,7 @@ import sqlite3
 import os
 from werkzeug.utils import secure_filename
 from krizanka import pridobi_podatke_iz_xml
+conn = sqlite3.connect('VUS.db', check_same_thread=False)
 
 
 app = Flask(__name__)
@@ -32,25 +33,21 @@ def home():
 
 
 @app.route('/preveri', methods=['POST'])
-def preveri_geslo():
-    data = request.get_json()
-    geslo = data['geslo'].strip().upper()
+def preveri():
+    geslo = request.json['geslo'].upper().strip()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT ID, geslo, opis FROM slovar
+        WHERE UPPER(REPLACE(geslo, ' ', '')) = ?
+    """, (geslo.replace(' ', '').upper(),))
 
-    conn = sqlite3.connect('VUS.db')
-    cur = conn.cursor()
+    rezultati = cursor.fetchall()
+    obstaja = len(rezultati) > 0
 
-    # Dodan TRIM(), da odstrani presledke iz baze
-    cur.execute("SELECT geslo, opis FROM slovar WHERE TRIM(UPPER(geslo)) = ?", (geslo,))
-    vrstice = cur.fetchall()
-
-    conn.close()
-
-    if vrstice:
-        return jsonify({"obstaja": True, "gesla": [{"geslo": v[0].strip(), "opis": v[1]} for v in vrstice]})
-    else:
-        return jsonify({"obstaja": False})
-
-
+    return jsonify({
+        'obstaja': obstaja,
+        'gesla': [{'id': id, 'geslo': g, 'opis': o} for id, g, o in rezultati]
+    })
 
 
 @app.route('/dodaj_geslo', methods=['POST'])
@@ -71,53 +68,52 @@ def dodaj_geslo():
 
 @app.route('/uredi_geslo', methods=['POST'])
 def uredi_geslo():
-    data = request.get_json()
-    geslo = data['geslo']
-    nov_opis = data['opis']
-
-    conn = sqlite3.connect('VUS.db')
-    cur = conn.cursor()
-    cur.execute("UPDATE slovar SET opis = ? WHERE TRIM(UPPER(geslo)) = ?", (nov_opis, geslo.upper()))
+    data = request.json
+    id = data['id']
+    opis = data['opis']
+    cursor = conn.cursor()
+    cursor.execute("UPDATE slovar SET opis=? WHERE ID=?", (opis, id))
     conn.commit()
-    conn.close()
+    return jsonify({'sporocilo': 'Opis uspešno spremenjen'})
 
-    return jsonify({"sporocilo": f"Geslo '{geslo}' je uspešno posodobljeno."})
-
-
-# BRISANJE
 @app.route('/brisi_geslo', methods=['POST'])
 def brisi_geslo():
-    data = request.get_json()
-    geslo = data['geslo']
-
-    conn = sqlite3.connect('VUS.db')
-    cur = conn.cursor()
-    cur.execute("DELETE FROM slovar WHERE TRIM(UPPER(geslo)) = ?", (geslo.upper(),))
+    data = request.json
+    id = data['id']
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM slovar WHERE ID=?", (id,))
     conn.commit()
-    conn.close()
-
-    return jsonify({"sporocilo": f"Geslo '{geslo}' je bilo uspešno izbrisano."})
+    return jsonify({'sporocilo': 'Geslo izbrisano'})
 
 
 @app.route('/isci_vzorec', methods=['GET', 'POST'])
 def isci_vzorec():
     if request.method == 'POST':
         data = request.get_json()
-        vzorec = data.get('vzorec').replace('_', '_').upper()
-        dodatno = data.get('dodatno')
-        dolzina_vzorca = len(data.get('vzorec'))
+        vzorec = data.get('vzorec').upper()
+        dodatno = data.get('dodatno', '')
+
+        # Odstrani prazne znake, pusti samo črke
+        dolzina_vzorca = len(vzorec)
 
         conn = get_db()
         cursor = conn.cursor()
 
         query = """
-            SELECT GESLO, OPIS FROM slovar 
-            WHERE TRIM(GESLO) LIKE ? 
-            AND LENGTH(TRIM(GESLO)) = ? 
-            AND OPIS LIKE ? LIMIT 100
+            SELECT GESLO, OPIS FROM slovar
+            WHERE LENGTH(REPLACE(REPLACE(REPLACE(GESLO, ' ', ''), '-', ''), '_', '')) = ?
+            AND OPIS LIKE ?
         """
 
-        cursor.execute(query, (vzorec, dolzina_vzorca, f'%{dodatno}%'))
+        params = [dolzina_vzorca, f'%{dodatno}%']
+
+        # Dodaj preverjanje vsake črke posebej
+        for i, crka in enumerate(vzorec):
+            if crka != '_':
+                query += f" AND SUBSTR(REPLACE(REPLACE(REPLACE(GESLO, ' ', ''), '-', ''), '_', ''), {i+1}, 1) = ?"
+                params.append(crka)
+
+        cursor.execute(query, params)
         results = cursor.fetchall()
         conn.close()
 
@@ -125,6 +121,7 @@ def isci_vzorec():
 
     else:
         return render_template('isci_vzorec.html')
+
 
 
 

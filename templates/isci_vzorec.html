@@ -13,16 +13,16 @@
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   }
 
-.search-container h2 {
+  .search-container h2 {
     text-align: center;
     margin-bottom: 20px;
-}
+  }
 
-#steviloCrk {
+  #steviloCrk {
     max-width: 100px;
     margin: 0 auto;
     text-align: center;
-}
+  }
 
   .navodila {
     font-size: 1rem;
@@ -74,11 +74,12 @@
   <h2>Iskanje po vzorcu</h2>
 
   <div class="d-flex flex-wrap justify-content-center">
-      <a class="btn btn-custom active" href="{{ url_for('isci_vzorec') }}">Išči po vzorcu</a>
-      <a class="btn btn-custom" href="{{ url_for('prikazi_krizanko') }}">Križanke</a>
-      <a class="btn btn-custom" href="{{ url_for('sudoku') }}">Sudoku</a>
-      <a class="btn btn-custom" href="{{ url_for('isci_opis') }}">Išči po opisu</a>
+    <a class="btn btn-custom active" href="{{ url_for('isci_vzorec') }}">Išči po vzorcu</a>
+    <a class="btn btn-custom" href="{{ url_for('prikazi_krizanko') }}">Križanke</a>
+    <a class="btn btn-custom" href="{{ url_for('sudoku') }}">Sudoku</a>
+    <a class="btn btn-custom" href="{{ url_for('isci_opis') }}">Išči po opisu</a>
   </div>
+
   <div class="navodila">
     Vnesi število črk v geslu in nato vpiši črke, ki jih že poznaš. Če črke ne poznaš, pusti polje prazno. Rezultate lahko dodatno zožiš z vpisom letnice, poklica, imena ipd.
   </div>
@@ -113,53 +114,53 @@
 
 {% block scripts %}
 <script>
-document.getElementById('steviloCrk').addEventListener('input', generirajPolja);
+  document.getElementById('steviloCrk').addEventListener('input', generirajPolja);
 
-document.addEventListener('DOMContentLoaded', generirajPolja);
+  document.addEventListener('DOMContentLoaded', generirajPolja);
 
-function generirajPolja() {
-  let stevilo = document.getElementById('steviloCrk').value;
-  let container = document.getElementById('inputsContainer');
-  container.innerHTML = '';
-
-  for (let i = 0; i < stevilo; i++) {
-    let input = document.createElement('input');
-    input.type = 'text';
-    input.maxLength = '1';
-    container.appendChild(input);
-  }
-}
-
-function isciVzorec() {
-  let crke = Array.from(document.querySelectorAll('#inputsContainer input')).map(input => input.value || '_').join('');
-  let dodatno = document.getElementById('dodatno').value;
-
-  fetch('/isci_vzorec', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({vzorec: crke, dodatno: dodatno})
-  })
-  .then(response => response.json())
-  .then(data => {
-    let container = document.getElementById('rezultati');
+  function generirajPolja() {
+    let stevilo = document.getElementById('steviloCrk').value;
+    let container = document.getElementById('inputsContainer');
     container.innerHTML = '';
 
-    if (data.length > 0) {
-      container.innerHTML = `<div class="alert alert-info">Najdeno: ${data.length} zadetkov</div>`;
-      let tabela = `<table class="table table-bordered"><thead><tr><th>Geslo</th><th>Opis</th></tr></thead><tbody>`;
-      data.forEach(r => tabela += `<tr><td>${r.GESLO}</td><td>${r.OPIS}</td></tr>`);
-      tabela += '</tbody></table>';
-      container.innerHTML += tabela;
-    } else {
-      container.innerHTML = '<div class="alert alert-warning">Ni najdenih rezultatov.</div>';
+    for (let i = 0; i < stevilo; i++) {
+      let input = document.createElement('input');
+      input.type = 'text';
+      input.maxLength = '1';
+      container.appendChild(input);
     }
-  });
-}
+  }
 
-function ponastaviIskanje() {
-  document.getElementById('dodatno').value = '';
-  generirajPolja();
-  document.getElementById('rezultati').innerHTML = '';
-}
+  function isciVzorec() {
+    let crke = Array.from(document.querySelectorAll('#inputsContainer input')).map(input => input.value || '_').join('');
+    let dodatno = document.getElementById('dodatno').value;
+
+    fetch('/isci_vzorec', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({vzorec: crke, dodatno: dodatno})
+    })
+    .then(response => response.json())
+    .then(data => {
+      let container = document.getElementById('rezultati');
+      container.innerHTML = '';
+
+      if (data.length > 0) {
+        container.innerHTML = `<div class="alert alert-info">Najdeno: ${data.length} zadetkov</div>`;
+        let tabela = `<table class="table table-bordered"><thead><tr><th>Geslo</th><th>Opis</th></tr></thead><tbody>`;
+        data.forEach(r => tabela += `<tr><td>${r.GESLO}</td><td>${r.OPIS}</td></tr>`);
+        tabela += '</tbody></table>';
+        container.innerHTML += tabela;
+      } else {
+        container.innerHTML = '<div class="alert alert-warning">Ni najdenih rezultatov.</div>';
+      }
+    });
+  }
+
+  function ponastaviIskanje() {
+    document.getElementById('dodatno').value = '';
+    generirajPolja();
+    document.getElementById('rezultati').innerHTML = '';
+  }
 </script>
 {% endblock %}
