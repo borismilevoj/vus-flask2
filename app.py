@@ -1,4 +1,5 @@
-from flask import Flask, request, jsonify, render_template, session
+from flask import Flask, request, jsonify, render_template,  redirect, url_for,session, render_template_string
+from datetime import datetime
 from pretvornik import normaliziraj_geslo
 import sqlite3
 import os
@@ -7,7 +8,7 @@ from krizanka import pridobi_podatke_iz_xml
 conn = sqlite3.connect('VUS.db', check_same_thread=False)
 
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='static', static_url_path='/static')
 app.config['PROPAGATE_EXCEPTIONS'] = True
 app.secret_key = 'tvoja_skrivna_koda'
 
@@ -163,33 +164,59 @@ def stevec_gesel():
 
 @app.route('/krizanka')
 def prikazi_krizanko():
-    podatki = pridobi_podatke_iz_xml('1.xml')
-    return render_template('krizanka.html', podatki=podatki)
+    danes = datetime.today().strftime('%Y-%m-%d')
+    ime_datoteke = f'krizanko_{danes}.xml'
+    pot_do_datoteke = os.path.join('static', 'Krizanke', ime_datoteke)
 
-@app.route('/krizanke')
-def krizanke():
-    return render_template('krizanke.html')
+    if not os.path.exists(pot_do_datoteke):
+        return render_template('napaka.html', sporocilo="Današnja križanka še ni objavljena.")
+
+    podatki = pridobi_podatke_iz_xml(pot_do_datoteke)
+    return render_template('krizanka.html', podatki=podatki, datum=danes)
 
 
-@app.route('/sudoku', methods=['GET', 'POST'])
-def sudoku():
-    tezavnosti = {
-        'lažja': 'easy',
-        'srednja': 'medium',
-        'težka': 'hard',
-        'najtežja': 'very_hard'
-    }
-    izbrana_tezavnost = None
-    tezavnost_datoteka = None
 
-    if request.method == 'POST':
-        izbrana_tezavnost = request.form.get('tezavnost')
-        tezavnost_datoteka = tezavnosti.get(izbrana_tezavnost)
 
-    return render_template('sudoku.html',
-                           tezavnosti=tezavnosti,
-                           izbrana_tezavnost=izbrana_tezavnost,
-                           tezavnost_datoteka=tezavnost_datoteka)
+@app.route('/krizanke/arhiv')
+def arhiv_krizank():
+    mapa_krizank = os.path.join('static', 'Krizanke')
+    datoteke = sorted([f.replace('.xml', '') for f in os.listdir(mapa_krizank) if f.endswith('.xml')], reverse=True)
+
+    return render_template('arhiv.html', datumi=datoteke)
+
+
+
+@app.route('/sudoku')
+def osnovni_sudoku():
+    return redirect(url_for('prikazi_danasnji_sudoku', tezavnost='easy'))
+
+@app.route('/sudoku/<tezavnost>/<datum>')
+def prikazi_sudoku(tezavnost, datum):
+    mapa_sudoku = f"Sudoku_{tezavnost}"
+    ime_datoteke = f"Sudoku_{tezavnost}_{datum}.html"
+    pot_do_datoteke = os.path.join('static', mapa_sudoku, ime_datoteke)
+
+    if not os.path.exists(pot_do_datoteke):
+        return render_template('napaka.html', sporocilo="Sudoku za ta datum ali težavnost ni na voljo.")
+
+    with open(pot_do_datoteke, 'r', encoding='utf-8') as f:
+        vsebina = f.read()
+
+    return render_template_string(vsebina)
+
+@app.route('/sudoku/<tezavnost>')
+def prikazi_danasnji_sudoku(tezavnost):
+    danes = datetime.today().strftime('%Y-%m-%d')
+    return redirect(url_for('prikazi_sudoku', tezavnost=tezavnost, datum=danes))
+
+@app.route('/sudoku/arhiv/<tezavnost>')
+def arhiv_sudoku(tezavnost):
+    mapa_sudoku = os.path.join('static', f"Sudoku_{tezavnost}")
+    datoteke = sorted([f for f in os.listdir(mapa_sudoku) if f.endswith('.html')], reverse=True)
+    datumi = [f.replace(f'Sudoku_{tezavnost}_', '').replace('.html', '') for f in datoteke]
+    return render_template('sudoku_arhiv.html', datumi=datumi, tezavnost=tezavnost)
+
+
 
 
 @app.route('/zamenjaj', methods=['POST'])

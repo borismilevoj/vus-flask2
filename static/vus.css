@@ -1,0 +1,4 @@
+div[aria-hidden="true"], div span[style*="crossword-compiler.com"] {
+    display: none !important;
+}
+

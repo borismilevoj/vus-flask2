@@ -35,7 +35,7 @@
 <div class="container">
     <h1 class="text-center">Sudoku uganke</h1>
 
-    <form method="post" action="{{ url_for('sudoku') }}">
+   <form method="post" action="{{ url_for('prikazi_danasnji_sudoku') }}">
         <select name="tezavnost">
             {% for ime, datoteka in tezavnosti.items() %}
             <option value="{{ ime }}" {% if ime == izbrana_tezavnost %}selected{% endif %}>

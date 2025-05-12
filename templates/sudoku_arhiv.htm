@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}Sudoku arhiv | VUS{% endblock %}
+
+{% block content %}
+<h2>Arhiv Sudoku - težavnost: {{ tezavnost }}</h2>
+
+<ul>
+{% for datum in datumi %}
+    <li><a href="{{ url_for('prikazi_sudoku', tezavnost=tezavnost, datum=datum) }}">{{ datum }}</a></li>
+{% endfor %}
+</ul>
+
+<a href="{{ url_for('home') }}" class="btn btn-secondary">Domov</a>
+{% endblock %}

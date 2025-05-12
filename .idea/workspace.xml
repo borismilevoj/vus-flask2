@@ -5,19 +5,71 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="7b096a74-7ed9-4344-af5e-d7be2fa85ca4" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/templates/arhiv.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/templates/napaka.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/templates/sudoku_arhiv.htm" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/zamenjaj_napis.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/VUS.db" beforeDir="false" afterPath="$PROJECT_DIR$/VUS.db" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/izvoz_besed.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/opisi_za_cc.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/opisi_za_cc_utf8.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/popravi_gesla.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/popravi_kodiranje.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/popravi_rojstva_smrti.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/posodobi_normalizacijo.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pretvori.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/puz_v_xml.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/admin.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/admin.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/isci_vzorec.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/isci_vzorec.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/crosswordCompiler.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/CrosswordCompilerApp/crosswordCompiler.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Sudoku_easy/Sudoku_easy_2025-05-17.html" beforeDir="false" afterPath="$PROJECT_DIR$/static/Sudoku_easy/Sudoku_easy_2025-05-17.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Sudoku_easy/Sudoku_easy_2025-05-17.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/Sudoku_easy/Sudoku_easy_2025-05-17.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Sudoku_easy/Sudoku_easy_2025-05-18.html" beforeDir="false" afterPath="$PROJECT_DIR$/static/Sudoku_easy/Sudoku_easy_2025-05-18.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Sudoku_easy/Sudoku_easy_2025-05-18.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/Sudoku_easy/Sudoku_easy_2025-05-18.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Sudoku_easy/Sudoku_easy_2025-05-19.html" beforeDir="false" afterPath="$PROJECT_DIR$/static/Sudoku_easy/Sudoku_easy_2025-05-19.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Sudoku_easy/Sudoku_easy_2025-05-19.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/Sudoku_easy/Sudoku_easy_2025-05-19.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Sudoku_easy/Sudoku_easy_2025-05-20.html" beforeDir="false" afterPath="$PROJECT_DIR$/static/Sudoku_easy/Sudoku_easy_2025-05-20.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Sudoku_easy/Sudoku_easy_2025-05-20.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/Sudoku_easy/Sudoku_easy_2025-05-20.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Sudoku_easy/Sudoku_easy_2025-05-21.html" beforeDir="false" afterPath="$PROJECT_DIR$/static/Sudoku_easy/Sudoku_easy_2025-05-21.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Sudoku_easy/Sudoku_easy_2025-05-21.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/Sudoku_easy/Sudoku_easy_2025-05-21.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Sudoku_easy/Sudoku_easy_2025-05-22.html" beforeDir="false" afterPath="$PROJECT_DIR$/static/Sudoku_easy/Sudoku_easy_2025-05-22.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Sudoku_easy/Sudoku_easy_2025-05-22.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/Sudoku_easy/Sudoku_easy_2025-05-22.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Sudoku_easy/Sudoku_easy_2025-05-23.html" beforeDir="false" afterPath="$PROJECT_DIR$/static/Sudoku_easy/Sudoku_easy_2025-05-23.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Sudoku_easy/Sudoku_easy_2025-05-23.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/Sudoku_easy/Sudoku_easy_2025-05-23.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Sudoku_hard/Sudoku_hard_2025-05-17.html" beforeDir="false" afterPath="$PROJECT_DIR$/static/Sudoku_hard/Sudoku_hard_2025-05-17.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Sudoku_hard/Sudoku_hard_2025-05-17.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/Sudoku_hard/Sudoku_hard_2025-05-17.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Sudoku_hard/Sudoku_hard_2025-05-18.html" beforeDir="false" afterPath="$PROJECT_DIR$/static/Sudoku_hard/Sudoku_hard_2025-05-18.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Sudoku_hard/Sudoku_hard_2025-05-18.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/Sudoku_hard/Sudoku_hard_2025-05-18.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Sudoku_hard/Sudoku_hard_2025-05-19.html" beforeDir="false" afterPath="$PROJECT_DIR$/static/Sudoku_hard/Sudoku_hard_2025-05-19.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Sudoku_hard/Sudoku_hard_2025-05-19.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/Sudoku_hard/Sudoku_hard_2025-05-19.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Sudoku_hard/Sudoku_hard_2025-05-20.html" beforeDir="false" afterPath="$PROJECT_DIR$/static/Sudoku_hard/Sudoku_hard_2025-05-20.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Sudoku_hard/Sudoku_hard_2025-05-20.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/Sudoku_hard/Sudoku_hard_2025-05-20.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Sudoku_hard/Sudoku_hard_2025-05-21.html" beforeDir="false" afterPath="$PROJECT_DIR$/static/Sudoku_hard/Sudoku_hard_2025-05-21.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Sudoku_hard/Sudoku_hard_2025-05-21.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/Sudoku_hard/Sudoku_hard_2025-05-21.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Sudoku_hard/Sudoku_hard_2025-05-22.html" beforeDir="false" afterPath="$PROJECT_DIR$/static/Sudoku_hard/Sudoku_hard_2025-05-22.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Sudoku_hard/Sudoku_hard_2025-05-22.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/Sudoku_hard/Sudoku_hard_2025-05-22.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Sudoku_hard/Sudoku_hard_2025-05-23.html" beforeDir="false" afterPath="$PROJECT_DIR$/static/Sudoku_hard/Sudoku_hard_2025-05-23.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Sudoku_hard/Sudoku_hard_2025-05-23.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/Sudoku_hard/Sudoku_hard_2025-05-23.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Sudoku_medium/Sudoku_medium_2025-05-17.html" beforeDir="false" afterPath="$PROJECT_DIR$/static/Sudoku_medium/Sudoku_medium_2025-05-17.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Sudoku_medium/Sudoku_medium_2025-05-17.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/Sudoku_medium/Sudoku_medium_2025-05-17.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Sudoku_medium/Sudoku_medium_2025-05-18.html" beforeDir="false" afterPath="$PROJECT_DIR$/static/Sudoku_medium/Sudoku_medium_2025-05-18.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Sudoku_medium/Sudoku_medium_2025-05-18.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/Sudoku_medium/Sudoku_medium_2025-05-18.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Sudoku_medium/Sudoku_medium_2025-05-19.html" beforeDir="false" afterPath="$PROJECT_DIR$/static/Sudoku_medium/Sudoku_medium_2025-05-19.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Sudoku_medium/Sudoku_medium_2025-05-19.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/Sudoku_medium/Sudoku_medium_2025-05-19.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Sudoku_medium/Sudoku_medium_2025-05-20.html" beforeDir="false" afterPath="$PROJECT_DIR$/static/Sudoku_medium/Sudoku_medium_2025-05-20.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Sudoku_medium/Sudoku_medium_2025-05-20.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/Sudoku_medium/Sudoku_medium_2025-05-20.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Sudoku_medium/Sudoku_medium_2025-05-21.html" beforeDir="false" afterPath="$PROJECT_DIR$/static/Sudoku_medium/Sudoku_medium_2025-05-21.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Sudoku_medium/Sudoku_medium_2025-05-21.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/Sudoku_medium/Sudoku_medium_2025-05-21.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Sudoku_medium/Sudoku_medium_2025-05-22.html" beforeDir="false" afterPath="$PROJECT_DIR$/static/Sudoku_medium/Sudoku_medium_2025-05-22.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Sudoku_medium/Sudoku_medium_2025-05-22.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/Sudoku_medium/Sudoku_medium_2025-05-22.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Sudoku_medium/Sudoku_medium_2025-05-23.html" beforeDir="false" afterPath="$PROJECT_DIR$/static/Sudoku_medium/Sudoku_medium_2025-05-23.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Sudoku_medium/Sudoku_medium_2025-05-23.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/Sudoku_medium/Sudoku_medium_2025-05-23.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Sudoku_very_easy/Sudoku_very_easy_2025-05-17.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Sudoku_very_easy/Sudoku_very_easy_2025-05-18.html" beforeDir="false" afterPath="$PROJECT_DIR$/static/Sudoku_very_easy/Sudoku_very_easy_2025-05-18.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Sudoku_very_easy/Sudoku_very_easy_2025-05-18.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/Sudoku_very_easy/Sudoku_very_easy_2025-05-18.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Sudoku_very_easy/Sudoku_very_easy_2025-05-19.html" beforeDir="false" afterPath="$PROJECT_DIR$/static/Sudoku_very_easy/Sudoku_very_easy_2025-05-19.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Sudoku_very_easy/Sudoku_very_easy_2025-05-19.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/Sudoku_very_easy/Sudoku_very_easy_2025-05-19.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Sudoku_very_easy/Sudoku_very_easy_2025-05-20.html" beforeDir="false" afterPath="$PROJECT_DIR$/static/Sudoku_very_easy/Sudoku_very_easy_2025-05-20.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Sudoku_very_easy/Sudoku_very_easy_2025-05-20.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/Sudoku_very_easy/Sudoku_very_easy_2025-05-20.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Sudoku_very_easy/Sudoku_very_easy_2025-05-21.html" beforeDir="false" afterPath="$PROJECT_DIR$/static/Sudoku_very_easy/Sudoku_very_easy_2025-05-21.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Sudoku_very_easy/Sudoku_very_easy_2025-05-21.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/Sudoku_very_easy/Sudoku_very_easy_2025-05-21.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Sudoku_very_easy/Sudoku_very_easy_2025-05-22.html" beforeDir="false" afterPath="$PROJECT_DIR$/static/Sudoku_very_easy/Sudoku_very_easy_2025-05-22.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Sudoku_very_easy/Sudoku_very_easy_2025-05-22.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/Sudoku_very_easy/Sudoku_very_easy_2025-05-22.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Sudoku_very_easy/Sudoku_very_easy_2025-05-23.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Sudoku_very_easy/Sudoku_very_easy_2025-05-23.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Sudoku_very_easy/sudoku_very_easy_2025-05-17.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/sudoku.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/sudoku.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
