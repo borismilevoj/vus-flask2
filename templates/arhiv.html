@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+    <h2>Arhiv križank</h2>
+    <ul>
+    {% for datum in datumi %}
+        <li><a href="{{ url_for('prikazi_krizanko', datum=datum) }}">{{ datum }}</a></li>
+    {% endfor %}
+    </ul>
+</div>
+{% endblock %}
