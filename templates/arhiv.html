@@ -1,11 +1,12 @@
 {% extends "base.html" %}
+{% block title %}Arhiv križank | VUS{% endblock %}
+
 {% block content %}
-<div class="container">
-    <h2>Arhiv križank</h2>
-    <ul>
+<h1>Arhiv križank</h1>
+<div class="d-flex flex-wrap justify-content-center">
     {% for datum in datumi %}
-        <li><a href="{{ url_for('prikazi_krizanko', datum=datum) }}">{{ datum }}</a></li>
+    <a class="btn btn-warning m-2" href="{{ url_for('prikazi_krizanko', datum=datum) }}">{{ datum }}</a>
     {% endfor %}
-    </ul>
 </div>
+<a href="{{ url_for('home') }}" class="btn btn-secondary mt-4">Domov</a>
 {% endblock %}
