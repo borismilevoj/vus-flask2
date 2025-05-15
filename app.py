@@ -3,6 +3,7 @@ from datetime import datetime
 from pretvornik import normaliziraj_geslo
 import sqlite3
 import os
+from flask import send_from_directory
 from werkzeug.utils import secure_filename
 from krizanka import pridobi_podatke_iz_xml
 conn = sqlite3.connect('VUS.db', check_same_thread=False)
@@ -23,14 +24,22 @@ def get_db():
     conn.row_factory = sqlite3.Row
     return conn
 
+@app.route("/ping")
+def ping():
+    return "OK iz Flaska!"
+
 
 @app.route('/admin')
 def admin():
     return render_template('admin.html')
 
-@app.route('/')
+@app.route('/home')
 def home():
     return render_template('home.html')
+
+@app.route('/')
+def redirect_to_home():
+    return redirect(url_for('home'))
 
 
 @app.route('/preveri', methods=['POST'])
@@ -86,15 +95,28 @@ def brisi_geslo():
     conn.commit()
     return jsonify({'sporocilo': 'Geslo izbrisano'})
 
+@app.route('/test_iscenje')
+def test_iscenje():
+    return render_template('isci_vzorec_test.html')
+
 
 @app.route('/isci_vzorec', methods=['GET', 'POST'])
 def isci_vzorec():
     if request.method == 'POST':
-        data = request.get_json()
-        vzorec = data.get('vzorec').upper()
+        print("🔎 Zahtevek s telefona?")
+        print("request.is_json:", request.is_json)
+        print("request.data:", request.data)
+        print("request.get_json():", request.get_json(silent=True))
+        if not request.is_json:
+            return jsonify([])
+
+        data = request.get_json(silent=True)
+        if not data or 'vzorec' not in data:
+            return jsonify([])
+
+        vzorec = data.get('vzorec', '').upper()
         dodatno = data.get('dodatno', '')
 
-        # Odstrani prazne znake, pusti samo črke
         dolzina_vzorca = len(vzorec)
 
         conn = get_db()
@@ -105,10 +127,8 @@ def isci_vzorec():
             WHERE LENGTH(REPLACE(REPLACE(REPLACE(GESLO, ' ', ''), '-', ''), '_', '')) = ?
             AND OPIS LIKE ?
         """
-
         params = [dolzina_vzorca, f'%{dodatno}%']
 
-        # Dodaj preverjanje vsake črke posebej
         for i, crka in enumerate(vzorec):
             if crka != '_':
                 query += f" AND SUBSTR(REPLACE(REPLACE(REPLACE(GESLO, ' ', ''), '-', ''), '_', ''), {i+1}, 1) = ?"
@@ -119,9 +139,10 @@ def isci_vzorec():
         conn.close()
 
         return jsonify([{"GESLO": row["GESLO"].strip(), "OPIS": row["OPIS"]} for row in results])
-
     else:
         return render_template('isci_vzorec.html')
+
+
 
 
 
@@ -158,21 +179,35 @@ def stevec_gesel():
     conn.close()
     return jsonify({"steviloGesel": steviloGesel})
 
+# Ta route mora biti ZUNAJ vseh funkcij!
+@app.route('/krizanka/static/<path:filename>')
+def krizanka_static_file(filename):
+    pot = os.path.join('static', 'Krizanke', 'CrosswordCompilerApp')
+    return send_from_directory(pot, filename)
 
 
+@app.route('/krizanka', defaults={'datum': None})
+@app.route('/krizanka/<datum>')
+def prikazi_krizanko(datum):
+    if datum is None:
+        datum = datetime.today().strftime('%Y-%m-%d')
 
-
-@app.route('/krizanka')
-def prikazi_krizanko():
-    danes = datetime.today().strftime('%Y-%m-%d')
-    ime_datoteke = f'krizanko_{danes}.xml'
-    pot_do_datoteke = os.path.join('static', 'Krizanke', ime_datoteke)
+    ime_datoteke = f'{datum}.xml'
+    osnovna_pot = os.path.dirname(os.path.abspath(__file__))
+    pot_do_datoteke = os.path.join(osnovna_pot, 'static', 'Krizanke', 'CrosswordCompilerApp', ime_datoteke)
 
     if not os.path.exists(pot_do_datoteke):
-        return render_template('napaka.html', sporocilo="Današnja križanka še ni objavljena.")
+        return render_template('napaka.html', sporocilo="Križanka za ta datum še ni objavljena.")
 
-    podatki = pridobi_podatke_iz_xml(pot_do_datoteke)
-    return render_template('krizanka.html', podatki=podatki, datum=danes)
+    try:
+        podatki = pridobi_podatke_iz_xml(pot_do_datoteke)
+        if not podatki:
+            return render_template('napaka.html', sporocilo="Križanka ni pravilno sestavljena.")
+    except Exception as e:
+        return render_template('napaka.html', sporocilo=f"Napaka pri branju križanke: {e}")
+
+    return render_template('krizanka.html', podatki=podatki, datum=datum)
+
 
 
 
@@ -216,6 +251,9 @@ def arhiv_sudoku(tezavnost):
     datumi = [f.replace(f'Sudoku_{tezavnost}_', '').replace('.html', '') for f in datoteke]
     return render_template('sudoku_arhiv.html', datumi=datumi, tezavnost=tezavnost)
 
+@app.route('/sudoku/arhiv')
+def arhiv_sudoku_pregled():
+    return render_template('sudoku_arhiv_glavni.html')
 
 
 
@@ -244,4 +282,5 @@ def zamenjaj():
 
 
 if __name__ == '__main__':
-    app.run(debug=True, port=10000)
+    app.run(debug=True, host='0.0.0.0', port=10000)
+

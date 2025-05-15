@@ -2,16 +2,23 @@
 <html lang="sl">
 <head>
     <meta charset="UTF-8">
-    <title>Križanka VUS</title>
+    <title>Križanka VUS – {{ datum }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Dodatni JS za ta dan, če obstaja -->
+    <script src="{{ url_for('krizanka_static_file', filename=datum + '.js') }}"></script>
+
     <style>
         body {
             font-family: Arial, sans-serif;
+            margin: 20px;
         }
 
         #grid {
             display: grid;
             grid-template-columns: repeat({{ podatki.sirina }}, 30px);
             grid-gap: 2px;
+            margin-right: 20px;
         }
 
         .cell {
@@ -58,13 +65,13 @@
             border: 2px solid red;
         }
 
-        .correct {
-            background-color: #c8f7c5;
-        }
+        .cell input.correct {
+    background-color: #c8f7c5 !important;
+}
 
-        .incorrect {
-            background-color: #f7c5c5;
-        }
+        .cell input.incorrect {
+    background-color: #f7c5c5 !important;
+}
 
         .arrow-right::after,
         .arrow-down::after {
@@ -101,14 +108,44 @@
             border-right: 3px solid black;
         }
 
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+        }
+
+        .gumbi {
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 10px 20px;
+            margin-right: 10px;
+            font-size: 14px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
 
-<div style="display: flex;">
+<h1>Križanka za datum {{ datum }}</h1>
+
+<div class="container">
     <div id="grid"></div>
     <div class="opis" id="opisPolje">Klikni na polje v križanki za prikaz opisa.</div>
 </div>
+
+<!--
+<div class="gumbi">
+    <button onclick="prikaziResitev()">Prikaži rešitev</button>
+    <button onclick="preveriVsaPolja()">Preveri križanko</button>
+    <button onclick="ponastaviPolja()">Ponastavi vnos</button>
+</div>
+-->
+
 
 <script>
     const width = {{ podatki.sirina }};
@@ -163,7 +200,12 @@
 
         zadnjeKliknjenoPolje = `${x}-${y}`;
 
-        const geslo = gesla_opisi.find(g => g.smer === trenutnaSmer && (trenutnaSmer === 'across' && g.y === y && x >= g.x && x < g.x + g.dolzina || trenutnaSmer === 'down' && g.x === x && y >= g.y && y < g.y + g.dolzina));
+        const geslo = gesla_opisi.find(g => g.smer === trenutnaSmer &&
+            (
+                (trenutnaSmer === 'across' && g.y === y && x >= g.x && x < g.x + g.dolzina) ||
+                (trenutnaSmer === 'down' && g.x === x && y >= g.y && y < g.y + g.dolzina)
+            )
+        );
 
         opisPolje.textContent = geslo ? `${geslo.stevilka}. ${geslo.opis}` : 'Ni opisa.';
         oznaciPolje(geslo);
@@ -177,7 +219,7 @@
         }
     }
 
- function preveriCrko(input) {
+    function preveriCrko(input) {
     const x = +input.dataset.x;
     const y = +input.dataset.y;
 
@@ -190,15 +232,27 @@
 
     const index = geslo.smer === 'across' ? x - geslo.x : y - geslo.y;
     const pravilnaCrka = geslo.solution[index];
+    const vnos = input.value.toUpperCase();
 
-    if (input.value.toUpperCase() === pravilnaCrka) {
+    // Odstrani stare barve
+    input.classList.remove('correct', 'incorrect');
+
+    // DEBUG: izpiši preverjanje v konzolo
+    console.log("Vnos:", vnos, " → rešitev:", pravilnaCrka);
+
+    if (vnos === '') {
+        // Ne dodamo razreda
+        return;
+    }
+
+    if (vnos === pravilnaCrka) {
         input.classList.add('correct');
-        input.classList.remove('incorrect');
     } else {
         input.classList.add('incorrect');
-        input.classList.remove('correct');
     }
 }
+
+
 
 
     function premakniNaprej(input) {
@@ -208,6 +262,38 @@
         const nextY = trenutnaSmer === 'down' ? y + 1 : y;
         const nextInput = document.querySelector(`.cell input[data-x='${nextX}'][data-y='${nextY}']`);
         if (nextInput) nextInput.focus();
+    }
+
+    function prikaziResitev() {
+        document.querySelectorAll('.cell input').forEach(input => {
+            const x = +input.dataset.x;
+            const y = +input.dataset.y;
+
+            const geslo = gesla_opisi.find(g =>
+                (g.smer === 'across' && g.y === y && x >= g.x && x < g.x + g.dolzina) ||
+                (g.smer === 'down' && g.x === x && y >= g.y && y < g.y + g.dolzina)
+            );
+
+            if (!geslo) return;
+
+            const index = geslo.smer === 'across' ? x - g.x : y - g.y;
+            input.value = geslo.solution[index];
+            input.classList.add('correct');
+            input.classList.remove('incorrect');
+        });
+    }
+
+    function preveriVsaPolja() {
+        document.querySelectorAll('.cell input').forEach(input => {
+            preveriCrko(input);
+        });
+    }
+
+    function ponastaviPolja() {
+        document.querySelectorAll('.cell input').forEach(input => {
+            input.value = '';
+            input.classList.remove('correct', 'incorrect');
+        });
     }
 </script>
 </body>
