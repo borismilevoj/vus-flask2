@@ -1,300 +1,219 @@
-<!DOCTYPE html>
-<html lang="sl">
-<head>
-    <meta charset="UTF-8">
-    <title>Križanka VUS – {{ datum }}</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <!-- Dodatni JS za ta dan, če obstaja -->
-    <script src="{{ url_for('krizanka_static_file', filename=datum + '.js') }}"></script>
-
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
-
-        #grid {
-            display: grid;
-            grid-template-columns: repeat({{ podatki.sirina }}, 30px);
-            grid-gap: 2px;
-            margin-right: 20px;
-        }
-
-        .cell {
-            width: 30px;
-            height: 30px;
-            border: 1px solid #999;
-            position: relative;
-            box-sizing: border-box;
-        }
-
-        .black {
-            background-color: #000;
-        }
-
-        .cell-number {
-            position: absolute;
-            top: 0;
-            left: 0;
-            font-size: 9px;
-            color: #00f;
-        }
-
-        .cell input {
-            width: 100%;
-            height: 100%;
-            text-align: center;
-            text-transform: uppercase;
-            font-size: 16px;
-            border: none;
-            outline: none;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        .opis {
-            margin-left: 10px;
-            padding: 10px;
-            border: 1px solid #ccc;
-            width: 300px;
-            height: fit-content;
-        }
-
-        .selected {
-            border: 2px solid red;
-        }
-
-        .cell input.correct {
-    background-color: #c8f7c5 !important;
-}
-
-        .cell input.incorrect {
-    background-color: #f7c5c5 !important;
-}
-
-        .arrow-right::after,
-        .arrow-down::after {
-            content: '';
-            position: absolute;
-            border-style: solid;
-        }
-
-        .arrow-right::after {
-            border-width: 5px 0 5px 8px;
-            border-color: transparent transparent transparent #000;
-            top: 50%;
-            right: -6px;
-            transform: translateY(-50%);
-        }
-
-        .arrow-down::after {
-            border-width: 8px 5px 0 5px;
-            border-color: #000 transparent transparent transparent;
-            bottom: -6px;
-            left: 50%;
-            transform: translateX(-50%);
-        }
-
-        .highlight-across {
-            border-left: 3px solid black;
-            border-top: 3px solid black;
-            border-bottom: 3px solid black;
-        }
-
-        .highlight-down {
-            border-left: 3px solid black;
-            border-top: 3px solid black;
-            border-right: 3px solid black;
-        }
-
-        .container {
-            display: flex;
-            flex-wrap: wrap;
-        }
-
-        h1 {
-            margin-bottom: 20px;
-        }
-
-        .gumbi {
-            margin-top: 20px;
-        }
-
-        button {
-            padding: 10px 20px;
-            margin-right: 10px;
-            font-size: 14px;
-            cursor: pointer;
-        }
-    </style>
-</head>
-<body>
-
-<h1>Križanka za datum {{ datum }}</h1>
-
-<div class="container">
-    <div id="grid"></div>
+{% extends "base.html" %}
+{% block title %}Križanka | VUS{% endblock %}
+{% block content %}
+<div style="display: flex; justify-content: center; align-items: flex-start; gap: 40px; flex-wrap: wrap; margin-top: 20px;">
+  <div id="grid"></div>
+  <div class="opis-box">
     <div class="opis" id="opisPolje">Klikni na polje v križanki za prikaz opisa.</div>
+  </div>
 </div>
-
-<!--
-<div class="gumbi">
-    <button onclick="prikaziResitev()">Prikaži rešitev</button>
-    <button onclick="preveriVsaPolja()">Preveri križanko</button>
-    <button onclick="ponastaviPolja()">Ponastavi vnos</button>
+<div id="uspeh" style="display:none; text-align:center; margin-top:20px; font-size:1.5rem; font-weight:bold; color:green; animation: fadeIn 2s ease-in-out;">
+  ✨ ČESTITAMO, USPEŠNO STE REŠILI KRIŽANKO! ✨
 </div>
--->
+{% endblock %}
 
+{% block styles %}
+<style>
+#grid {
+  display: grid;
+  grid-template-columns: repeat({{ podatki.sirina }}, 30px);
+  grid-auto-rows: 30px;
+  gap: 2px;
+  margin-top: 20px;
+}
+.cell {
+  position: relative;
+  width: 30px;
+  height: 30px;
+  border: 1px solid #999;
+  box-sizing: border-box;
+}
+.cell input {
+  width: 100%;
+  height: 100%;
+  font-size: 16px;
+  text-align: center;
+  text-transform: uppercase;
+  border: none;
+  outline: none;
+}
+.cell.black {
+  background-color: black;
+}
+.cell-number {
+  position: absolute;
+  top: 0;
+  left: 0;
+  font-size: 10px;
+  color: blue;
+  z-index: 2;
+}
+.cell.highlight {
+  border: 2px solid red;
+}
+.opis-box {
+  width: 320px;
+  min-height: 150px;
+  border: 1px solid #ccc;
+  padding: 15px;
+  background-color: #f8f8f8;
+  font-size: 1rem;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+</style>
+{% endblock %}
 
+{% block scripts %}
 <script>
-    const width = {{ podatki.sirina }};
-    const height = {{ podatki.visina }};
-    const crna_polja = {{ podatki.crna_polja | tojson }};
-    const gesla_opisi = {{ podatki.gesla_opisi | tojson }};
+const width = {{ podatki.sirina }};
+const height = {{ podatki.visina }};
+const crna_polja = {{ podatki.crna_polja | tojson }};
+const gesla_opisi = {{ podatki.gesla_opisi | tojson }};
+let trenutnaSmer = 'across';
 
-    let trenutnaSmer = 'across';
-    let zadnjeKliknjenoPolje = null;
+const grid = document.getElementById('grid');
 
-    const grid = document.getElementById('grid');
-    const opisPolje = document.getElementById('opisPolje');
+for (let y = 0; y < height; y++) {
+  for (let x = 0; x < width; x++) {
+    const cell = document.createElement('div');
+    cell.classList.add('cell');
 
-    for (let y = 0; y < height; y++) {
-        for (let x = 0; x < width; x++) {
-            const cell = document.createElement('div');
-            cell.classList.add('cell');
-
-            if (crna_polja.some(polje => polje[0] === x && polje[1] === y)) {
-                cell.classList.add('black');
-            } else {
-                const input = document.createElement('input');
-                input.setAttribute('maxlength', '1');
-                input.dataset.x = x;
-                input.dataset.y = y;
-
-                input.addEventListener('input', (e) => {
-                    preveriCrko(input);
-                    premakniNaprej(e.target);
-                });
-                input.addEventListener('click', () => prikaziOpis(x, y));
-
-                cell.appendChild(input);
-
-                const geslo = gesla_opisi.find(g => g.x === x && g.y === y);
-                if (geslo && geslo.stevilka !== '?') {
-                    const numberDiv = document.createElement('div');
-                    numberDiv.classList.add('cell-number');
-                    numberDiv.textContent = geslo.stevilka;
-                    cell.appendChild(numberDiv);
-                }
-            }
-
-            grid.appendChild(cell);
-        }
-    }
-
-    function prikaziOpis(x, y) {
-        if (zadnjeKliknjenoPolje === `${x}-${y}`) {
-            trenutnaSmer = trenutnaSmer === 'across' ? 'down' : 'across';
-        }
-
-        zadnjeKliknjenoPolje = `${x}-${y}`;
-
-        const geslo = gesla_opisi.find(g => g.smer === trenutnaSmer &&
-            (
-                (trenutnaSmer === 'across' && g.y === y && x >= g.x && x < g.x + g.dolzina) ||
-                (trenutnaSmer === 'down' && g.x === x && y >= g.y && y < g.y + g.dolzina)
-            )
-        );
-
-        opisPolje.textContent = geslo ? `${geslo.stevilka}. ${geslo.opis}` : 'Ni opisa.';
-        oznaciPolje(geslo);
-    }
-
-    function oznaciPolje(geslo) {
-        document.querySelectorAll('.cell').forEach(c => c.classList.remove('selected', 'arrow-right', 'arrow-down', 'highlight-across', 'highlight-down'));
-        if (geslo) {
-            const polje = document.querySelector(`.cell input[data-x='${geslo.x}'][data-y='${geslo.y}']`).parentElement;
-            polje.classList.add('selected', geslo.smer === 'across' ? 'highlight-across' : 'highlight-down');
-        }
-    }
-
-    function preveriCrko(input) {
-    const x = +input.dataset.x;
-    const y = +input.dataset.y;
-
-    const geslo = gesla_opisi.find(g =>
-        (g.smer === 'across' && g.y === y && x >= g.x && x < g.x + g.dolzina) ||
-        (g.smer === 'down' && g.x === x && y >= g.y && y < g.y + g.dolzina)
-    );
-
-    if (!geslo) return;
-
-    const index = geslo.smer === 'across' ? x - geslo.x : y - geslo.y;
-    const pravilnaCrka = geslo.solution[index];
-    const vnos = input.value.toUpperCase();
-
-    // Odstrani stare barve
-    input.classList.remove('correct', 'incorrect');
-
-    // DEBUG: izpiši preverjanje v konzolo
-    console.log("Vnos:", vnos, " → rešitev:", pravilnaCrka);
-
-    if (vnos === '') {
-        // Ne dodamo razreda
-        return;
-    }
-
-    if (vnos === pravilnaCrka) {
-        input.classList.add('correct');
+    if (crna_polja.some(p => p[0] === x && p[1] === y)) {
+      cell.classList.add('black');
     } else {
-        input.classList.add('incorrect');
+      const input = document.createElement('input');
+      input.setAttribute('maxlength', '1');
+      input.dataset.x = x;
+      input.dataset.y = y;
+
+      input.addEventListener('input', () => {
+        preveriCrko(input);
+        premakniNaprej(input);
+      });
+
+      input.addEventListener('click', () => {
+        prikaziOpis(x, y);
+        oznaciGeslo(x, y);
+      });
+
+      input.addEventListener('dblclick', () => {
+        trenutnaSmer = trenutnaSmer === 'across' ? 'down' : 'across';
+        prikaziOpis(x, y);
+        oznaciGeslo(x, y);
+      });
+
+      cell.appendChild(input);
+
+      const geslo = gesla_opisi.find(g => g.x === x && g.y === y);
+      if (geslo && geslo.stevilka !== '?') {
+        const numberDiv = document.createElement('div');
+        numberDiv.classList.add('cell-number');
+        numberDiv.textContent = geslo.stevilka;
+        cell.appendChild(numberDiv);
+      }
     }
+
+    grid.appendChild(cell);
+  }
 }
 
+document.addEventListener('keydown', function (e) {
+  const active = document.activeElement;
+  if (!active || active.tagName !== 'INPUT') return;
 
+  if (e.key === 'Tab' && e.shiftKey) {
+    e.preventDefault();
+    premakniNazaj(active);
+  }
 
+  if ((e.key === 'Enter') || (e.key === 'Tab' && !e.shiftKey)) {
+    e.preventDefault();
+    premakniNaprej(active);
+  }
+});
 
-    function premakniNaprej(input) {
-        const x = +input.dataset.x;
-        const y = +input.dataset.y;
-        const nextX = trenutnaSmer === 'across' ? x + 1 : x;
-        const nextY = trenutnaSmer === 'down' ? y + 1 : y;
-        const nextInput = document.querySelector(`.cell input[data-x='${nextX}'][data-y='${nextY}']`);
-        if (nextInput) nextInput.focus();
+function oznaciGeslo(x, y) {
+  document.querySelectorAll('.cell').forEach(c => c.classList.remove('highlight'));
+
+  gesla_opisi.forEach(g => {
+    if ((trenutnaSmer === 'across' && g.smer === 'across' && g.y === y && x >= g.x && x < g.x + g.dolzina) ||
+        (trenutnaSmer === 'down' && g.smer === 'down' && g.x === x && y >= g.y && y < g.y + g.dolzina)) {
+      for (let i = 0; i < g.dolzina; i++) {
+        const tx = g.smer === 'across' ? g.x + i : g.x;
+        const ty = g.smer === 'down' ? g.y + i : g.y;
+        const inp = document.querySelector(`input[data-x='${tx}'][data-y='${ty}']`);
+        if (inp) inp.parentElement.classList.add('highlight');
+      }
     }
+  });
+}
 
-    function prikaziResitev() {
-        document.querySelectorAll('.cell input').forEach(input => {
-            const x = +input.dataset.x;
-            const y = +input.dataset.y;
-
-            const geslo = gesla_opisi.find(g =>
-                (g.smer === 'across' && g.y === y && x >= g.x && x < g.x + g.dolzina) ||
-                (g.smer === 'down' && g.x === x && y >= g.y && y < g.y + g.dolzina)
-            );
-
-            if (!geslo) return;
-
-            const index = geslo.smer === 'across' ? x - g.x : y - g.y;
-            input.value = geslo.solution[index];
-            input.classList.add('correct');
-            input.classList.remove('incorrect');
-        });
+function premakniNaprej(input) {
+  let x = +input.dataset.x;
+  let y = +input.dataset.y;
+  while (true) {
+    x = trenutnaSmer === 'across' ? x + 1 : x;
+    y = trenutnaSmer === 'down' ? y + 1 : y;
+    const nextInput = document.querySelector(`.cell input[data-x='${x}'][data-y='${y}']`);
+    if (!nextInput) break;
+    if (!nextInput.classList.contains('correct')) {
+      nextInput.focus();
+      break;
     }
+  }
+}
 
-    function preveriVsaPolja() {
-        document.querySelectorAll('.cell input').forEach(input => {
-            preveriCrko(input);
-        });
-    }
+function premakniNazaj(input) {
+  let x = +input.dataset.x;
+  let y = +input.dataset.y;
+  while (true) {
+    x = trenutnaSmer === 'across' ? x - 1 : x;
+    y = trenutnaSmer === 'down' ? y - 1 : y;
+    const prevInput = document.querySelector(`.cell input[data-x='${x}'][data-y='${y}']`);
+    if (!prevInput) break;
+    prevInput.focus();
+    break;
+  }
+}
 
-    function ponastaviPolja() {
-        document.querySelectorAll('.cell input').forEach(input => {
-            input.value = '';
-            input.classList.remove('correct', 'incorrect');
-        });
-    }
+function preveriCrko(input) {
+  const x = +input.dataset.x;
+  const y = +input.dataset.y;
+  const geslo = gesla_opisi.find(g =>
+    (g.smer === 'across' && g.y === y && x >= g.x && x < g.x + g.dolzina) ||
+    (g.smer === 'down' && g.x === x && y >= g.y && y < g.y + g.dolzina)
+  );
+  if (!geslo) return;
+  const index = geslo.smer === 'across' ? x - geslo.x : y - geslo.y;
+  const pravilna = geslo.solution[index];
+  const vnos = input.value.toUpperCase();
+  input.classList.remove('correct', 'incorrect');
+  if (vnos === '') return;
+  if (vnos === pravilna) {
+    input.classList.add('correct');
+    input.value = pravilna;
+    preveriUspeh();
+  } else {
+    input.classList.add('incorrect');
+  }
+}
+
+function preveriUspeh() {
+  const inputs = document.querySelectorAll('.cell input');
+  for (let i of inputs) if (!i.classList.contains('correct')) return;
+  document.getElementById('uspeh').style.display = 'block';
+}
+
+function prikaziOpis(x, y) {
+  const opisPolje = document.getElementById('opisPolje');
+  const geslo = gesla_opisi.find(g =>
+    (trenutnaSmer === 'across' && g.y === y && x >= g.x && x < g.x + g.dolzina) ||
+    (trenutnaSmer === 'down' && g.x === x && y >= g.y && y < g.y + g.dolzina)
+  );
+  opisPolje.textContent = geslo ? `${geslo.stevilka}. ${geslo.opis}` : 'Ni opisa.';
+}
 </script>
-</body>
-</html>
+{% endblock %}

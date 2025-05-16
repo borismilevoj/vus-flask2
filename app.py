@@ -189,6 +189,8 @@ def krizanka_static_file(filename):
 @app.route('/krizanka', defaults={'datum': None})
 @app.route('/krizanka/<datum>')
 def prikazi_krizanko(datum):
+    print("📥 Funkcija prikazi_krizanko je bila poklicana z datumom:", datum)
+
     if datum is None:
         datum = datetime.today().strftime('%Y-%m-%d')
 
@@ -196,17 +198,27 @@ def prikazi_krizanko(datum):
     osnovna_pot = os.path.dirname(os.path.abspath(__file__))
     pot_do_datoteke = os.path.join(osnovna_pot, 'static', 'Krizanke', 'CrosswordCompilerApp', ime_datoteke)
 
+    print("🔍 Absolutna pot do datoteke:", pot_do_datoteke)
+    print("📂 Preverjam obstoj datoteke ... obstaja:", os.path.exists(pot_do_datoteke))
+
     if not os.path.exists(pot_do_datoteke):
+        print("❌ Datoteka NI bila najdena!")
         return render_template('napaka.html', sporocilo="Križanka za ta datum še ni objavljena.")
 
     try:
+        print("📞 Kličem funkcijo pridobi_podatke_iz_xml...")
         podatki = pridobi_podatke_iz_xml(pot_do_datoteke)
+        print("✅ Podatki uspešno prebrani:", podatki)
+
         if not podatki:
+            print("⚠️ Funkcija vrnila prazne ali neveljavne podatke.")
             return render_template('napaka.html', sporocilo="Križanka ni pravilno sestavljena.")
     except Exception as e:
+        print("❌ Napaka pri branju XML:", e)
         return render_template('napaka.html', sporocilo=f"Napaka pri branju križanke: {e}")
 
     return render_template('krizanka.html', podatki=podatki, datum=datum)
+
 
 
 
@@ -222,8 +234,10 @@ def arhiv_krizank():
 
 
 @app.route('/sudoku')
-def osnovni_sudoku():
-    return redirect(url_for('prikazi_danasnji_sudoku', tezavnost='easy'))
+def glavni_sudoku():
+    today = datetime.today().strftime('%Y-%m-%d')
+    return render_template('sudoku_glavni.html', today=today)
+
 
 @app.route('/sudoku/<tezavnost>/<datum>')
 def prikazi_sudoku(tezavnost, datum):

@@ -1,119 +1,36 @@
-<!DOCTYPE html>
-<html lang="sl">
-<head>
-    <meta charset="UTF-8">
-    <title>VUS – Veliki ugankarski slovar</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body {
-            background-image: url("{{ url_for('static', filename='slika.png') }}");
-            background-size: cover;
-            background-position: center;
-            font-family: 'Arial', sans-serif;
-            color: #fff;
-            text-align: center;
-            padding-top: 20vh;
-        }
-        .btn-custom {
-            background-color: #ffc107;
-            border: none;
-            color: black;
-            padding: 10px 20px;
-            margin: 10px;
-            font-weight: bold;
-        }
-        .stevec-home {
-            font-size: 1.4rem;
-            font-weight: bold;
-            margin-top: 20px;
-            color: #ffc107;
-        }
-    </style>
-<style>
-.btn-custom {
-  background-color: #ffc107; /* osnovna rumena */
-  color: black;
-  font-weight: bold;
-  min-width: 140px;
-  margin: 5px;
-  transition: background-color 0.3s ease;
-}
+{% extends "base.html" %}
+{% block title %}VUS – Veliki ugankarski slovar{% endblock %}
 
-.btn-custom.active {
-  background-color: #e38e00; /* temnejša rumena - aktivni gumb */
-  color: white;
-}
-</style>
-
-</head>
-<body>
-    <div class="container">
-        <h1>VUS – Veliki ugankarski slovar</h1>
-        <p>Slovar za križanke in uganke. Poišči gesla po vzorcu ali opisu.</p>
-
-        <div class="d-flex flex-wrap justify-content-center">
-    <a class="btn btn-custom" href="{{ url_for('isci_vzorec') }}">Išči po vzorcu</a>
-    <a class="btn btn-custom" href="{{ url_for('isci_opis') }}">Išči po opisu</a>
-    <a class="btn btn-custom" href="{{ url_for('prikazi_krizanko') }}">Križanke</a>
-  <!<a class="btn btn-custom" href="{{ url_for('prikazi_danasnji_sudoku', tezavnost='very_easy') }}">Sudoku danes (zelo lahki)</a>
-    <a class="btn btn-custom" href="{{ url_for('prikazi_danasnji_sudoku', tezavnost='easy') }}">Sudoku danes (lahki)</a>
-    <a class="btn btn-custom" href="{{ url_for('prikazi_danasnji_sudoku', tezavnost='medium') }}">Sudoku danes (srednji)</a>
-    <a class="btn btn-custom" href="{{ url_for('prikazi_danasnji_sudoku', tezavnost='hard') }}">Sudoku danes (težki)</a>
-
-<!-- Sudoku arhiv -->
-    <a class="btn btn-custom" href="{{ url_for('arhiv_sudoku', tezavnost='very_easy') }}">Arhiv (zelo lahki)</a>
-    <a class="btn btn-custom" href="{{ url_for('arhiv_sudoku', tezavnost='easy') }}">Arhiv (lahki)</a>
-    <a class="btn btn-custom" href="{{ url_for('arhiv_sudoku', tezavnost='medium') }}">Arhiv (srednji)</a>
-    <a class="btn btn-custom" href="{{ url_for('arhiv_sudoku', tezavnost='hard') }}">Arhiv (težki)</a>
-
-</div>
-
-        </div>
-        <div class="d-flex justify-content-center mt-2">
-            <a href="{{ url_for('prispevaj_geslo') }}" class="btn btn-custom">Prispevaj geslo</a>
-        </div>
-
-        <!-- Dodan števec tukaj -->
-        <div id="stevecHome" class="stevec-home">
-            Nalaganje števila gesel...
-        </div>
+{% block content %}
+<div class="container-fluid p-0">
+  <div class="hero-image" style="background-image: url('{{ url_for('static', filename='slika.png') }}'); background-size: cover; background-position: center; padding: 100px 20px; text-align: center;">
+    <h1 class="display-5 fw-bold text-white">VUS – Veliki ugankarski slovar</h1>
+    <p class="lead text-white">Slovar za križanke in uganke. Poišči gesla po vzorcu ali opisu.</p>
+    <div class="d-flex flex-wrap justify-content-center mt-4 gap-3">
+      <a class="btn btn-warning fw-bold" href="{{ url_for('isci_vzorec') }}">IŠČI PO VZORCU</a>
+      <a class="btn btn-warning fw-bold" href="{{ url_for('isci_opis') }}">IŠČI PO OPISU</a>
+      <a class="btn btn-warning fw-bold" href="{{ url_for('prikazi_krizanko') }}">KRIŽANKE</a>
+      <a class="btn btn-warning fw-bold" href="{{ url_for('glavni_sudoku') }}">SUDOKU</a>
+      <a class="btn btn-warning fw-bold" href="{{ url_for('prispevaj_geslo') }}">PRISPEVAJ GESLO</a>
     </div>
+    <div class="stevec-home mt-4 fs-4 fw-bold text-warning" id="stevecHome">
+      Nalaganje števila gesel...
+    </div>
+  </div>
+</div>
+{% endblock %}
 
-    <!-- JavaScript za števec -->
-    <script>
-document.addEventListener("DOMContentLoaded", function(){
-    fetch('/stevec_gesel')
-        .then(response => response.json())
-        .then(data => {
-            document.getElementById('stevecHome').innerText = "Gesel v bazi: " + data.steviloGesel;
-        })
-        .catch(err => {
-            document.getElementById('stevecHome').innerText = "Napaka pri nalaganju števila gesel.";
-        });
+{% block scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  fetch('/stevec_gesel')
+    .then(response => response.json())
+    .then(data => {
+      document.getElementById('stevecHome').innerText = "Gesel v bazi: " + data.steviloGesel;
+    })
+    .catch(err => {
+      document.getElementById('stevecHome').innerText = "Napaka pri nalaganju števila gesel.";
+    });
 });
 </script>
-<style>
-  #stevec {
-    font-size: 2em; /* povečava pisave */
-    font-weight: bold;
-    color: #2c3e50; /* elegantna temna barva */
-    opacity: 0;
-    transition: opacity 1.5s ease-in;
-  }
-</style>
-
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const stevec = document.getElementById('stevec');
-    stevec.style.opacity = '1';
-  });
-</script>
-<style>
-.btn-warning {
-    min-width: 150px; /* ali poljubno širino po želji */
-    text-align: center;
-}
-</style>
-
-</body>
-</html>
+{% endblock %}
