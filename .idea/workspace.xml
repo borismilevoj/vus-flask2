@@ -5,51 +5,42 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="7b096a74-7ed9-4344-af5e-d7be2fa85ca4" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/templates/sudoku_arhiv_glavni.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/premakni_html.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/static/Krizanke/CrosswordCompilerApp/2025-05-24.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/static/Krizanke/CrosswordCompilerApp/2025-05-24.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/static/Krizanke/CrosswordCompilerApp/CrosswordCompilerApp/CrosswordImages/check.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/static/Krizanke/CrosswordCompilerApp/CrosswordCompilerApp/CrosswordImages/check_2x.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/static/Krizanke/CrosswordCompilerApp/CrosswordCompilerApp/CrosswordImages/pencil.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/static/Krizanke/CrosswordCompilerApp/CrosswordCompilerApp/CrosswordImages/pencil_2x.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/static/Krizanke/CrosswordCompilerApp/CrosswordCompilerApp/CrosswordImages/revealletter.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/static/Krizanke/CrosswordCompilerApp/CrosswordCompilerApp/CrosswordImages/revealletter_2x.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/static/Krizanke/CrosswordCompilerApp/CrosswordCompilerApp/CrosswordImages/revealword.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/static/Krizanke/CrosswordCompilerApp/CrosswordCompilerApp/CrosswordImages/revealword_2x.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/static/Krizanke/CrosswordCompilerApp/CrosswordCompilerApp/CrosswordImages/revert.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/static/Krizanke/CrosswordCompilerApp/CrosswordCompilerApp/CrosswordImages/revert_2x.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/static/Krizanke/CrosswordCompilerApp/CrosswordCompilerApp/CrosswordImages/save.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/static/Krizanke/CrosswordCompilerApp/CrosswordCompilerApp/CrosswordImages/save_2x.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/static/Krizanke/CrosswordCompilerApp/CrosswordCompilerApp/CrosswordImages/solution.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/static/Krizanke/CrosswordCompilerApp/CrosswordCompilerApp/CrosswordImages/solution_2x.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/static/Krizanke/CrosswordCompilerApp/CrosswordCompilerApp/CrosswordImages/submit.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/static/Krizanke/CrosswordCompilerApp/CrosswordCompilerApp/CrosswordImages/submit_2x.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/static/Krizanke/CrosswordCompilerApp/CrosswordCompilerApp/crosswordCompiler.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/static/Krizanke/CrosswordCompilerApp/CrosswordCompilerApp/jquery.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/static/Krizanke/CrosswordCompilerApp/CrosswordCompilerApp/raphael.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/templates/sudoku_glavni.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/1.ccw" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/1.xml" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/VUS.db" beforeDir="false" afterPath="$PROJECT_DIR$/VUS.db" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/krizanka.py" beforeDir="false" afterPath="$PROJECT_DIR$/krizanka.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/CrosswordImages/check.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/CrosswordImages/check_2x.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/CrosswordImages/pencil.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/CrosswordImages/pencil_2x.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/CrosswordImages/revealletter.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/CrosswordImages/revealletter_2x.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/CrosswordImages/revealword.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/CrosswordImages/revealword_2x.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/CrosswordImages/revert.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/CrosswordImages/revert_2x.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/CrosswordImages/save.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/CrosswordImages/save_2x.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/CrosswordImages/solution.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/CrosswordImages/solution_2x.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/CrosswordImages/submit.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/CrosswordImages/submit_2x.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/crosswordCompiler.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/jquery.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/raphael.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/Krizanke/krizanka_2025-05-17.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/Krizanke/krizanka_2025-05-18.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/Krizanke/krizanka_2025-05-19.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/Krizanke/krizanka_2025-05-20.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/Krizanke/krizanka_2025-05-21.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/Krizanke/krizanka_2025-05-22.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/Krizanke/krizanka_2025-05-23.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/Krizanke/krizanka_2025-05-24.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/Krizanke/krizanka_2025-05-25.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/Krizanke/krizanka_2025-05-26.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/Krizanke/krizanka_2025-05-27.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/Sudoku_hard/Sudoku_hard_2025-05-20.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/Sudoku_hard/Sudoku_hard_2025-05-20.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/googlec2a0a98f7a1ae4b3.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/arhiv.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/arhiv.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/base.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/base.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Krizanke/CrosswordCompilerApp/2025-05-17.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Krizanke/CrosswordCompilerApp/2025-05-18.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Krizanke/CrosswordCompilerApp/2025-05-19.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Krizanke/CrosswordCompilerApp/2025-05-20.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Krizanke/CrosswordCompilerApp/2025-05-21.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Krizanke/CrosswordCompilerApp/2025-05-22.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Krizanke/CrosswordCompilerApp/2025-05-23.html" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/templates/home.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/home.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/isci_vzorec.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/isci_vzorec.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/templates/krizanka.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/krizanka.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/sudoku_arhiv.htm" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/sudoku.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/sudoku.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

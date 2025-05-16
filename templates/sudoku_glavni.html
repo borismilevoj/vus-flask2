@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Sudoku | VUS{% endblock %}
+
+{% block content %}
+<div class="container text-center mt-5">
+  <h2 class="mb-4">Izberi težavnost Sudoku</h2>
+  <div class="d-flex flex-wrap justify-content-center gap-3">
+    <a class="btn btn-outline-primary" href="{{ url_for('prikazi_sudoku', tezavnost='very_easy', datum=today) }}">Zelo lahki</a>
+    <a class="btn btn-outline-primary" href="{{ url_for('prikazi_sudoku', tezavnost='easy', datum=today) }}">Lahki</a>
+    <a class="btn btn-outline-primary" href="{{ url_for('prikazi_sudoku', tezavnost='medium', datum=today) }}">Srednji</a>
+    <a class="btn btn-outline-primary" href="{{ url_for('prikazi_sudoku', tezavnost='hard', datum=today) }}">Težki</a>
+  </div>
+  <hr class="my-5">
+  <h4 class="mb-3">Arhiv po težavnosti</h4>
+  <div class="d-flex flex-wrap justify-content-center gap-3">
+    <a class="btn btn-secondary" href="{{ url_for('arhiv_sudoku', tezavnost='very_easy') }}">Arhiv – Zelo lahki</a>
+    <a class="btn btn-secondary" href="{{ url_for('arhiv_sudoku', tezavnost='easy') }}">Arhiv – Lahki</a>
+    <a class="btn btn-secondary" href="{{ url_for('arhiv_sudoku', tezavnost='medium') }}">Arhiv – Srednji</a>
+    <a class="btn btn-secondary" href="{{ url_for('arhiv_sudoku', tezavnost='hard') }}">Arhiv – Težki</a>
+  </div>
+</div>
+{% endblock %}

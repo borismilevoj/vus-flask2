@@ -28,14 +28,26 @@
             border: none;
             margin-top: 20px;
         }
+        #uspeh {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: green;
+            animation: fadeIn 2s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
     </style>
 </head>
 <body>
-
 <div class="container">
     <h1 class="text-center">Sudoku uganke</h1>
 
-   <form method="post" action="{{ url_for('prikazi_danasnji_sudoku') }}">
+    <form method="post" action="{{ url_for('prikazi_danasnji_sudoku') }}">
         <select name="tezavnost">
             {% for ime, datoteka in tezavnosti.items() %}
             <option value="{{ ime }}" {% if ime == izbrana_tezavnost %}selected{% endif %}>
@@ -48,9 +60,17 @@
 
     {% if tezavnost_datoteka %}
     <p>Izbrali ste težavnost: {{ izbrana_tezavnost }}</p>
-    <iframe src="{{ url_for('static', filename='sudoku_' + tezavnost_datoteka + '.html') }}"></iframe>
+    <iframe src="{{ url_for('static', filename='sudoku_' + tezavnost_datoteka + '.html') }}" id="sudokuFrame"></iframe>
     {% endif %}
+
+    <div id="uspeh">
+        ✨ ČESTITAMO, USPEŠNO STE REŠILI DANAŠNJI SUDOKU! ✨
+    </div>
 </div>
 
+<script>
+  // Ta del bo treba vkljuciti v tvojo Sudoku HTML igro (znotraj iframe) za delovanje
+  // Primer: okno.parent.document.getElementById('uspeh').style.display = 'block';
+</script>
 </body>
 </html>
