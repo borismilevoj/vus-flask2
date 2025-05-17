@@ -1,6 +1,28 @@
 {% extends "base.html" %}
 {% block title %}Križanka | VUS{% endblock %}
 {% block content %}
+<div class="navodila-križanka" style="background-color:#f8f9fa; border:1px solid #ddd; padding:15px; border-radius:8px; margin-bottom:20px; font-family: Arial, sans-serif;">
+    <h3 style="color:#333; margin-bottom:10px;">📌 Navodila za reševanje križanke</h3>
+    <ol style="line-height:1.6;">
+        <li>
+            <strong>Izbira smeri reševanja:</strong>
+            <ul>
+                <li>Z <strong>enim klikom</strong> na oštevilčeno polje izberete smer reševanja (polja se bodo nežno obarvala).</li>
+                <li>Z <strong>dvoklikom</strong> na isto polje smer spremenite (polja se prilagodijo novi smeri).</li>
+            </ul>
+        </li>
+        <li><strong>Vsa gesla so vključena v Veliki ugankarski slovar (VUS).</strong></li>
+        <li>
+            <strong>Iskanje rešitev:</strong>
+            <ul>
+                <li><em>Išči po vzorcu:</em> Vnesite število črk gesla in znane črke. Če je zadetkov preveč, dodajte dodatne informacije (ime, poklic, država, letnica …).</li>
+                <li><em>Išči po opisu:</em> Uporabite ključne besede iz opisa gesla.</li>
+            </ul>
+        </li>
+    </ol>
+    <p style="font-weight:bold; color:#007bff;">Veliko uspeha pri iskanju in reševanju! 🍀</p>
+</div>
+
 <div style="display: flex; justify-content: center; align-items: flex-start; gap: 40px; flex-wrap: wrap; margin-top: 20px;">
   <div id="grid"></div>
   <div class="opis-box">
@@ -190,6 +212,9 @@ function preveriCrko(input) {
   const index = geslo.smer === 'across' ? x - geslo.x : y - geslo.y;
   const pravilna = geslo.solution[index];
   const vnos = input.value.toUpperCase();
+
+  console.log("Vnos:", vnos, "Pravilna:", pravilna);  // Dodano za testiranje
+
   input.classList.remove('correct', 'incorrect');
   if (vnos === '') return;
   if (vnos === pravilna) {
@@ -200,6 +225,7 @@ function preveriCrko(input) {
     input.classList.add('incorrect');
   }
 }
+
 
 function preveriUspeh() {
   const inputs = document.querySelectorAll('.cell input');
