@@ -239,24 +239,44 @@ def glavni_sudoku():
     return render_template('sudoku_glavni.html', today=today)
 
 
+from flask import send_from_directory
+
 @app.route('/sudoku/<tezavnost>/<datum>')
 def prikazi_sudoku(tezavnost, datum):
     mapa_sudoku = f"Sudoku_{tezavnost}"
     ime_datoteke = f"Sudoku_{tezavnost}_{datum}.html"
-    pot_do_datoteke = os.path.join('static', mapa_sudoku, ime_datoteke)
+    return send_from_directory(os.path.join('static', mapa_sudoku), ime_datoteke)
+
+
+@app.route('/sudoku', methods=['GET', 'POST'])
+def prikazi_danasnji_sudoku():
+    tezavnosti = {
+        'Zelo lahki': 'very_easy',
+        'Lahki': 'easy',
+        'Srednji': 'medium',
+        'Težki': 'hard'
+    }
+
+    izbrana_tezavnost = 'easy'  # privzeto
+    if request.method == 'POST':
+        izbrana_tezavnost = request.form['tezavnost']
+
+    today = datetime.today().strftime('%Y-%m-%d')
+    tezavnost_datoteka = tezavnosti[izbrana_tezavnost]
+
+    pot_do_datoteke = os.path.join('static', f'Sudoku_{tezavnost_datoteka}',
+                                   f'Sudoku_{tezavnost_datoteka}_{today}.html')
+    print("Tezavnost datoteka:", tezavnost_datoteka, "Danes:", today)
 
     if not os.path.exists(pot_do_datoteke):
-        return render_template('napaka.html', sporocilo="Sudoku za ta datum ali težavnost ni na voljo.")
+        return render_template('napaka.html', sporocilo="Sudoku ni na voljo.")
 
-    with open(pot_do_datoteke, 'r', encoding='utf-8') as f:
-        vsebina = f.read()
+    return render_template('sudoku.html',
+                           tezavnosti=tezavnosti,
+                           izbrana_tezavnost=izbrana_tezavnost,
+                           tezavnost_datoteka=tezavnost_datoteka,
+                           today=today)
 
-    return render_template_string(vsebina)
-
-@app.route('/sudoku/<tezavnost>')
-def prikazi_danasnji_sudoku(tezavnost):
-    danes = datetime.today().strftime('%Y-%m-%d')
-    return redirect(url_for('prikazi_sudoku', tezavnost=tezavnost, datum=danes))
 
 @app.route('/sudoku/arhiv/<tezavnost>')
 def arhiv_sudoku(tezavnost):
