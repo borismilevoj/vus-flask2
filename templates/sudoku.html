@@ -15,10 +15,6 @@
             max-width: 800px;
             margin: auto;
         }
-        .sudoku-container {
-            text-align: center;
-            margin-top: 30px;
-        }
         select, button {
             margin-top: 15px;
         }
@@ -55,12 +51,12 @@
             </option>
             {% endfor %}
         </select>
-        <button type="submit">Izberi težavnost</button>
+        <button type="submit" class="btn btn-primary">Izberi težavnost</button>
     </form>
 
     {% if tezavnost_datoteka %}
-    <p>Izbrali ste težavnost: {{ izbrana_tezavnost }}</p>
-    <iframe src="{{ url_for('static', filename='sudoku_' + tezavnost_datoteka + '.html') }}" id="sudokuFrame"></iframe>
+    <p class="mt-3">Izbrali ste težavnost: <strong>{{ izbrana_tezavnost }}</strong></p>
+    <iframe src="{{ url_for('static', filename='Sudoku_' + tezavnost_datoteka + '/Sudoku_' + tezavnost_datoteka + '_' + today + '.html') }}" id="sudokuFrame"></iframe>
     {% endif %}
 
     <div id="uspeh">
@@ -69,7 +65,7 @@
 </div>
 
 <script>
-  // Ta del bo treba vkljuciti v tvojo Sudoku HTML igro (znotraj iframe) za delovanje
+  // Ta del bo treba vključiti v tvojo Sudoku HTML igro (znotraj iframe) za delovanje
   // Primer: okno.parent.document.getElementById('uspeh').style.display = 'block';
 </script>
 </body>
