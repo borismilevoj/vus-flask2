@@ -279,11 +279,13 @@ def prikazi_danasnji_sudoku():
 
 
 @app.route('/sudoku/arhiv/<tezavnost>')
+@app.route('/sudoku/arhiv/<tezavnost>')
 def arhiv_sudoku(tezavnost):
-    mapa_sudoku = os.path.join('static', f"Sudoku_{tezavnost}")
-    datoteke = sorted([f for f in os.listdir(mapa_sudoku) if f.endswith('.html')], reverse=True)
+    mapa = os.path.join('static', f'Sudoku_{tezavnost}')
+    datoteke = sorted([f for f in os.listdir(mapa) if f.endswith('.html')], reverse=True)
     datumi = [f.replace(f'Sudoku_{tezavnost}_', '').replace('.html', '') for f in datoteke]
     return render_template('sudoku_arhiv.html', datumi=datumi, tezavnost=tezavnost)
+
 
 @app.route('/sudoku/arhiv')
 def arhiv_sudoku_pregled():

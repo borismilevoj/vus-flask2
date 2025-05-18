@@ -6,9 +6,28 @@
   <component name="ChangeListManager">
     <list default="true" id="7b096a74-7ed9-4344-af5e-d7be2fa85ca4" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/vus.css" beforeDir="false" afterPath="$PROJECT_DIR$/static/vus.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/base.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/base.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/krizanka.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/krizanka.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/VUS.db" beforeDir="false" afterPath="$PROJECT_DIR$/VUS.db" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/CrosswordImages/check.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/CrosswordImages/check_2x.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/CrosswordImages/pencil.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/CrosswordImages/pencil_2x.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/CrosswordImages/revealletter.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/CrosswordImages/revealletter_2x.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/CrosswordImages/revealword.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/CrosswordImages/revealword_2x.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/CrosswordImages/revert.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/CrosswordImages/revert_2x.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/CrosswordImages/save.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/CrosswordImages/save_2x.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/CrosswordImages/solution.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/CrosswordImages/solution_2x.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/CrosswordImages/submit.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/CrosswordImages/submit_2x.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/crosswordCompiler.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/jquery.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/raphael.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Sudoku_easy/Sudoku_easy_2025-05-18.html" beforeDir="false" afterPath="$PROJECT_DIR$/static/Sudoku_easy/Sudoku_easy_2025-05-18.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -71,11 +90,11 @@
       <recent name="C:\Users\bormi\Documents\vus-flask2\static" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\bormi\Documents\vus-flask2\static\Sudoku_medium" />
+      <recent name="C:\Users\bormi\Documents\vus-flask2\static\Sudoku_very_easy" />
       <recent name="C:\Users\bormi\Documents\vus-flask2\static" />
       <recent name="C:\Users\bormi\Documents\vus-flask2\static\Krizanke\CrosswordCompilerApp" />
       <recent name="C:\Users\bormi\Documents\vus-flask2\static\Krizanke\CrosswordCompilerApp\CrosswordCompilerApp" />
-      <recent name="C:\Users\bormi\Documents\vus-flask2\static\Krizanke\CrosswordCompilerApp\CrosswordImages" />
-      <recent name="C:\Users\bormi\Documents\vus-flask2\static\Krizanke" />
     </key>
   </component>
   <component name="RunManager" selected="Python.test_baze">
