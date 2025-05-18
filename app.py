@@ -226,26 +226,42 @@ def prikazi_krizanko(datum):
 
 @app.route('/krizanke/arhiv')
 def arhiv_krizank():
-    mapa_krizank = os.path.join('static', 'Krizanke')
-    datoteke = sorted([f.replace('.xml', '') for f in os.listdir(mapa_krizank) if f.endswith('.xml')], reverse=True)
+    mapa = os.path.join('static', 'Krizanke', 'CrosswordCompilerApp')
+    datumi = []
 
-    return render_template('arhiv.html', datumi=datoteke)
+    if os.path.exists(mapa):
+        for ime in os.listdir(mapa):
+            if ime.endswith('.xml') and len(ime) >= 15:
+                datum = ime.replace('.xml', '')
+                try:
+                    # preverimo, ali je dejansko datum oblike YYYY-MM-DD
+                    datetime.strptime(datum, "%Y-%m-%d")
+                    datumi.append(datum)
+                except ValueError:
+                    pass  # preskoči napačne formate
+
+    datumi.sort(reverse=True)
+
+    return render_template('krizanka_arhiv.html', datumi=datumi)
 
 
 
-@app.route('/sudoku')
-def glavni_sudoku():
-    today = datetime.today().strftime('%Y-%m-%d')
-    return render_template('sudoku_glavni.html', today=today)
-
-
-from flask import send_from_directory
 
 @app.route('/sudoku/<tezavnost>/<datum>')
 def prikazi_sudoku(tezavnost, datum):
     mapa_sudoku = f"Sudoku_{tezavnost}"
     ime_datoteke = f"Sudoku_{tezavnost}_{datum}.html"
-    return send_from_directory(os.path.join('static', mapa_sudoku), ime_datoteke)
+    pot_do_datoteke = os.path.join('static', mapa_sudoku, ime_datoteke)
+
+    if not os.path.exists(pot_do_datoteke):
+        return render_template('napaka.html', sporocilo="Sudoku za ta datum ali težavnost ni na voljo.")
+
+    with open(pot_do_datoteke, 'r', encoding='utf-8') as f:
+        vsebina = f.read()
+
+    return render_template_string(vsebina)
+
+
 
 
 @app.route('/sudoku', methods=['GET', 'POST'])
@@ -257,35 +273,54 @@ def prikazi_danasnji_sudoku():
         'Težki': 'hard'
     }
 
-    izbrana_tezavnost = 'easy'  # privzeto
+    today = datetime.today().strftime('%Y-%m-%d')
+    izbrana_tezavnost = 'easy'  # Privzeta vrednost
+
     if request.method == 'POST':
         izbrana_tezavnost = request.form['tezavnost']
+        tezavnost_datoteka = tezavnosti[izbrana_tezavnost]
 
-    today = datetime.today().strftime('%Y-%m-%d')
-    tezavnost_datoteka = tezavnosti[izbrana_tezavnost]
+        pot_do_datoteke = os.path.join('static', f'Sudoku_{tezavnost_datoteka}',
+                                       f'Sudoku_{tezavnost_datoteka}_{today}.html')
 
-    pot_do_datoteke = os.path.join('static', f'Sudoku_{tezavnost_datoteka}',
-                                   f'Sudoku_{tezavnost_datoteka}_{today}.html')
-    print("Tezavnost datoteka:", tezavnost_datoteka, "Danes:", today)
+        if not os.path.exists(pot_do_datoteke):
+            return render_template('napaka.html', sporocilo="Sudoku ni na voljo.")
 
-    if not os.path.exists(pot_do_datoteke):
-        return render_template('napaka.html', sporocilo="Sudoku ni na voljo.")
+        return render_template('sudoku.html',
+                               tezavnosti=tezavnosti,
+                               izbrana_tezavnost=izbrana_tezavnost,
+                               tezavnost_datoteka=tezavnost_datoteka,
+                               today=today)
 
-    return render_template('sudoku.html',
-                           tezavnosti=tezavnosti,
-                           izbrana_tezavnost=izbrana_tezavnost,
-                           tezavnost_datoteka=tezavnost_datoteka,
-                           today=today)
+    # Za GET zahtevo prikaži glavno stran z današnjim datumom in seznam težavnosti
+    return render_template('sudoku_glavni.html',
+                           today=today,
+                           tezavnosti=tezavnosti)
 
 
-@app.route('/sudoku/arhiv/<tezavnost>')
+
+from datetime import datetime
+
 @app.route('/sudoku/arhiv/<tezavnost>')
 def arhiv_sudoku(tezavnost):
     mapa = os.path.join('static', f'Sudoku_{tezavnost}')
-    datoteke = sorted([f for f in os.listdir(mapa) if f.endswith('.html')], reverse=True)
-    datumi = [f.replace(f'Sudoku_{tezavnost}_', '').replace('.html', '') for f in datoteke]
-    return render_template('sudoku_arhiv.html', datumi=datumi, tezavnost=tezavnost)
+    danes = datetime.today().date()
+    datumi = []
 
+    if os.path.exists(mapa):
+        for datoteka in os.listdir(mapa):
+            if datoteka.endswith('.html') and datoteka.startswith(f'Sudoku_{tezavnost}_'):
+                datum_str = datoteka.replace(f'Sudoku_{tezavnost}_', '').replace('.html', '')
+                try:
+                    datum = datetime.strptime(datum_str, "%Y-%m-%d").date()
+                    if datum <= danes:
+                        datumi.append(datum_str)
+                except ValueError:
+                    pass  # preskoči, če ni veljaven datum
+
+    datumi.sort(reverse=True)
+
+    return render_template('sudoku_arhiv.html', datumi=datumi, tezavnost=tezavnost)
 
 @app.route('/sudoku/arhiv')
 def arhiv_sudoku_pregled():

@@ -29,9 +29,11 @@
     <div class="opis" id="opisPolje">Klikni na polje v križanki za prikaz opisa.</div>
   </div>
 </div>
-<div id="uspeh" style="display:none; text-align:center; margin-top:20px; font-size:1.5rem; font-weight:bold; color:green; animation: fadeIn 2s ease-in-out;">
-  ✨ ČESTITAMO, USPEŠNO STE REŠILI KRIŽANKO! ✨
+<div id="uspeh" style="display:none; text-align:center; margin-top: 20px;">
+    ✨ ČESTITAMO, USPEŠNO STE REŠILI KRIŽANKO! ✨
 </div>
+<a href="{{ url_for('arhiv_krizank') }}" class="btn btn-outline-secondary mt-4">⬅️ Arhiv križank</a>
+
 {% endblock %}
 
 {% block styles %}
