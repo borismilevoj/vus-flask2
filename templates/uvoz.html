@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Uvoz datotek | VUS{% endblock %}
+
+<style>
+.animated-flash {
+  animation: fadeOut 0.5s ease-in-out 4s forwards;
+}
+
+@keyframes fadeOut {
+  to {
+    opacity: 0;
+    transform: translateY(-10px);
+    visibility: hidden;
+  }
+}
+</style>
+
+{% block content %}
+<h2>Uvozi datoteke iz Crossword Compilerja</h2>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+   {% for category, msg in messages %}
+  <div class="alert alert-{{ category }} fade show animated-flash" role="alert">
+    <strong>✅</strong> {{ msg }}
+  </div>
+{% endfor %}
+
+  {% endif %}
+{% endwith %}
+
+<form method="post">
+  <button name="tip" value="krizanka" class="btn btn-primary mb-3">Uvozi križanke</button>
+</form>
+
+<form method="post">
+  <div class="mb-3">
+    <label for="tezavnost" class="form-label">Izberi težavnost sudokuja:</label>
+    <select name="tezavnost" class="form-select" required>
+      <option value="very_easy">Zelo lahki</option>
+      <option value="easy">Lahki</option>
+      <option value="medium">Srednji</option>
+      <option value="hard">Težki</option>
+    </select>
+  </div>
+  <button name="tip" value="sudoku" class="btn btn-success">Uvozi sudoku</button>
+</form>
+
+<a href="{{ url_for('home') }}" class="btn btn-secondary mt-4">Nazaj domov</a>
+{% endblock %}

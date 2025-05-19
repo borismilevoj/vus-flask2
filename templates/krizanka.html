@@ -40,8 +40,10 @@
 <style>
 #grid {
   display: grid;
-  grid-template-columns: repeat({{ podatki.sirina }}, 30px);
+  grid-template-columns: repeat(15, 30px);  /* ← TO! */
   grid-auto-rows: 30px;
+  ...
+
   gap: 2px;
   margin-top: 20px;
 }
@@ -75,6 +77,14 @@
 .cell.highlight {
   border: 2px solid red;
 }
+input.correct {
+  background-color: #c8e6c9; /* svetlo zelena */
+}
+
+input.incorrect {
+  background-color: #ffcdd2; /* svetlo rdeča */
+}
+
 .opis-box {
   width: 320px;
   min-height: 150px;
@@ -92,8 +102,11 @@
 
 {% block scripts %}
 <script>
+
 const width = {{ podatki.sirina }};
 const height = {{ podatki.visina }};
+console.log("🔍 Širina:", width);
+console.log("🔍 Višina:", height);
 const crna_polja = {{ podatki.crna_polja | tojson }};
 const gesla_opisi = {{ podatki.gesla_opisi | tojson }};
 let trenutnaSmer = 'across';
