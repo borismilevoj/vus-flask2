@@ -2,16 +2,27 @@
 {% block title %}VUS – Veliki ugankarski slovar{% endblock %}
 
 {% block content %}
+<style>
+.btn-anim {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.btn-anim:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 10px rgba(0,0,0,0.3);
+}
+</style>
+
 <div class="container-fluid p-0">
-  <div class="hero-image" style="background-image: url('{{ url_for('static', filename='slika.png') }}'); background-size: cover; background-position: center; padding: 100px 20px; text-align: center;">
+  <div class="hero-image" style="background-image: url('{{ url_for('static', filename='slika.png') }}'); background-size: 100% 100%; background-position: center; background-repeat: no-repeat; height: 100%; padding: 100px 20px; text-align: center;">
     <h1 class="display-5 fw-bold text-white">VUS – Veliki ugankarski slovar</h1>
     <p class="lead text-white">Slovar za križanke in uganke. Poišči gesla po vzorcu ali opisu.</p>
     <div class="d-flex flex-wrap justify-content-center mt-4 gap-3">
-      <a class="btn btn-warning fw-bold" href="{{ url_for('isci_vzorec') }}">IŠČI PO VZORCU</a>
-      <a class="btn btn-warning fw-bold" href="{{ url_for('isci_opis') }}">IŠČI PO OPISU</a>
-      <a class="btn btn-warning fw-bold" href="{{ url_for('prikazi_krizanko') }}">KRIŽANKE</a>
-      <a class="btn btn-warning fw-bold" href="{{ url_for('glavni_sudoku') }}">SUDOKU</a>
-      <a class="btn btn-warning fw-bold" href="{{ url_for('prispevaj_geslo') }}">PRISPEVAJ GESLO</a>
+      <a class="btn btn-primary fw-bold btn-anim" href="{{ url_for('isci_vzorec') }}">IŠČI PO VZORCU</a>
+      <a class="btn btn-primary fw-bold btn-anim" href="{{ url_for('isci_opis') }}">IŠČI PO OPISU</a>
+      <a class="btn btn-success fw-bold btn-anim" href="{{ url_for('arhiv_krizank') }}">KRIŽANKE</a>
+      <a class="btn btn-success fw-bold btn-anim" href="{{ url_for('sudoku_meni') }}">SUDOKU</a>
+      <a class="btn btn-info fw-bold btn-anim" href="{{ url_for('prispevaj_geslo') }}">PRISPEVAJ GESLO</a>
+      <a class="btn btn-dark fw-bold btn-anim" href="{{ url_for('uvoz_datotek') }}">UVOZI DATOTEKE</a>
     </div>
     <div class="stevec-home mt-4 fs-4 fw-bold text-warning" id="stevecHome">
       Nalaganje števila gesel...
