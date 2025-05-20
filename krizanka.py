@@ -34,7 +34,6 @@ def pridobi_podatke_iz_xml(xml_pot):
     width = int(grid.get('width'))
     height = int(grid.get('height'))
 
-    # Zgradimo matriko celic
     grid_matrix = [['' for _ in range(width)] for _ in range(height)]
     for cell in grid.findall(".//ns:cell", ns):
         x = int(cell.get('x')) - 1
@@ -43,14 +42,13 @@ def pridobi_podatke_iz_xml(xml_pot):
         if char:
             grid_matrix[y][x] = char.upper()
 
-    # Črna polja
     crna_polja = []
-    for cell in grid.findall(".//ns:cell[@type='block']", ns):
-        x = int(cell.get('x')) - 1
-        y = int(cell.get('y')) - 1
-        crna_polja.append((x, y))
+    for cell in grid.findall(".//ns:cell", ns):
+        if cell.get('type') == 'block' or not cell.get('solution'):
+            x = int(cell.get('x')) - 1
+            y = int(cell.get('y')) - 1
+            crna_polja.append((x, y))
 
-    # Gesla in opisi
     gesla_opisi = []
     words = root.findall('.//ns:word', ns)
     for word in words:
@@ -74,7 +72,6 @@ def pridobi_podatke_iz_xml(xml_pot):
             y_start = int(y_range) - 1
             dolzina = 1
 
-        # Zgradi rešitev iz mreže
         solution = ''
         for i in range(dolzina):
             if smer == 'across':
@@ -94,7 +91,8 @@ def pridobi_podatke_iz_xml(xml_pot):
             'y': y_start,
             'smer': smer,
             'dolzina': dolzina,
-            'solution': solution
+            'solution': solution,
+            'je_zacetek': True
         })
 
     return {

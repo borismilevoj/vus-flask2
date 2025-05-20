@@ -1,52 +1,37 @@
 {% extends "base.html" %}
 {% block title %}Križanka | VUS{% endblock %}
+
 {% block content %}
 <div class="navodila-križanka" style="background-color:#f8f9fa; border:1px solid #ddd; padding:15px; border-radius:8px; margin-bottom:20px; font-family: Arial, sans-serif;">
-    <h3 style="color:#333; margin-bottom:10px;">📌 Navodila za reševanje križanke</h3>
-    <ol style="line-height:1.6;">
-        <li>
-            <strong>Izbira smeri reševanja:</strong>
-            <ul>
-                <li>Z <strong>enim klikom</strong> na oštevilčeno polje izberete smer reševanja (polja se bodo nežno obarvala).</li>
-                <li>Z <strong>dvoklikom</strong> na isto polje smer spremenite (polja se prilagodijo novi smeri).</li>
-            </ul>
-        </li>
-        <li><strong>Vsa gesla so vključena v Veliki ugankarski slovar (VUS).</strong></li>
-        <li>
-            <strong>Iskanje rešitev:</strong>
-            <ul>
-                <li><em>Išči po vzorcu:</em> Vnesite število črk gesla in znane črke. Če je zadetkov preveč, dodajte dodatne informacije (ime, poklic, država, letnica …).</li>
-                <li><em>Išči po opisu:</em> Uporabite ključne besede iz opisa gesla.</li>
-            </ul>
-        </li>
-    </ol>
-    <p style="font-weight:bold; color:#007bff;">Veliko uspeha pri iskanju in reševanju! 🍀</p>
+  <h3 style="color:#333; margin-bottom:10px;">📌 Navodila za reševanje križanke</h3>
+  <ol style="line-height:1.6;">
+    <li><strong>Izbira smeri reševanja:</strong>
+      <ul>
+        <li>Z <strong>enim klikom</strong> izberete smer (polja se obarvajo).</li>
+        <li>Z <strong>dvoklikom</strong> zamenjate smer (vodoravno ↔ navpično).</li>
+      </ul>
+    </li>
+    <li><strong>Gesla so iz slovarja VUS.</strong></li>
+  </ol>
+  <p style="font-weight:bold; color:#007bff;">Veliko uspeha! 🍀</p>
 </div>
 
 <div style="display: flex; justify-content: center; align-items: flex-start; gap: 40px; flex-wrap: wrap; margin-top: 20px;">
-  <div id="grid"></div>
-  <div class="opis-box">
-    <div class="opis" id="opisPolje">Klikni na polje v križanki za prikaz opisa.</div>
+  <div id="grid" style="display: grid; grid-template-columns: repeat({{ podatki.sirina }}, 30px); grid-auto-rows: 30px; gap: 2px; margin-top: 20px;"></div>
+  <div class="opis-box" style="width: 320px; min-height: 150px; border: 1px solid #ccc; padding: 15px; background-color: #f8f8f8;">
+    <div class="opis" id="opisPolje">Klikni na polje za prikaz opisa.</div>
   </div>
 </div>
-<div id="uspeh" style="display:none; text-align:center; margin-top: 20px;">
-    ✨ ČESTITAMO, USPEŠNO STE REŠILI KRIŽANKO! ✨
-</div>
-<a href="{{ url_for('arhiv_krizank') }}" class="btn btn-outline-secondary mt-4">⬅️ Arhiv križank</a>
 
+<div id="uspeh" style="display:none; text-align:center; margin-top: 20px;">
+  ✨ ČESTITAMO, USPEŠNO STE REŠILI KRIŽANKO! ✨
+</div>
+
+<a href="{{ url_for('arhiv_krizank') }}" class="btn btn-outline-secondary mt-4">⬅️ Nazaj na arhiv</a>
 {% endblock %}
 
 {% block styles %}
 <style>
-#grid {
-  display: grid;
-  grid-template-columns: repeat(15, 30px);  /* ← TO! */
-  grid-auto-rows: 30px;
-  ...
-
-  gap: 2px;
-  margin-top: 20px;
-}
 .cell {
   position: relative;
   width: 30px;
@@ -78,35 +63,18 @@
   border: 2px solid red;
 }
 input.correct {
-  background-color: #c8e6c9; /* svetlo zelena */
+  background-color: #c8e6c9;
 }
-
 input.incorrect {
-  background-color: #ffcdd2; /* svetlo rdeča */
-}
-
-.opis-box {
-  width: 320px;
-  min-height: 150px;
-  border: 1px solid #ccc;
-  padding: 15px;
-  background-color: #f8f8f8;
-  font-size: 1rem;
-}
-@keyframes fadeIn {
-  from { opacity: 0; transform: scale(0.9); }
-  to { opacity: 1; transform: scale(1); }
+  background-color: #ffcdd2;
 }
 </style>
 {% endblock %}
 
 {% block scripts %}
 <script>
-
 const width = {{ podatki.sirina }};
 const height = {{ podatki.visina }};
-console.log("🔍 Širina:", width);
-console.log("🔍 Višina:", height);
 const crna_polja = {{ podatki.crna_polja | tojson }};
 const gesla_opisi = {{ podatki.gesla_opisi | tojson }};
 let trenutnaSmer = 'across';
@@ -144,11 +112,12 @@ for (let y = 0; y < height; y++) {
 
       cell.appendChild(input);
 
-      const geslo = gesla_opisi.find(g => g.x === x && g.y === y);
-      if (geslo && geslo.stevilka !== '?') {
+      const geslaNaTemPolju = gesla_opisi.filter(g => g.x === x && g.y === y && g.je_zacetek);
+      const prva = geslaNaTemPolju.find(g => g.stevilka && g.stevilka !== '?');
+      if (prva) {
         const numberDiv = document.createElement('div');
         numberDiv.classList.add('cell-number');
-        numberDiv.textContent = geslo.stevilka;
+        numberDiv.textContent = prva.stevilka;
         cell.appendChild(numberDiv);
       }
     }
@@ -157,24 +126,8 @@ for (let y = 0; y < height; y++) {
   }
 }
 
-document.addEventListener('keydown', function (e) {
-  const active = document.activeElement;
-  if (!active || active.tagName !== 'INPUT') return;
-
-  if (e.key === 'Tab' && e.shiftKey) {
-    e.preventDefault();
-    premakniNazaj(active);
-  }
-
-  if ((e.key === 'Enter') || (e.key === 'Tab' && !e.shiftKey)) {
-    e.preventDefault();
-    premakniNaprej(active);
-  }
-});
-
 function oznaciGeslo(x, y) {
   document.querySelectorAll('.cell').forEach(c => c.classList.remove('highlight'));
-
   gesla_opisi.forEach(g => {
     if ((trenutnaSmer === 'across' && g.smer === 'across' && g.y === y && x >= g.x && x < g.x + g.dolzina) ||
         (trenutnaSmer === 'down' && g.smer === 'down' && g.x === x && y >= g.y && y < g.y + g.dolzina)) {
@@ -186,6 +139,35 @@ function oznaciGeslo(x, y) {
       }
     }
   });
+}
+
+function preveriCrko(input) {
+  const x = +input.dataset.x;
+  const y = +input.dataset.y;
+  const geslo = gesla_opisi.find(g =>
+    (g.smer === 'across' && g.y === y && x >= g.x && x < g.x + g.dolzina) ||
+    (g.smer === 'down' && g.x === x && y >= g.y && y < g.y + g.dolzina)
+  );
+  if (!geslo) return;
+  const index = geslo.smer === 'across' ? x - geslo.x : y - geslo.y;
+  const pravilna = geslo.solution[index];
+  const vnos = input.value.toUpperCase();
+
+  input.classList.remove('correct', 'incorrect');
+  if (vnos === '') return;
+  if (vnos === pravilna) {
+    input.classList.add('correct');
+    input.value = pravilna;
+    preveriUspeh();
+  } else {
+    input.classList.add('incorrect');
+  }
+}
+
+function preveriUspeh() {
+  const inputs = document.querySelectorAll('.cell input');
+  for (let i of inputs) if (!i.classList.contains('correct')) return;
+  document.getElementById('uspeh').style.display = 'block';
 }
 
 function premakniNaprej(input) {
@@ -214,38 +196,6 @@ function premakniNazaj(input) {
     prevInput.focus();
     break;
   }
-}
-
-function preveriCrko(input) {
-  const x = +input.dataset.x;
-  const y = +input.dataset.y;
-  const geslo = gesla_opisi.find(g =>
-    (g.smer === 'across' && g.y === y && x >= g.x && x < g.x + g.dolzina) ||
-    (g.smer === 'down' && g.x === x && y >= g.y && y < g.y + g.dolzina)
-  );
-  if (!geslo) return;
-  const index = geslo.smer === 'across' ? x - geslo.x : y - geslo.y;
-  const pravilna = geslo.solution[index];
-  const vnos = input.value.toUpperCase();
-
-  console.log("Vnos:", vnos, "Pravilna:", pravilna);  // Dodano za testiranje
-
-  input.classList.remove('correct', 'incorrect');
-  if (vnos === '') return;
-  if (vnos === pravilna) {
-    input.classList.add('correct');
-    input.value = pravilna;
-    preveriUspeh();
-  } else {
-    input.classList.add('incorrect');
-  }
-}
-
-
-function preveriUspeh() {
-  const inputs = document.querySelectorAll('.cell input');
-  for (let i of inputs) if (!i.classList.contains('correct')) return;
-  document.getElementById('uspeh').style.display = 'block';
 }
 
 function prikaziOpis(x, y) {
