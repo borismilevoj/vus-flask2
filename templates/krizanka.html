@@ -218,13 +218,15 @@ function preveriUspeh() {
 }
 
 function prikaziOpis(x, y) {
-  const opisPolje = document.getElementById('opisPolje');
-  const geslo = gesla_opisi.find(g =>
-    (trenutnaSmer === 'across' && g.y === y && x >= g.x && x < g.x + g.dolzina) ||
-    (trenutnaSmer === 'down' && g.x === x && y >= g.y && y < g.y + g.dolzina)
-  );
-  opisPolje.textContent = geslo ? `${geslo.stevilka}. ${geslo.opis}` : 'Ni opisa.';
+    const opisPolje = document.getElementById('opisPolje');
+    const geslo = gesla_opisi.find(g =>
+        (trenutnaSmer === 'across' && g.smer === 'across' && g.y === y && x >= g.x && x < g.x + g.dolzina) ||
+        (trenutnaSmer === 'down' && g.smer === 'down' && g.x === x && y >= g.y && y < g.y + g.dolzina)
+    );
+
+    opisPolje.textContent = geslo ? `${geslo.stevilka} ${geslo.smer === 'across' ? 'vodoravno' : 'navpično'}: ${geslo.opis}` : 'Ni opisa.';
 }
+
 </script>
 
 {% endblock %}
