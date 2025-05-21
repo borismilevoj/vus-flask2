@@ -60,13 +60,15 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav ms-auto">
-                <li class="nav-item"><a class="nav-link" href="{{ url_for('isci_vzorec') }}">Iskanje po vzorcu</a></li>
-                <li class="nav-item"><a class="nav-link" href="{{ url_for('isci_opis') }}">Iskanje po opisu</a></li>
-                <li class="nav-item"><a class="nav-link" href="{{ url_for('prikazi_krizanko') }}">Današnja križanka</a></li>
-                <li class="nav-item"><a class="nav-link" href="{{ url_for('arhiv_krizank') }}">Arhiv križank</a></li>
-                <li class="nav-item"><a class="nav-link" href="{{ url_for('arhiv_sudoku_pregled') }}">Arhiv Sudoku</a></li>
-                <li class="nav-item"><a class="nav-link" href="{{ url_for('prispevaj_geslo') }}">Prispevaj</a></li>
-            </ul>
+    <li class="nav-item"><a class="nav-link" href="{{ url_for('isci_vzorec') }}" target="_blank">Iskanje po vzorcu</a></li>
+    <li class="nav-item"><a class="nav-link" href="{{ url_for('isci_opis') }}" target="_blank">Iskanje po opisu</a></li>
+    <li class="nav-item"><a class="nav-link" href="{{ url_for('prikazi_krizanko') }}" target="_blank">Današnja križanka</a></li>
+    <li class="nav-item"><a class="nav-link" href="{{ url_for('arhiv_krizank') }}" target="_blank">Arhiv križank</a></li>
+    <li class="nav-item"><a class="nav-link" href="{{ url_for('arhiv_sudoku_pregled') }}" target="_blank">Arhiv Sudoku</a></li>
+    <li class="nav-item"><a class="nav-link" href="{{ url_for('prispevaj_geslo') }}" target="_blank">Prispevaj</a></li>
+</ul>
+
+
         </div>
     </div>
 </nav>

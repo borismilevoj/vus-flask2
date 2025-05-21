@@ -18,8 +18,7 @@
 
 <div style="display: flex; justify-content: center; align-items: flex-start; gap: 40px; flex-wrap: wrap; margin-top: 20px;">
   <div id="grid" style="display: grid; grid-template-columns: repeat({{ podatki.sirina }}, 30px); grid-auto-rows: 30px; gap: 2px; margin-top: 20px;"></div>
-  <div class="opis-box" style="width: 320px; min-height: 150px; border: 1px solid #ccc; padding: 15px; background-color: #f8f8f8;">
-    <div class="opis" id="opisPolje">Klikni na polje za prikaz opisa.</div>
+  <div class="opis-box" style="width: 320px; min-height: 150px; border: 1px solid #ccc; padding: 15px; background-color: #f8f8f8;"><div class="opis" id="opisPolje">Klikni na polje za prikaz opisa.</div>
   </div>
 </div>
 
@@ -112,12 +111,11 @@ for (let y = 0; y < height; y++) {
 
       cell.appendChild(input);
 
-      const geslaNaTemPolju = gesla_opisi.filter(g => g.x === x && g.y === y && g.je_zacetek);
-      const prva = geslaNaTemPolju.find(g => g.stevilka && g.stevilka !== '?');
-      if (prva) {
+      const geslo = gesla_opisi.find(g => g.x === x && g.y === y);
+      if (geslo && geslo.stevilka !== '?') {
         const numberDiv = document.createElement('div');
         numberDiv.classList.add('cell-number');
-        numberDiv.textContent = prva.stevilka;
+        numberDiv.textContent = geslo.stevilka;
         cell.appendChild(numberDiv);
       }
     }
@@ -126,8 +124,24 @@ for (let y = 0; y < height; y++) {
   }
 }
 
+document.addEventListener('keydown', function (e) {
+  const active = document.activeElement;
+  if (!active || active.tagName !== 'INPUT') return;
+
+  if (e.key === 'Tab' && e.shiftKey) {
+    e.preventDefault();
+    premakniNazaj(active);
+  }
+
+  if ((e.key === 'Enter') || (e.key === 'Tab' && !e.shiftKey)) {
+    e.preventDefault();
+    premakniNaprej(active);
+  }
+});
+
 function oznaciGeslo(x, y) {
   document.querySelectorAll('.cell').forEach(c => c.classList.remove('highlight'));
+
   gesla_opisi.forEach(g => {
     if ((trenutnaSmer === 'across' && g.smer === 'across' && g.y === y && x >= g.x && x < g.x + g.dolzina) ||
         (trenutnaSmer === 'down' && g.smer === 'down' && g.x === x && y >= g.y && y < g.y + g.dolzina)) {
@@ -139,35 +153,6 @@ function oznaciGeslo(x, y) {
       }
     }
   });
-}
-
-function preveriCrko(input) {
-  const x = +input.dataset.x;
-  const y = +input.dataset.y;
-  const geslo = gesla_opisi.find(g =>
-    (g.smer === 'across' && g.y === y && x >= g.x && x < g.x + g.dolzina) ||
-    (g.smer === 'down' && g.x === x && y >= g.y && y < g.y + g.dolzina)
-  );
-  if (!geslo) return;
-  const index = geslo.smer === 'across' ? x - geslo.x : y - geslo.y;
-  const pravilna = geslo.solution[index];
-  const vnos = input.value.toUpperCase();
-
-  input.classList.remove('correct', 'incorrect');
-  if (vnos === '') return;
-  if (vnos === pravilna) {
-    input.classList.add('correct');
-    input.value = pravilna;
-    preveriUspeh();
-  } else {
-    input.classList.add('incorrect');
-  }
-}
-
-function preveriUspeh() {
-  const inputs = document.querySelectorAll('.cell input');
-  for (let i of inputs) if (!i.classList.contains('correct')) return;
-  document.getElementById('uspeh').style.display = 'block';
 }
 
 function premakniNaprej(input) {
@@ -198,6 +183,40 @@ function premakniNazaj(input) {
   }
 }
 
+function preveriCrko(input) {
+  const x = +input.dataset.x;
+  const y = +input.dataset.y;
+  const geslo = gesla_opisi.find(g =>
+    (g.smer === 'across' && g.y === y && x >= g.x && x < g.x + g.dolzina) ||
+    (g.smer === 'down' && g.x === x && y >= g.y && y < g.y + g.dolzina)
+  );
+  if (!geslo) return;
+  const index = geslo.smer === 'across' ? x - geslo.x : y - geslo.y;
+  const pravilna = geslo.solution[index];
+  const vnos = input.value.toUpperCase();
+
+  input.classList.remove('correct', 'incorrect');
+  if (vnos === '') return;
+
+  if (vnos === pravilna) {
+    input.classList.add('correct');
+    input.style.backgroundColor = '#d4edda';  // nežno zelena za pravilno
+    input.style.color = '#155724';  // temno zelena pisava
+    input.value = pravilna;
+    preveriUspeh();
+  } else {
+    input.classList.add('incorrect');
+    input.style.backgroundColor = '#f8d7da';  // nežno rdeča za napačno
+    input.style.color = '#721c24';  // temno rdeča pisava
+  }
+}
+
+function preveriUspeh() {
+  const inputs = document.querySelectorAll('.cell input');
+  for (let i of inputs) if (!i.classList.contains('correct')) return;
+  document.getElementById('uspeh').style.display = 'block';
+}
+
 function prikaziOpis(x, y) {
   const opisPolje = document.getElementById('opisPolje');
   const geslo = gesla_opisi.find(g =>
@@ -207,4 +226,5 @@ function prikaziOpis(x, y) {
   opisPolje.textContent = geslo ? `${geslo.stevilka}. ${geslo.opis}` : 'Ni opisa.';
 }
 </script>
+
 {% endblock %}
