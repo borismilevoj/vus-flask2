@@ -1,165 +1,187 @@
 {% extends "base.html" %}
+
 {% block title %}Križanka | VUS{% endblock %}
 
 {% block content %}
 <div class="navodila-križanka" style="background-color:#f8f9fa; border:1px solid #ddd; padding:15px; border-radius:8px; margin-bottom:20px; font-family: Arial, sans-serif;">
   <h3 style="color:#333; margin-bottom:10px;">📌 Navodila za reševanje križanke</h3>
-  <ol style="line-height:1.6;">
-    <li><strong>Izbira smeri reševanja:</strong>
-      <ul>
-        <li>Z <strong>enim klikom</strong> izberete smer (polja se obarvajo).</li>
-        <li>Z <strong>dvoklikom</strong> zamenjate smer (vodoravno ↔ navpično).</li>
-      </ul>
-    </li>
-    <li><strong>Gesla so iz slovarja VUS.</strong></li>
-  </ol>
-  <p style="font-weight:bold; color:#007bff;">Veliko uspeha! 🍀</p>
+  <ul style="line-height:1.6;">
+    <li><strong>En klik</strong> na polje označi aktivno geslo (polja se obarvajo).</li>
+    <li><strong>Gumb <span style="font-size: 1.2em;">🔁</span></strong> spodaj levo zamenja smer vnosa (vodoravno ↔ navpično).</li>
+    <li>Gesla so iz slovarja VUS.</li>
+  </ul>
 </div>
 
-<div style="display: flex; justify-content: center; align-items: flex-start; gap: 40px; flex-wrap: wrap; margin-top: 20px;">
-  <div id="grid" style="display: grid; grid-template-columns: repeat({{ podatki.sirina }}, 30px); grid-auto-rows: 30px; gap: 2px; margin-top: 20px;"></div>
-  <div class="opis-box" style="width: 320px; min-height: 150px; border: 1px solid #ccc; padding: 15px; background-color: #f8f8f8;"><div class="opis" id="opisPolje">Klikni na polje za prikaz opisa.</div>
-  </div>
+<div style="display: flex; flex-wrap: wrap; gap: 20px;">
+  <div id="grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(40px, 1fr)); gap: 2px;"></div>
+  <div id="opisPolje" style="min-width: 220px; font-weight: bold; font-size: 1.2rem;">Klikni na polje za prikaz opisa</div>
 </div>
 
-<div id="uspeh" style="display:none; text-align:center; margin-top: 20px;">
-  ✨ ČESTITAMO, USPEŠNO STE REŠILI KRIŽANKO! ✨
-</div>
+<div id="uspeh" style="display:none; font-weight:bold; font-size:20px; margin-top:20px; color:green;"> 🎉 ČESTITAMO, USPEŠNO STE REŠILI KRIŽANKO! 🎉 </div>
 
-<a href="{{ url_for('arhiv_krizank') }}" class="btn btn-outline-secondary mt-4">⬅️ Nazaj na arhiv</a>
-{% endblock %}
+<!-- Gumb za zamenjavo smeri -->
+<button id="menjajSmerBtn" onclick="zamenjajSmer()">🔁</button>
 
-{% block styles %}
 <style>
-.cell {
-  position: relative;
-  width: 30px;
-  height: 30px;
-  border: 1px solid #999;
-  box-sizing: border-box;
-}
-.cell input {
-  width: 100%;
-  height: 100%;
-  font-size: 16px;
-  text-align: center;
-  text-transform: uppercase;
-  border: none;
-  outline: none;
-}
-.cell.black {
-  background-color: black;
-}
-.cell-number {
-  position: absolute;
-  top: 0;
-  left: 0;
-  font-size: 10px;
-  color: blue;
-  z-index: 2;
+  #menjajSmerBtn {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    z-index: 1000;
+    background-color: #ffc107;
+    color: black;
+    border: none;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    font-size: 24px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    transition: background-color 0.3s ease;
+  }
+  #menjajSmerBtn:hover {
+    background-color: #e0a800;
+  }
+  @media (max-width: 768px) {
+    #menjajSmerBtn {
+      width: 45px;
+      height: 45px;
+      font-size: 22px;
+      bottom: 15px;
+      left: 15px;
+    }
+  }
+  @keyframes zasveti {
+    0%   { background-color: #ffc107; transform: scale(1); }
+    50%  { background-color: #ffe066; transform: scale(1.2); }
+    100% { background-color: #ffc107; transform: scale(1); }
+  }
+  .cell {
+    width: 40px;
+    height: 40px;
+    border: 1px solid #999;
+    position: relative;
+  }
+  .cell input {
+    width: 100%;
+    height: 100%;
+    border: none;
+    font-size: 1.2rem;
+    text-align: center;
+    text-transform: uppercase;
+  }
+  .cell.black {
+    background-color: #000;
+    pointer-events: none;
+    border: 1px solid #666;
+  }
+  .cell-number {
+    position: absolute;
+    top: 1px;
+    left: 3px;
+    font-size: 0.6rem;
+    color: #333;
+  }
+  .highlight {
+  background-color: transparent !important;
 }
 .cell.highlight {
-  border: 2px solid red;
+  border: 2px solid #dc3545 !important; /* rdeča obroba za smer */
 }
-input.correct {
-  background-color: #c8e6c9;
+
+.cell input.correct {
+  background-color: #d4edda !important; /* ZELENA polnitev */
+  color: #155724 !important;
 }
-input.incorrect {
-  background-color: #ffcdd2;
+
+.cell input.incorrect {
+  background-color: #f8d7da !important; /* RDEČA polnitev */
+  color: #721c24 !important;
 }
+
+
 </style>
-{% endblock %}
 
-{% block scripts %}
 <script>
-const width = {{ podatki.sirina }};
-const height = {{ podatki.visina }};
-const crna_polja = {{ podatki.crna_polja | tojson }};
-const gesla_opisi = {{ podatki.gesla_opisi | tojson }};
-let trenutnaSmer = 'across';
+  const width = {{ podatki.sirina }};
+  const height = {{ podatki.visina }};
+  const crna_polja = {{ podatki.crna_polja | tojson }};
+  const gesla_opisi = {{ podatki.gesla_opisi | tojson }};
+  let trenutnaSmer = 'across';
 
-const grid = document.getElementById('grid');
+  document.addEventListener('DOMContentLoaded', function () {
+    const grid = document.getElementById('grid');
+    grid.style.gridTemplateColumns = `repeat(${width}, 40px)`;
 
-for (let y = 0; y < height; y++) {
-  for (let x = 0; x < width; x++) {
-    const cell = document.createElement('div');
-    cell.classList.add('cell');
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const cell = document.createElement('div');
+        cell.classList.add('cell');
 
-    if (crna_polja.some(p => p[0] === x && p[1] === y)) {
-      cell.classList.add('black');
-    } else {
-      const input = document.createElement('input');
-      input.setAttribute('maxlength', '1');
-      input.dataset.x = x;
-      input.dataset.y = y;
+        if (crna_polja.some(p => p[0] === x && p[1] === y)) {
+          cell.classList.add('black');
+        } else {
+          const input = document.createElement('input');
+          input.setAttribute('maxlength', '1');
+          input.dataset.x = x;
+          input.dataset.y = y;
 
-      input.addEventListener('input', () => {
-        preveriCelotnoGeslo(input);
-        premakniNaprej(input);
-      });
-
-      input.addEventListener('click', () => {
-        prikaziOpis(x, y);
-        oznaciGeslo(x, y);
-      });
-
-      input.addEventListener('dblclick', () => {
-        trenutnaSmer = trenutnaSmer === 'across' ? 'down' : 'across';
-        prikaziOpis(x, y);
-        oznaciGeslo(x, y);
-      });
-
-      cell.appendChild(input);
-
-      const geslo = gesla_opisi.find(g => g.x === x && g.y === y);
-      if (geslo && geslo.stevilka !== '?') {
-        const numberDiv = document.createElement('div');
-        numberDiv.classList.add('cell-number');
-        numberDiv.textContent = geslo.stevilka;
-        cell.appendChild(numberDiv);
-      }
-    }
-
-    grid.appendChild(cell);
-  }
-}
-
-document.addEventListener('keydown', function (e) {
-  const active = document.activeElement;
-  if (!active || active.tagName !== 'INPUT') return;
-
-  if (e.key === 'Tab' && e.shiftKey) {
-    e.preventDefault();
-    premakniNazaj(active);
-  }
-
-  if ((e.key === 'Enter') || (e.key === 'Tab' && !e.shiftKey)) {
-    e.preventDefault();
-    premakniNaprej(active);
-  }
+         input.addEventListener('input', () => {
+  setTimeout(() => {
+    preveriCelotnoGeslo(input);
+    premakniNaprej(input);
+  }, 10); // mali delay, da dobi pravo črko
 });
 
-function oznaciGeslo(x, y) {
-  document.querySelectorAll('.cell').forEach(c => c.classList.remove('highlight'));
 
-  gesla_opisi.forEach(g => {
-    if ((trenutnaSmer === 'across' && g.smer === 'across' && g.y === y && x >= g.x && x < g.x + g.dolzina) ||
-        (trenutnaSmer === 'down' && g.smer === 'down' && g.x === x && y >= g.y && y < g.y + g.dolzina)) {
-      for (let i = 0; i < g.dolzina; i++) {
-        const tx = g.smer === 'across' ? g.x + i : g.x;
-        const ty = g.smer === 'down' ? g.y + i : g.y;
-        const inp = document.querySelector(`input[data-x='${tx}'][data-y='${ty}']`);
-        if (inp) inp.parentElement.classList.add('highlight');
+          input.addEventListener('click', () => {
+            prikaziOpis(x, y);
+            oznaciGeslo(x, y);
+          });
+
+          cell.appendChild(input);
+
+          const geslo = gesla_opisi.find(g => g.x === x && g.y === y);
+          if (geslo && geslo.stevilka !== '?') {
+            const numberDiv = document.createElement('div');
+            numberDiv.classList.add('cell-number');
+            numberDiv.textContent = geslo.stevilka;
+            cell.appendChild(numberDiv);
+          }
+        }
+
+        grid.appendChild(cell);
       }
     }
   });
-}
 
+  window.zamenjajSmer = function () {
+  trenutnaSmer = trenutnaSmer === 'across' ? 'down' : 'across';
 
-function ocistiZnake(besedilo) {
-    return besedilo.toUpperCase().replace(/[\s\-'\.]/g, '');
-}
+  // Poišči trenutno izbrano (fokusirano) ali zadnjo z 'highlight'
+  let x = null, y = null;
+  const aktivno = document.activeElement;
+  if (aktivno && aktivno.tagName === 'INPUT') {
+    x = +aktivno.dataset.x;
+    y = +aktivno.dataset.y;
+  } else {
+    const oznaceno = document.querySelector('.highlight input');
+    if (oznaceno) {
+      x = +oznaceno.dataset.x;
+      y = +oznaceno.dataset.y;
+    }
+  }
 
+  if (x !== null && y !== null) {
+    prikaziOpis(x, y);
+    oznaciGeslo(x, y);
+  }
+
+  const btn = document.getElementById('menjajSmerBtn');
+  if (btn) {
+    btn.style.animation = 'zasveti 0.4s ease-in-out';
+    setTimeout(() => { btn.style.animation = ''; }, 400);
+  }
+};
 
 
 function premakniNaprej(input) {
@@ -177,19 +199,6 @@ function premakniNaprej(input) {
   }
 }
 
-function premakniNazaj(input) {
-  let x = +input.dataset.x;
-  let y = +input.dataset.y;
-  while (true) {
-    x = trenutnaSmer === 'across' ? x - 1 : x;
-    y = trenutnaSmer === 'down' ? y - 1 : y;
-    const prevInput = document.querySelector(`.cell input[data-x='${x}'][data-y='${y}']`);
-    if (!prevInput) break;
-    prevInput.focus();
-    break;
-  }
-}
-
 function preveriCelotnoGeslo(input) {
   const x = +input.dataset.x;
   const y = +input.dataset.y;
@@ -199,32 +208,29 @@ function preveriCelotnoGeslo(input) {
   );
   if (!geslo) return;
 
-  let uporabnikovVnos = '';
-  let celotnaResitev = geslo.solution;
+  const resitev = geslo.solution.toUpperCase();
+  const vnosPolja = [];
 
   for (let i = 0; i < geslo.dolzina; i++) {
     const tx = geslo.smer === 'across' ? geslo.x + i : geslo.x;
     const ty = geslo.smer === 'down' ? geslo.y + i : geslo.y;
     const inp = document.querySelector(`input[data-x='${tx}'][data-y='${ty}']`);
-    uporabnikovVnos += inp.value;
+    if (inp) vnosPolja.push(inp);
   }
 
-  const jePravilno = ocistiZnake(uporabnikovVnos) === ocistiZnake(celotnaResitev);
+  for (let i = 0; i < vnosPolja.length; i++) {
+    const inp = vnosPolja[i];
+    const znak = inp.value.toUpperCase();
+    const pravilna = resitev[i];
 
-  for (let i = 0; i < geslo.dolzina; i++) {
-    const tx = geslo.smer === 'across' ? geslo.x + i : geslo.x;
-    const ty = geslo.smer === 'down' ? geslo.y + i : geslo.y;
-    const inp = document.querySelector(`input[data-x='${tx}'][data-y='${ty}']`);
     inp.classList.remove('correct', 'incorrect');
-    if (jePravilno) {
+
+    if (!znak.match(/[A-ZČŠŽ]/)) continue;
+
+    if (znak === pravilna) {
       inp.classList.add('correct');
-      inp.style.backgroundColor = '#d4edda';
-      inp.style.color = '#155724';
-      inp.value = celotnaResitev[i];
     } else {
       inp.classList.add('incorrect');
-      inp.style.backgroundColor = '#f8d7da';
-      inp.style.color = '#721c24';
     }
   }
 
@@ -232,22 +238,42 @@ function preveriCelotnoGeslo(input) {
 }
 
 
-function preveriUspeh() {
-  const inputs = document.querySelectorAll('.cell input');
-  for (let i of inputs) if (!i.classList.contains('correct')) return;
-  document.getElementById('uspeh').style.display = 'block';
-}
+  function preveriUspeh() {
+    const inputs = document.querySelectorAll('.cell input');
+    for (let i of inputs) if (!i.classList.contains('correct')) return;
+    const uspehDiv = document.getElementById('uspeh');
+    uspehDiv.style.display = 'block';
+    uspehDiv.style.opacity = 0;
+    uspehDiv.style.transition = 'opacity 1s ease-in';
+    setTimeout(() => {
+      uspehDiv.style.opacity = 1;
+    }, 10);
+  }
+  function prikaziOpis(x, y) {
+    const opisPolje = document.getElementById('opisPolje');
+    const geslo = gesla_opisi.find(g =>
+      (trenutnaSmer === g.smer && ((g.smer === 'across' && g.y === y && x >= g.x && x < g.x + g.dolzina) ||
+      (g.smer === 'down' && g.x === x && y >= g.y && y < g.y + g.dolzina)))
+    );
+    opisPolje.textContent = geslo ? `${geslo.stevilka}. ${geslo.opis}` : 'Klikni na polje za prikaz opisa';
+  }
 
-function prikaziOpis(x, y) {
-  const opisPolje = document.getElementById('opisPolje');
-  const geslo = gesla_opisi.find(g =>
-    (trenutnaSmer === g.smer && ((g.smer === 'across' && g.y === y && x >= g.x && x < g.x + g.dolzina) ||
-    (g.smer === 'down' && g.x === x && y >= g.y && y < g.y + g.dolzina)))
-  );
-  opisPolje.textContent = geslo ? `${geslo.stevilka}. ${geslo.opis}` : 'Ni opisa.';
+  function oznaciGeslo(x, y) {
+  document.querySelectorAll('.cell').forEach(c => c.classList.remove('highlight'));
+  gesla_opisi.forEach(g => {
+    if (
+      (trenutnaSmer === 'across' && g.smer === 'across' && g.y === y && x >= g.x && x < g.x + g.dolzina) ||
+      (trenutnaSmer === 'down' && g.smer === 'down' && g.x === x && y >= g.y && y < g.y + g.dolzina)
+    ) {
+      for (let i = 0; i < g.dolzina; i++) {
+        const tx = g.smer === 'across' ? g.x + i : g.x;
+        const ty = g.smer === 'down' ? g.y + i : g.y;
+        const inp = document.querySelector(`input[data-x='${tx}'][data-y='${ty}']`);
+        if (inp) inp.parentElement.classList.add('highlight');
+      }
+    }
+  });
 }
-
 
 </script>
-
 {% endblock %}

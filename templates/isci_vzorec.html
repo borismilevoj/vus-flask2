@@ -124,6 +124,7 @@
     const container = document.getElementById('inputsContainer');
     container.innerHTML = '';
     const stevilo = parseInt(document.getElementById('steviloCrk').value);
+
     for (let i = 0; i < stevilo; i++) {
       const input = document.createElement('input');
       input.type = 'text';
@@ -133,8 +134,39 @@
       input.style.textAlign = 'center';
       input.style.fontSize = '1.5rem';
       input.style.margin = '5px';
+
+      input.addEventListener('input', () => {
+        if (input.value.length === 1) {
+          const next = input.nextElementSibling;
+          if (next && next.tagName === 'INPUT') next.focus();
+        }
+      });
+
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Backspace' && !input.value) {
+          const prev = input.previousElementSibling;
+          if (prev && prev.tagName === 'INPUT') {
+            prev.focus();
+            e.preventDefault();
+          }
+        }
+        if (e.key === 'Enter' || e.key === 'Tab') {
+          e.preventDefault();
+          if (e.shiftKey) {
+            const prev = input.previousElementSibling;
+            if (prev && prev.tagName === 'INPUT') prev.focus();
+          } else {
+            const next = input.nextElementSibling;
+            if (next && next.tagName === 'INPUT') next.focus();
+          }
+        }
+      });
+
       container.appendChild(input);
     }
+
+    const prva = container.querySelector('input');
+    if (prva) prva.focus();
   }
 
   window.isciVzorec = function () {
@@ -180,4 +212,5 @@
     document.getElementById('rezultati').innerHTML = '';
   }
 </script>
+
 {% endblock %}
