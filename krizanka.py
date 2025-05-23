@@ -26,6 +26,11 @@ def popravi_sumnike(besedilo):
             .replace('ĂŹ', 'í'))
 
 import xml.etree.ElementTree as ET
+import re
+
+def ocisti_znake(besedilo):
+    # Odstrani presledke, pomišljaje, apostrofe, pike itd.
+    return re.sub(r"[\s\-\'\.]", "", besedilo.upper())
 
 def pridobi_podatke_iz_xml(xml_pot):
     tree = ET.parse(xml_pot)
