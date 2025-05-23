@@ -94,7 +94,7 @@ for (let y = 0; y < height; y++) {
       input.dataset.y = y;
 
       input.addEventListener('input', () => {
-        preveriCrko(input);
+        preveriCelotnoGeslo(input);
         premakniNaprej(input);
       });
 
@@ -190,7 +190,7 @@ function premakniNazaj(input) {
   }
 }
 
-function preveriCrko(input) {
+function preveriCelotnoGeslo(input) {
   const x = +input.dataset.x;
   const y = +input.dataset.y;
   const geslo = gesla_opisi.find(g =>
@@ -198,25 +198,39 @@ function preveriCrko(input) {
     (g.smer === 'down' && g.x === x && y >= g.y && y < g.y + g.dolzina)
   );
   if (!geslo) return;
-  const index = geslo.smer === 'across' ? x - geslo.x : y - geslo.y;
-  const pravilna = geslo.solution[index];
-  const vnos = input.value.toUpperCase();
 
-  input.classList.remove('correct', 'incorrect');
-  if (vnos === '') return;
+  let uporabnikovVnos = '';
+  let celotnaResitev = geslo.solution;
 
-  if (ocistiZnake(vnos) === ocistiZnake(pravilna)) {
-    input.classList.add('correct');
-    input.style.backgroundColor = '#d4edda';  // nežno zelena za pravilno
-    input.style.color = '#155724';  // temno zelena pisava
-    input.value = pravilna;
-    preveriUspeh();
-  } else {
-    input.classList.add('incorrect');
-    input.style.backgroundColor = '#f8d7da';  // nežno rdeča za napačno
-    input.style.color = '#721c24';  // temno rdeča pisava
+  for (let i = 0; i < geslo.dolzina; i++) {
+    const tx = geslo.smer === 'across' ? geslo.x + i : geslo.x;
+    const ty = geslo.smer === 'down' ? geslo.y + i : geslo.y;
+    const inp = document.querySelector(`input[data-x='${tx}'][data-y='${ty}']`);
+    uporabnikovVnos += inp.value;
   }
+
+  const jePravilno = ocistiZnake(uporabnikovVnos) === ocistiZnake(celotnaResitev);
+
+  for (let i = 0; i < geslo.dolzina; i++) {
+    const tx = geslo.smer === 'across' ? geslo.x + i : geslo.x;
+    const ty = geslo.smer === 'down' ? geslo.y + i : geslo.y;
+    const inp = document.querySelector(`input[data-x='${tx}'][data-y='${ty}']`);
+    inp.classList.remove('correct', 'incorrect');
+    if (jePravilno) {
+      inp.classList.add('correct');
+      inp.style.backgroundColor = '#d4edda';
+      inp.style.color = '#155724';
+      inp.value = celotnaResitev[i];
+    } else {
+      inp.classList.add('incorrect');
+      inp.style.backgroundColor = '#f8d7da';
+      inp.style.color = '#721c24';
+    }
+  }
+
+  preveriUspeh();
 }
+
 
 function preveriUspeh() {
   const inputs = document.querySelectorAll('.cell input');
