@@ -3,7 +3,11 @@
 
 {% block content %}
 <style>
-.btn-anim {
+.hero-image {
+  background-color: rgba(0,0,0,0.4); /* temen preliv */
+  background-blend-mode: multiply;
+}
+  .btn-anim {
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 .btn-anim:hover {
@@ -19,11 +23,11 @@
     <div class="d-flex flex-wrap justify-content-center mt-4 gap-3">
       <a class="btn btn-primary fw-bold btn-anim" href="{{ url_for('isci_vzorec') }}">IŠČI PO VZORCU</a>
       <a class="btn btn-primary fw-bold btn-anim" href="{{ url_for('isci_opis') }}">IŠČI PO OPISU</a>
-      <a class="btn btn-success fw-bold btn-anim" href="{{ url_for('arhiv_krizank') }}">KRIŽANKE</a>
+      <a class="btn btn-success fw-bold btn-anim" href="{{ url_for('prikazi_krizanko') }}">KRIŽANKA</a>
       <a class="btn btn-success fw-bold btn-anim" href="{{ url_for('sudoku_meni') }}">SUDOKU</a>
       <a class="btn btn-info fw-bold btn-anim" href="{{ url_for('prispevaj_geslo') }}">PRISPEVAJ GESLO</a>
-<!--   </div>
-    <div class="stevec-home mt-4 fs-4 fw-bold text-warning" id="stevecHome">-->
+   </div>
+    <div class="stevec-home mt-4 fs-4 fw-bold text-warning" id="stevecHome">
       Nalaganje števila gesel...
     </div>
   </div>
