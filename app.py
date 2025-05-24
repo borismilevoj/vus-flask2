@@ -1,3 +1,5 @@
+print(">>> TA app.py SE JE ZAČEL IZVAJATI <<<")
+
 from flask import Flask, request, jsonify, render_template,  redirect, url_for,session, render_template_string
 from datetime import datetime
 from pretvornik import normaliziraj_geslo
@@ -193,17 +195,23 @@ def prikazi_krizanko(datum):
     if datum is None:
         datum = datetime.today().strftime('%Y-%m-%d')
 
-    ime_datoteke = f'{datum}.xml'
+    print(f"✅ KLICANO: prikazi_krizanko za datum: {datum}")
+
+    ime_datoteke = f"{datum}.xml"
     osnovna_pot = os.path.dirname(os.path.abspath(__file__))
     pot_do_datoteke = os.path.join(osnovna_pot, 'static', 'CrosswordCompilerApp', ime_datoteke)
 
     if not os.path.exists(pot_do_datoteke):
         return render_template('napaka.html', sporocilo="Križanka za ta datum še ni objavljena.")
 
-    podatki = pridobi_podatke_iz_xml(pot_do_datoteke)
+    try:
+        podatki = pridobi_podatke_iz_xml(pot_do_datoteke)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return render_template('napaka.html', sporocilo=f"Napaka pri branju križanke: {e}")
+
     return render_template('krizanka.html', podatki=podatki)
-
-
 
 
 

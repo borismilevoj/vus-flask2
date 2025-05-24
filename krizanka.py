@@ -64,7 +64,11 @@ def pridobi_podatke_iz_xml(xml_pot):
     for word, clue in zip(words, clues):
         x_range = word.attrib['x']
         y_range = word.attrib['y']
-        solution = word.attrib['solution']
+        solution = word.attrib.get('solution')
+        if not solution:
+            print(f"⚠️ Preskakamo word brez solution: {ET.tostring(word, encoding='unicode')}")
+            continue
+
         number = clue.attrib['number']
         opis = clue.text
         smer = 'across' if '-' in x_range else 'down'
