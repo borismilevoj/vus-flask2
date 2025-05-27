@@ -308,23 +308,25 @@ function preveriCelotnoGeslo(input) {
     }
   }
 
-  let resitevIndex = 0;
   for (let i = 0; i < vnosPolja.length; i++) {
-    const inp = vnosPolja[i];
-    const znak = inp.value.toUpperCase();
+  const inp = vnosPolja[i];
+  const znak = inp.value.toUpperCase();
 
-    inp.classList.remove('correct', 'incorrect');
+  inp.classList.remove('correct', 'incorrect');
 
-    if (!znak.match(/[A-ZČŠŽ]/)) continue;
+  if (!znak.match(/[A-ZČŠŽ]/)) continue;
 
-    if (znak === resitev[resitevIndex]) {
-      inp.classList.add('correct');
-    } else {
-      inp.classList.add('incorrect');
-    }
+  const indexVnosa = geslo.smer === 'across'
+    ? +inp.dataset.x - geslo.x
+    : +inp.dataset.y - geslo.y;
 
-    resitevIndex++;
+  if (znak === resitev[indexVnosa]) {
+    inp.classList.add('correct');
+  } else {
+    inp.classList.add('incorrect');
   }
+}
+
 
   preveriUspeh();
 }
