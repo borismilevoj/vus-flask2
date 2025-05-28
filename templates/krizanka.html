@@ -105,7 +105,11 @@
   color: #721c24 !important;
 }
 </style>
-function ponastaviKrizanko() {
+
+
+<script>
+
+  function ponastaviKrizanko() {
   const urlParts = window.location.pathname.split('/');
   const datumKrizanke = urlParts[urlParts.length - 1];
   const localKey = `krizanka-${datumKrizanke}`;
@@ -120,7 +124,6 @@ function ponastaviKrizanko() {
   if (uspehDiv) uspehDiv.style.display = 'none';
 }
 
-<script>
   const urlParts = window.location.pathname.split('/');
   const datumKrizanke = urlParts[urlParts.length - 1];
   const localKey = `krizanka-${datumKrizanke}`;
