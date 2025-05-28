@@ -364,7 +364,7 @@ function normalizirajNaziv(niz) {
       (g.smer === 'down' && g.x === x && y >= g.y && y < g.y + g.dolzina)))
     );
     if (geslo) {
-      const pot = `/static/${normalizirajNaziv(geslo.opis)}.jpg`;
+      const pot = `/static/Images/${normalizirajNaziv(geslo.opis)}.jpg`;
       const img = document.createElement('img');
       img.src = pot;
       img.alt = geslo.opis;
