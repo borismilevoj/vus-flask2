@@ -105,6 +105,20 @@
   color: #721c24 !important;
 }
 </style>
+function ponastaviKrizanko() {
+  const urlParts = window.location.pathname.split('/');
+  const datumKrizanke = urlParts[urlParts.length - 1];
+  const localKey = `krizanka-${datumKrizanke}`;
+  localStorage.removeItem(localKey);
+
+  document.querySelectorAll('.cell input').forEach(inp => {
+    inp.value = '';
+    inp.classList.remove('correct', 'incorrect');
+  });
+
+  const uspehDiv = document.getElementById('uspeh');
+  if (uspehDiv) uspehDiv.style.display = 'none';
+}
 
 <script>
   const urlParts = window.location.pathname.split('/');
@@ -350,7 +364,7 @@ function normalizirajNaziv(niz) {
       (g.smer === 'down' && g.x === x && y >= g.y && y < g.y + g.dolzina)))
     );
     if (geslo) {
-      const pot = `/static/Images/${normalizirajNaziv(geslo.opis)}.jpg`;
+      const pot = `/static/${normalizirajNaziv(geslo.opis)}.jpg`;
       const img = document.createElement('img');
       img.src = pot;
       img.alt = geslo.opis;
