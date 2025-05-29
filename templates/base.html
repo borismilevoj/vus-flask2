@@ -6,49 +6,144 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body {
-            background-color: #f8f9fa;
-            font-family: Arial, sans-serif;
-            padding-top: 70px;
-        }
-        .navbar {
-            background-color: #343a40;
-        }
-        .navbar-brand, .nav-link {
-            color: white !important;
-        }
-        .nav-link:hover {
-            text-decoration: underline;
-        }
-        .container {
-            max-width: 1000px;
-            margin: auto;
-            padding-left: 15px;
-            padding-right: 15px;
-        }
-        footer {
-            margin-top: 40px;
-            padding: 20px 0;
-            background-color: #343a40;
-            color: #ccc;
-            text-align: center;
-        }
+  #menjajSmerBtn {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    z-index: 1000;
+    background-color: #ffc107;
+    color: black;
+    border: none;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    font-size: 24px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    transition: background-color 0.3s ease;
+  }
+  #menjajSmerBtn:hover {
+    background-color: #e0a800;
+  }
+  @media (max-width: 768px) {
+    #menjajSmerBtn {
+      width: 45px;
+      height: 45px;
+      font-size: 22px;
+      bottom: 15px;
+      left: 15px;
+    }
+  }
+  @keyframes zasveti {
+    0%   { background-color: #ffc107; transform: scale(1); }
+    50%  { background-color: #ffe066; transform: scale(1.2); }
+    100% { background-color: #ffc107; transform: scale(1); }
+  }
+  .cell {
+    width: 40px;
+    height: 40px;
+    border: 1px solid #999;
+    position: relative;
+  }
+  .cell input {
+    width: 100%;
+    height: 100%;
+    border: none;
+    font-size: 1.2rem;
+    text-align: center;
+    text-transform: uppercase;
+  }
+  .cell.black {
+    background-color: #000;
+    pointer-events: none;
+    border: 1px solid #666;
+  }
+  .cell-number {
+    position: absolute;
+    top: 1px;
+    left: 3px;
+    font-size: 0.6rem;
+    color: #333;
+  }
+  .highlight {
+  background-color: transparent !important;
+  border: none;
+}
+.cell.highlight {
+  border: 2px solid #3399ff !important;
+}
 
-        @media (max-width: 576px) {
-            .btn-custom {
-                font-size: 1.2rem;
-                padding: 12px 24px;
-                margin: 8px 4px;
-                width: 90%;
-            }
 
-            .search-inputs input[type="text"] {
-                width: 50px;
-                height: 50px;
-                font-size: 1.8rem;
-            }
-        }
-    </style>
+  .correct {
+  background-color: #d4edda !important;
+  color: #155724 !important;
+}
+  .incorrect {
+  background-color: #f8d7da !important;
+  color: #721c24 !important;
+}
+  input[type="text"] {
+    font-size: 16px; /* Za iOS zoom */
+  }
+
+  .cell input:focus {
+    outline: none;
+    box-shadow: 0 0 5px #3399ff;
+    background-color: #eef7ff;
+  }
+
+  @media (max-width: 768px) {
+    #grid {
+      overflow-x: auto;
+      display: inline-block;
+      max-width: 100%;
+    }
+
+    .cell input {
+      font-size: 16px;
+      padding: 6px;
+    }
+
+    #slikaGesla img {
+      max-width: 100%;
+      height: auto;
+    }
+
+    #opisPolje {
+      text-align: center;
+      font-size: 1rem;
+    }
+
+    #menjajSmerBtn,
+    .btn {
+      font-size: 1.1rem;
+      padding: 12px 16px;
+      width: auto;
+    }
+  }
+
+  @media (max-width: 992px) {
+    #opisPolje {
+      font-size: 1.1rem;
+    }
+
+    #menjajSmerBtn {
+      font-size: 1.2rem;
+      bottom: 16px;
+      left: 16px;
+    }
+  }
+
+  @media screen and (orientation: landscape) and (max-width: 768px) {
+    #grid {
+      max-height: 70vh;
+      overflow-y: auto;
+    }
+
+    #opisPolje {
+      font-size: 0.95rem;
+    }
+  }
+</style>
     {% block styles %}{% endblock %}
 </head>
 <body>
@@ -61,7 +156,7 @@
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav ms-auto">
     <li class="nav-item"><a class="nav-link" href="{{ url_for('isci_vzorec') }}" target="_blank">Iskanje po vzorcu</a></li>
-    <li class="nav-item"><a class="nav-link" href="{{ url_for('isci_opis') }}" target="_blank">Iskanje po opisu</a></li>
+    <!-- <a class="btn btn-primary" href="{{ url_for('isci_opis') }}">IŠČI PO OPISU</a> -->
     <li class="nav-item"><a class="nav-link" href="{{ url_for('prikazi_krizanko') }}" target="_blank">Današnja križanka</a></li>
     <li class="nav-item"><a class="nav-link" href="{{ url_for('arhiv_krizank') }}" target="_blank">Arhiv križank</a></li>
     <li class="nav-item"><a class="nav-link" href="{{ url_for('arhiv_sudoku_pregled') }}" target="_blank">Arhiv Sudoku</a></li>

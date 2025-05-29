@@ -352,10 +352,17 @@ function normalizirajNaziv(niz) {
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .replace(/\s+/g, '_')
-    .replace(/[()]/g, '')
+    .replace(/[()\-:]/g, '')
+    .replace(/\.+/g, '')
     .replace(/[^a-zA-Z0-9_]/g, '')
-    .toLowerCase();
+    .replace(/_+/g, '_')          // 🔁 novo: zamenja __ z _
+    .toLowerCase()
+    .split('_')
+    .slice(0, 8)
+    .join('_')
+    .slice(0, 64);
 }
+
 
 
   function prikaziOpis(x, y) {

@@ -1,5 +1,3 @@
-print(">>> TA app.py SE JE ZAČEL IZVAJATI <<<")
-
 from flask import Flask, request, jsonify, render_template,  redirect, url_for,session, render_template_string
 from datetime import datetime
 from pretvornik import normaliziraj_geslo
@@ -31,10 +29,24 @@ def get_db():
 def ping():
     return "OK iz Flaska!"
 
+import shutil
+from datetime import datetime
+
+def varnostna_kopija_baze():
+    danes = datetime.now().strftime('%Y%m%d_%H%M%S')
+    shutil.copy('VUS.db', f'backup/VUS_backup_{danes}.db')
+    print("✅ Varnostna kopija shranjena.")
+
 
 @app.route('/admin')
 def admin():
-    return render_template('admin.html')
+    conn = sqlite3.connect('VUS.db')  # ali uporabi get_db() če ga že imaš
+    cur = conn.cursor()
+    cur.execute("SELECT COUNT(*) FROM slovar")
+    stevilo = cur.fetchone()[0]
+    conn.close()
+    return render_template('admin.html', stevilo_gesel=stevilo)
+
 
 @app.route('/home')
 def home():
@@ -47,20 +59,24 @@ def redirect_to_home():
 
 @app.route('/preveri', methods=['POST'])
 def preveri():
-    geslo = request.json['geslo'].upper().strip()
+    geslo = request.json['geslo']
+    # normalizacija: odstrani presledke, pomišljaje, podčrtaje
+    iskalno = geslo.replace(' ', '').replace('-', '').replace('_', '').upper()
+
+    conn = get_db()
     cursor = conn.cursor()
     cursor.execute("""
         SELECT ID, geslo, opis FROM slovar
-        WHERE UPPER(REPLACE(geslo, ' ', '')) = ?
-    """, (geslo.replace(' ', '').upper(),))
-
+        WHERE UPPER(REPLACE(REPLACE(REPLACE(geslo, ' ', ''), '-', ''), '_', '')) = ?
+    """, (iskalno,))
     rezultati = cursor.fetchall()
-    obstaja = len(rezultati) > 0
-
     return jsonify({
-        'obstaja': obstaja,
-        'gesla': [{'id': id, 'geslo': g, 'opis': o} for id, g, o in rezultati]
+        'obstaja': len(rezultati) > 0,
+        'gesla': [{'id': r['ID'], 'geslo': r['geslo'], 'opis': r['opis']} for r in rezultati]
     })
+
+
+
 
 
 @app.route('/dodaj_geslo', methods=['POST'])
@@ -68,14 +84,11 @@ def dodaj_geslo():
     data = request.json
     geslo = data.get('geslo')
     opis = data.get('opis')
-
     conn = get_db()
     cur = conn.cursor()
     cur.execute("INSERT INTO slovar (GESLO, OPIS) VALUES (?, ?)", (geslo, opis))
     conn.commit()
-    conn.close()
-
-    return jsonify({"status": "uspesno", "sporocilo": "Geslo uspešno dodano!"})
+    return jsonify({"sporocilo": "Geslo uspešno dodano!"})
 
 # UREJANJE GESLA
 
@@ -84,8 +97,9 @@ def uredi_geslo():
     data = request.json
     id = data['id']
     opis = data['opis']
+    conn = get_db()
     cursor = conn.cursor()
-    cursor.execute("UPDATE slovar SET opis=? WHERE ID=?", (opis, id))
+    cursor.execute("UPDATE slovar SET OPIS = ? WHERE ID = ?", (opis, id))
     conn.commit()
     return jsonify({'sporocilo': 'Opis uspešno spremenjen'})
 
@@ -93,10 +107,11 @@ def uredi_geslo():
 def brisi_geslo():
     data = request.json
     id = data['id']
-    cursor = conn.cursor()
-    cursor.execute("DELETE FROM slovar WHERE ID=?", (id,))
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM slovar WHERE ID = ?", (id,))
     conn.commit()
-    return jsonify({'sporocilo': 'Geslo izbrisano'})
+    return jsonify({'sporocilo': 'Geslo izbrisano.'})
 
 @app.route('/test_iscenje')
 def test_iscenje():
