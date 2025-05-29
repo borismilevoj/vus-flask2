@@ -48,20 +48,7 @@
   #menjajSmerBtn:hover {
     background-color: #e0a800;
   }
-  @media (max-width: 768px) {
-    #menjajSmerBtn {
-      width: 45px;
-      height: 45px;
-      font-size: 22px;
-      bottom: 15px;
-      left: 15px;
-    }
-  }
-  @keyframes zasveti {
-    0%   { background-color: #ffc107; transform: scale(1); }
-    50%  { background-color: #ffe066; transform: scale(1.2); }
-    100% { background-color: #ffc107; transform: scale(1); }
-  }
+
   .cell {
     width: 40px;
     height: 40px;
@@ -88,23 +75,49 @@
     font-size: 0.6rem;
     color: #333;
   }
+
   .highlight {
-  background-color: transparent !important;
-  border: none;
-}
-.cell.highlight {
-  border: 2px solid #dc3545 !important; /* rdeča */
-}
+    background-color: transparent !important;
+    border: none;
+  }
+  .cell.highlight {
+    border: 2px solid #dc3545 !important;
+  }
 
   .correct {
-  background-color: #d4edda !important;
-  color: #155724 !important;
-}
+    background-color: #d4edda !important;
+    color: #155724 !important;
+  }
   .incorrect {
-  background-color: #f8d7da !important;
-  color: #721c24 !important;
-}
+    background-color: #f8d7da !important;
+    color: #721c24 !important;
+  }
+
+  /* 🔧 Prilagoditev za mobilnike */
+  @media (max-width: 768px) {
+    div[style*="grid-template-columns: auto 250px"] {
+      display: flex !important;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    #grid {
+      width: 100% !important;
+      overflow-x: auto;
+    }
+
+    #slikaGesla, #opisPolje {
+      max-width: 100%;
+      padding: 10px;
+      margin-top: 15px;
+      background: #f8f9fa;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+  }
 </style>
+
+
 
 
 <script>
