@@ -32,6 +32,12 @@
   </div>
 
   <div class="row">
+    <form action="/admin/arhiviraj" method="post" style="margin-top: 1em;">
+  <button type="submit" class="btn btn-sm btn-outline-secondary">
+    🗂 Arhiviraj današnje datoteke
+  </button>
+</form>
+
   <!-- Preveri geslo -->
   <div class="col-md-6">
     <div class="card p-3">
@@ -185,6 +191,25 @@ function zamenjajIzraz() {
     alert('Število zamenjav: ' + data.spremembe);
   });
 }
+# 🟠 Gumb v adminu za sprožitev arhiviranja
+from flask import Flask, render_template, request, redirect, url_for, flash
+
+app = Flask(__name__)
+app.secret_key = "skrivnost"
+
+@app.route('/admin/arhiviraj', methods=['POST'])
+def sprozi_arhiviranje():
+    premaknjeni = arhiviraj_danes()
+    flash(f"Premaknjenih {len(premaknjeni)} datotek.", "success")
+    return redirect(url_for('admin'))
+
+
+# ✅ Dodaj gumb v HTML (na koncu admin.html pod zamenjaj izraz)
+# <form action="/admin/arhiviraj" method="post" style="margin-top:2em;">
+#     <button type="submit" class="btn btn-secondary">🗂 Arhiviraj današnje datoteke</button>
+# </form>
+
+
 
 function zamenjajCrke() {
   const izraz = document.getElementById('crke_izraz').value;

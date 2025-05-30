@@ -1,29 +1,36 @@
-from flask import Flask, request, jsonify, render_template,  redirect, url_for,session, render_template_string
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, session, send_from_directory
 from datetime import datetime
+from werkzeug.utils import secure_filename
 from pretvornik import normaliziraj_geslo
+from krizanka import pridobi_podatke_iz_xml
+from uvoz_datotek import premakni_krizanke, premakni_sudoku
+from arhiviranje_util import arhiviraj_danes
 import sqlite3
 import os
-from flask import send_from_directory
-from werkzeug.utils import secure_filename
-from krizanka import pridobi_podatke_iz_xml
-conn = sqlite3.connect('VUS.db', check_same_thread=False)
-from uvoz_datotek import premakni_krizanke, premakni_sudoku
-
 
 app = Flask(__name__, static_folder='static', static_url_path='/static')
-app.config['PROPAGATE_EXCEPTIONS'] = True
-app.secret_key = 'tvoja_skrivna_koda'
-
+app.secret_key = "skrivnost"
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
+app.config['PROPAGATE_EXCEPTIONS'] = True
+
 if not os.path.exists(app.config['UPLOAD_FOLDER']):
     os.makedirs(app.config['UPLOAD_FOLDER'])
-
 
 # Database connection
 def get_db():
     conn = sqlite3.connect('VUS.db')
     conn.row_factory = sqlite3.Row
     return conn
+
+@app.route('/admin/arhiviraj', methods=['POST'])
+def sprozi_arhiviranje():
+    premaknjeni = arhiviraj_danes()
+    flash(f"Premaknjenih {len(premaknjeni)} datotek.", "success")
+    return redirect(url_for('admin'))
+
+
+if __name__ == '__main__':
+    app.run(debug=True)
 
 @app.route("/ping")
 def ping():

@@ -9,11 +9,10 @@
       <change beforePath="$PROJECT_DIR$/VUS.db" beforeDir="false" afterPath="$PROJECT_DIR$/VUS.db" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/krizanka.py" beforeDir="false" afterPath="$PROJECT_DIR$/krizanka.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/preimenuj_slike.py" beforeDir="false" afterPath="$PROJECT_DIR$/preimenuj_slike.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/Images/vran_golobje_velikosti_z_znacilno_svetlosivo_glavo_in_belim_ocesom.jpg" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/templates/admin.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/admin.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/base.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/base.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/krizanka.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/krizanka.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/home.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/home.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/isci_vzorec.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/isci_vzorec.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
