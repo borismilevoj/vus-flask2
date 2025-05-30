@@ -77,10 +77,10 @@ def pridobi_podatke_iz_xml(xml_pot):
 
     slika_iz_opisa = None
 
-    clue_map = {str(c.attrib['word']): c for c in clues}
+    clue_map = {c.attrib['word']: c for c in clues}
 
     for word in words:
-        word_id = str(word.attrib.get('id'))
+        word_id = word.attrib.get('id')
         if word_id not in clue_map:
             print(f"⚠️  Word ID brez pripadajočega clue: {word_id}")
             continue
@@ -91,7 +91,6 @@ def pridobi_podatke_iz_xml(xml_pot):
         y_range = word.attrib['y']
         solution = word.attrib.get('solution')
         if not solution:
-            print(f"❗ Word ID {word_id} nima 'solution' in bo preskočen.")
             continue
 
         number = clue.attrib.get('number', '?')
@@ -112,8 +111,6 @@ def pridobi_podatke_iz_xml(xml_pot):
             'dolzina': len(solution)
         })
 
-        print(f"🟩 {number}: {solution} ({smer}) na ({x+1},{y+1})")
-
         if slika_iz_opisa is None:
             slika_iz_opisa = celi_opis.strip()
 
@@ -130,6 +127,7 @@ def pridobi_podatke_iz_xml(xml_pot):
         'cell_numbers': cell_numbers,
         'slika': slika_ime
     }
+
 
 
 
