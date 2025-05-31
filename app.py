@@ -7,7 +7,6 @@ from uvoz_datotek import premakni_krizanke, premakni_sudoku
 from arhiviranje_util import arhiviraj_danes
 import sqlite3
 import os
-from flask import render_template_string
 from flask import send_from_directory
 
 app = Flask(__name__, static_folder='static', static_url_path='/static')
@@ -270,12 +269,13 @@ def osnovni_sudoku():
 def prikazi_sudoku(tezavnost, datum):
     mapa = os.path.join('static', f'Sudoku_{tezavnost}')
     ime = f'Sudoku_{tezavnost}_{datum}.html'
-
     pot = os.path.join(mapa, ime)
+
     if not os.path.exists(pot):
         return render_template('napaka.html', sporocilo="Sudoku za ta datum ali težavnost ni na voljo.")
 
     return send_from_directory(mapa, ime)
+
 
 @app.route('/sudoku/<tezavnost>')
 def prikazi_danasnji_sudoku(tezavnost):
