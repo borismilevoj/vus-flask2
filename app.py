@@ -151,7 +151,7 @@ def isci_vzorec():
         cursor = conn.cursor()
 
         query = """
-            SELECT GESLO, OPIS FROM slovar
+            SELECT ID, GESLO, OPIS FROM slovar
             WHERE LENGTH(REPLACE(REPLACE(REPLACE(GESLO, ' ', ''), '-', ''), '_', '')) = ?
             AND OPIS LIKE ?
         """
