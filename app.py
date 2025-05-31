@@ -166,7 +166,12 @@ def isci_vzorec():
         results = cursor.fetchall()
         conn.close()
 
-        return jsonify([{"GESLO": row["GESLO"].strip(), "OPIS": row["OPIS"]} for row in results])
+        return jsonify([{
+            "id": row["ID"],
+            "GESLO": row["GESLO"].strip(),
+            "OPIS": row["OPIS"]
+        } for row in results])
+
     else:
         return render_template('isci_vzorec.html')
 
