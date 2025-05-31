@@ -7,6 +7,8 @@ from uvoz_datotek import premakni_krizanke, premakni_sudoku
 from arhiviranje_util import arhiviraj_danes
 import sqlite3
 import os
+from flask import render_template_string
+from flask import send_from_directory
 
 app = Flask(__name__, static_folder='static', static_url_path='/static')
 app.secret_key = "skrivnost"
@@ -28,9 +30,10 @@ def sprozi_arhiviranje():
     flash(f"Premaknjenih {len(premaknjeni)} datotek.", "success")
     return redirect(url_for('admin'))
 
+@app.route('/test')
+def test():
+    return "<h1>Test route deluje!</h1>"
 
-if __name__ == '__main__':
-    app.run(debug=True)
 
 @app.route("/ping")
 def ping():
@@ -47,12 +50,16 @@ def varnostna_kopija_baze():
 
 @app.route('/admin')
 def admin():
-    conn = sqlite3.connect('VUS.db')  # ali uporabi get_db() če ga že imaš
-    cur = conn.cursor()
-    cur.execute("SELECT COUNT(*) FROM slovar")
-    stevilo = cur.fetchone()[0]
-    conn.close()
-    return render_template('admin.html', stevilo_gesel=stevilo)
+    try:
+        conn = sqlite3.connect('VUS.db')
+        cur = conn.cursor()
+        cur.execute("SELECT COUNT(*) FROM slovar")
+        stevilo = cur.fetchone()[0]
+        conn.close()
+        return render_template('admin.html', stevilo_gesel=stevilo)
+    except Exception as e:
+        return f"<h1>Napaka v admin: {e}</h1>"
+
 
 
 @app.route('/home')
@@ -81,9 +88,6 @@ def preveri():
         'obstaja': len(rezultati) > 0,
         'gesla': [{'id': r['ID'], 'geslo': r['geslo'], 'opis': r['opis']} for r in rezultati]
     })
-
-
-
 
 
 @app.route('/dodaj_geslo', methods=['POST'])
@@ -168,11 +172,6 @@ def isci_vzorec():
         return render_template('isci_vzorec.html')
 
 
-
-
-
-
-
 @app.route('/isci_opis', methods=['GET', 'POST'])
 def isci_opis():
     if request.method == 'POST':
@@ -214,6 +213,7 @@ def krizanka_static_file(filename):
 @app.route('/krizanka', defaults={'datum': None})
 @app.route('/krizanka/<datum>')
 def prikazi_krizanko(datum):
+
     if datum is None:
         datum = datetime.today().strftime('%Y-%m-%d')
 
@@ -222,6 +222,7 @@ def prikazi_krizanko(datum):
     ime_datoteke = f"{datum}.xml"
     osnovna_pot = os.path.dirname(os.path.abspath(__file__))
     pot_do_datoteke = os.path.join(osnovna_pot, 'static', 'CrosswordCompilerApp', ime_datoteke)
+    print("📁 Iščem datoteko tukaj:", pot_do_datoteke)
 
     if not os.path.exists(pot_do_datoteke):
         return render_template('napaka.html', sporocilo="Križanka za ta datum še ni objavljena.")
@@ -267,17 +268,14 @@ def osnovni_sudoku():
 
 @app.route('/sudoku/<tezavnost>/<datum>')
 def prikazi_sudoku(tezavnost, datum):
-    mapa_sudoku = f"Sudoku_{tezavnost}"
-    ime_datoteke = f"Sudoku_{tezavnost}_{datum}.html"
-    pot_do_datoteke = os.path.join('static', mapa_sudoku, ime_datoteke)
+    mapa = os.path.join('static', f'Sudoku_{tezavnost}')
+    ime = f'Sudoku_{tezavnost}_{datum}.html'
 
-    if not os.path.exists(pot_do_datoteke):
+    pot = os.path.join(mapa, ime)
+    if not os.path.exists(pot):
         return render_template('napaka.html', sporocilo="Sudoku za ta datum ali težavnost ni na voljo.")
 
-    with open(pot_do_datoteke, 'r', encoding='utf-8') as f:
-        vsebina = f.read()
-
-    return render_template_string(vsebina)
+    return send_from_directory(mapa, ime)
 
 @app.route('/sudoku/<tezavnost>')
 def prikazi_danasnji_sudoku(tezavnost):
