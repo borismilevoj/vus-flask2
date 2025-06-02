@@ -29,10 +29,9 @@ def sprozi_arhiviranje():
     flash(f"Premaknjenih {len(premaknjeni)} datotek.", "success")
     return redirect(url_for('admin'))
 
-@app.route('/test')
+@app.route("/test")
 def test():
-    return "<h1>Test route deluje!</h1>"
-
+    return render_template("test.html")
 
 @app.route("/ping")
 def ping():
@@ -360,6 +359,25 @@ def zamenjaj():
 
     # Vrni število dejanskih sprememb
     return jsonify({"spremembe": stevilo_zadetkov})
+from flask import send_file
+import zipfile
+import io
+import os
+
+@app.route('/prenesi_slike_zip')
+def prenesi_slike_zip():
+    pot_mape = os.path.join('static', 'Images')
+    zip_buffer = io.BytesIO()
+
+    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zipf:
+        for koren, _, datoteke in os.walk(pot_mape):
+            for ime_datoteke in datoteke:
+                polna_pot = os.path.join(koren, ime_datoteke)
+                rel_pot = os.path.relpath(polna_pot, pot_mape)
+                zipf.write(polna_pot, rel_pot)
+
+    zip_buffer.seek(0)
+    return send_file(zip_buffer, mimetype='application/zip', as_attachment=True, download_name='slike_static_Images.zip')
 
 
 if __name__ == '__main__':
