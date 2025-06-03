@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="navodila-križanka" style="background-color:#f8f9fa; border:1px solid #ddd; padding:15px; border-radius:8px; margin-bottom:20px; font-family: Arial, sans-serif;">
-  <h3 style="color:#333; margin-bottom:10px;">📌 Navodila za reševanje križanke</h3>
+  <h3 style="color:#333; margin-bottom:10px;">🖌 Navodila za reševanje križanke</h3>
   <ul style="line-height:1.6;">
     <li><strong>En klik</strong> na polje označi aktivno geslo (polja se obarvajo).</li>
     <li><strong>Gumb <span style="font-size: 1.2em;">🔁</span></strong> spodaj levo zamenja smer vnosa (vodoravno ↔ navpično).</li>
@@ -15,403 +15,242 @@
 <div style="display: grid; grid-template-columns: auto 250px; gap: 20px; align-items: start;">
   <div id="grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(40px, 1fr)); gap: 2px;"></div>
 
-  <div>
+  <div style="position: sticky; top: 10px; z-index: 500;">
     <div id="slikaGesla" style="margin-bottom:10px;"></div>
-    <div id="opisPolje" style="font-weight: bold; font-size: 1.2rem;">Klikni na polje za prikaz opisa</div>
+    <div id="opisPolje" style="font-weight: bold; font-size: 1.2rem; background:#f8f9fa; padding:10px; border:1px solid #ccc; border-radius:5px;">Klikni na polje za prikaz opisa</div>
   </div>
 </div>
 
 <div id="uspeh" style="display:none; font-weight:bold; font-size:20px; margin-top:20px; color:green;"> 🎉 ČESTITAMO, USPEŠNO STE REŠILI KRIŽANKO! 🎉 </div>
+
 <button onclick="if (confirm('Ali res želiš počistiti vnos?')) ponastaviKrizanko();" class="btn btn-warning mt-3">
   🔄 Počisti križanko
 </button>
 
-<!-- Gumb za zamenjavo smeri -->
 <button id="menjajSmerBtn" onclick="zamenjajSmer()">🔁</button>
 
 <style>
-  #menjajSmerBtn {
-    position: fixed;
-    bottom: 20px;
-    left: 20px;
-    z-index: 1000;
-    background-color: #ffc107;
-    color: black;
-    border: none;
-    border-radius: 50%;
-    width: 50px;
-    height: 50px;
-    font-size: 24px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-    transition: background-color 0.3s ease;
-  }
-  #menjajSmerBtn:hover {
-    background-color: #e0a800;
+#menjajSmerBtn {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  z-index: 1000;
+  background-color: #ffc107;
+  color: black;
+  border: none;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  font-size: 24px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  transition: background-color 0.3s ease;
+}
+#menjajSmerBtn:hover {
+  background-color: #e0a800;
+}
+
+.cell {
+  width: 40px;
+  height: 40px;
+  border: 1px solid #999;
+  position: relative;
+}
+.cell input {
+  width: 100%;
+  height: 100%;
+  border: none;
+  font-size: 1.2rem;
+  text-align: center;
+  text-transform: uppercase;
+}
+.cell.black {
+  background-color: #000;
+  pointer-events: none;
+  border: 1px solid #666;
+}
+.cell-number {
+  position: absolute;
+  top: 1px;
+  left: 3px;
+  font-size: 0.6rem;
+  color: #333;
+}
+
+.cell.highlight {
+  border: 2px solid #007bff !important;
+}
+
+.correct {
+  background-color: #d4edda !important;
+  color: #155724 !important;
+}
+.incorrect {
+  background-color: #f8d7da !important;
+  color: #721c24 !important;
+}
+
+@media (max-width: 768px) {
+  div[style*="grid-template-columns: auto 250px"] {
+    display: flex !important;
+    flex-direction: column;
+    align-items: center;
   }
 
-  .cell {
-    width: 40px;
-    height: 40px;
-    border: 1px solid #999;
-    position: relative;
+  #grid {
+    width: 100% !important;
+    overflow-x: auto;
   }
-  .cell input {
-    width: 100%;
-    height: 100%;
-    border: none;
-    font-size: 1.2rem;
-    text-align: center;
-    text-transform: uppercase;
-  }
-  .cell.black {
-    background-color: #000;
-    pointer-events: none;
-    border: 1px solid #666;
-  }
-  .cell-number {
-    position: absolute;
-    top: 1px;
-    left: 3px;
-    font-size: 0.6rem;
-    color: #333;
-  }
-
-  .highlight {
-    background-color: transparent !important;
-    border: none;
-  }
-  .cell.highlight {
-    border: 2px solid #dc3545 !important;
-  }
-
-  .correct {
-    background-color: #d4edda !important;
-    color: #155724 !important;
-  }
-  .incorrect {
-    background-color: #f8d7da !important;
-    color: #721c24 !important;
-  }
-
-  /* 🔧 Prilagoditev za mobilnike */
-  @media (max-width: 768px) {
-    div[style*="grid-template-columns: auto 250px"] {
-      display: flex !important;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    #grid {
-      width: 100% !important;
-      overflow-x: auto;
-    }
-
-    #slikaGesla, #opisPolje {
-      max-width: 100%;
-      padding: 10px;
-      margin-top: 15px;
-      background: #f8f9fa;
-      border: 1px solid #ddd;
-      border-radius: 5px;
-    }
-  }
+}
 </style>
 
-
-
-
 <script>
+function normalizirajNaziv(opis) {
+  const rezultat = opis
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[-–—−]/g, ' ')
+    .replace(/[†]/g, '')
+    .replace(/[().,]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, '')
+    .trim()
+    .split(/\s+/)
+    .slice(0, 15)
+    .join('_');
 
-  function ponastaviKrizanko() {
-  const urlParts = window.location.pathname.split('/');
-  const datumKrizanke = urlParts[urlParts.length - 1];
-  const localKey = `krizanka-${datumKrizanke}`;
-  localStorage.removeItem(localKey);
-
-  document.querySelectorAll('.cell input').forEach(inp => {
-    inp.value = '';
-    inp.classList.remove('correct', 'incorrect');
-  });
-
-  const uspehDiv = document.getElementById('uspeh');
-  if (uspehDiv) uspehDiv.style.display = 'none';
+  console.log("=== NORMALIZIRANO ===");
+  console.log("Vhod:", opis);
+  console.log("Izhod:", rezultat);
+  return rezultat;
 }
 
-  const urlParts = window.location.pathname.split('/');
-  const datumKrizanke = urlParts[urlParts.length - 1];
-  const localKey = `krizanka-${datumKrizanke}`;
+let trenutnaSmer = 'across';
 
-  function premakniNazaj(input) {
-    let x = +input.dataset.x;
-    let y = +input.dataset.y;
-
-    while (true) {
-      x = trenutnaSmer === 'across' ? x - 1 : x;
-      let aktivnoPolje = null;
-      y = trenutnaSmer === 'down' ? y - 1 : y;
-
-      const prev = document.querySelector(`input[data-x='${x}'][data-y='${y}']`);
-      if (!prev) break;
-      if (!prev.classList.contains('correct')) {
-        prev.focus();
-        break;
-      }
-    }
-  }
-
-  const width = {{ podatki.sirina }};
-  const height = {{ podatki.visina }};
-  const crna_polja = {{ podatki.crna_polja | tojson }};
-  const gesla_opisi = {{ podatki.gesla_opisi | tojson }};
-  let trenutnaSmer = 'across';
-
-  document.addEventListener('DOMContentLoaded', function () {
-  const urlParts = window.location.pathname.split('/');
-const datumKrizanke = urlParts[urlParts.length - 1];
-const localKey = `krizanka-${datumKrizanke}`;
-const shrani = localStorage.getItem(localKey);
-if (shrani) {
-  const podatki = JSON.parse(shrani);
-  podatki.forEach(el => {
-    const inp = document.querySelector(`input[data-x='${el.x}'][data-y='${el.y}']`);
-    if (inp) inp.value = el.value;
-  });
-}
-function ponastaviKrizanko() {
-  const urlParts = window.location.pathname.split('/');
-  const datumKrizanke = urlParts[urlParts.length - 1];
-  const localKey = `krizanka-${datumKrizanke}`;
-  localStorage.removeItem(localKey);
-
-  document.querySelectorAll('.cell input').forEach(inp => {
-    inp.value = '';
-    inp.classList.remove('correct', 'incorrect');
-  });
-
-  document.getElementById('uspeh').style.display = 'none';
+function zamenjajSmer() {
+  trenutnaSmer = (trenutnaSmer === 'across') ? 'down' : 'across';
+  document.getElementById('opisPolje').textContent = "Smer vnosa: " + (trenutnaSmer === 'across' ? 'vodoravno' : 'navpično');
 }
 
-
-
-    const grid = document.getElementById('grid');
-    grid.style.gridTemplateColumns = `repeat(${width}, 40px)`;
-
-    for (let y = 0; y < height; y++) {
-      for (let x = 0; x < width; x++) {
-        const cell = document.createElement('div');
-        cell.classList.add('cell');
-
-        if (crna_polja.some(p => p[0] === x && p[1] === y)) {
-          cell.classList.add('black');
-        } else {
-          const input = document.createElement('input');
-          input.setAttribute('maxlength', '1');
-          input.dataset.x = x;
-          input.dataset.y = y;
-
-          input.addEventListener('input', () => {
-  setTimeout(() => {
-  preveriCelotnoGeslo(input);
-  const stanje = [];
-  document.querySelectorAll('.cell input').forEach(inp => {
-    stanje.push({
-      x: inp.dataset.x,
-      y: inp.dataset.y,
-      value: inp.value
-    });
-  });
-  localStorage.setItem(localKey, JSON.stringify(stanje));
-  premakniNaprej(input); // 🔁 TA DEL NAJ BO ZNOTRAJ timeout-a!
-}, 10);
-
-});
-
-input.addEventListener('keydown', (e) => {
-  if (e.key === 'Backspace' && input.value === '') {
-    e.preventDefault();
-    premakniNazaj(input);
-  }
-});
-
-          input.addEventListener('click', () => {
-  aktivnoPolje = input;
-  prikaziOpis(x, y);
-  oznaciGeslo(x, y);
-});
-
-
-          cell.appendChild(input);
-
-          const geslo = gesla_opisi.find(g => g.x === x && g.y === y);
-          if (geslo && geslo.stevilka !== '?') {
-            const numberDiv = document.createElement('div');
-            numberDiv.classList.add('cell-number');
-            numberDiv.textContent = geslo.stevilka;
-            cell.appendChild(numberDiv);
-          }
-        }
-
-        grid.appendChild(cell);
-      }
-    }
-  });
-
-  window.zamenjajSmer = function () {
-  trenutnaSmer = trenutnaSmer === 'across' ? 'down' : 'across';
-
-  // Poišči trenutno izbrano (fokusirano) ali zadnjo z 'highlight'
-  let x = null, y = null;
-  const aktivno = document.activeElement;
-  if (aktivno && aktivno.tagName === 'INPUT') {
-    x = +aktivno.dataset.x;
-    y = +aktivno.dataset.y;
-  } else {
-    const oznaceno = document.querySelector('.highlight input');
-    if (oznaceno) {
-      x = +oznaceno.dataset.x;
-      y = +oznaceno.dataset.y;
-    }
-  }
-
-  if (x !== null && y !== null) {
-    prikaziOpis(x, y);
-    oznaciGeslo(x, y);
-  }
-
-  const btn = document.getElementById('menjajSmerBtn');
-  if (btn) {
-    btn.style.animation = 'zasveti 0.4s ease-in-out';
-    setTimeout(() => { btn.style.animation = ''; }, 400);
-  }
-};
-
-
-  function preveriUspeh() {
-    const inputs = document.querySelectorAll('.cell input');
-    for (let i of inputs) if (!i.classList.contains('correct')) return;
-    const uspehDiv = document.getElementById('uspeh');
-    uspehDiv.style.display = 'block';
-    uspehDiv.style.opacity = 0;
-    uspehDiv.style.transition = 'opacity 1s ease-in';
-    setTimeout(() => {
-      uspehDiv.style.opacity = 1;
-    }, 10);
-  }
-
-  function premakniNaprej(input) {
+function premakniNaprej(input) {
   let x = +input.dataset.x;
   let y = +input.dataset.y;
-
   while (true) {
     x = trenutnaSmer === 'across' ? x + 1 : x;
     y = trenutnaSmer === 'down' ? y + 1 : y;
-
-    const nextInput = document.querySelector(`input[data-x='${x}'][data-y='${y}']`);
-    if (!nextInput) break;
-    if (!nextInput.classList.contains('correct')) {
-      nextInput.focus();
+    const next = document.querySelector(`input[data-x='${x}'][data-y='${y}']`);
+    if (!next) break;
+    if (!next.classList.contains('correct')) {
+      next.focus();
       break;
     }
   }
 }
 
-function preveriCelotnoGeslo(input) {
-  const x = +input.dataset.x;
-  const y = +input.dataset.y;
-  const geslo = gesla_opisi.find(g =>
-    (g.smer === 'across' && g.y === y && x >= g.x && x < g.x + g.dolzina) ||
-    (g.smer === 'down' && g.x === x && y >= g.y && y < g.y + g.dolzina)
-  );
-  if (!geslo) return;
+document.addEventListener('DOMContentLoaded', function () {
+  const grid = document.getElementById('grid');
+  const width = {{ podatki.sirina }};
+  const height = {{ podatki.visina }};
+  const crna_polja = {{ podatki.crna_polja | tojson }};
+  const gesla_opisi = {{ podatki.gesla_opisi | tojson }};
+  grid.style.gridTemplateColumns = `repeat(${width}, 40px)`;
 
-  const resitev = geslo.solution.replace(/[\s\-'.]/g, '').toUpperCase();
-  const vnosPolja = [];
-  let uporabnikovVnos = '';
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const cell = document.createElement('div');
+      cell.classList.add('cell');
+      if (crna_polja.some(p => p[0] === x && p[1] === y)) {
+        cell.classList.add('black');
+      } else {
+        const input = document.createElement('input');
+        input.setAttribute('maxlength', '1');
+        input.dataset.x = x;
+        input.dataset.y = y;
+        cell.appendChild(input);
 
-  for (let i = 0; i < geslo.dolzina; i++) {
-    const tx = geslo.smer === 'across' ? geslo.x + i : geslo.x;
-    const ty = geslo.smer === 'down' ? geslo.y + i : geslo.y;
-    const inp = document.querySelector(`input[data-x='${tx}'][data-y='${ty}']`);
-    if (inp) {
-      uporabnikovVnos += inp.value;
-      vnosPolja.push(inp);
+        const geslo = gesla_opisi.find(g => g.x === x && g.y === y);
+        if (geslo && geslo.stevilka !== '?') {
+          const numberDiv = document.createElement('div');
+          numberDiv.classList.add('cell-number');
+          numberDiv.textContent = geslo.stevilka;
+          cell.appendChild(numberDiv);
+        }
+
+        input.addEventListener('input', () => {
+          preveriCelotnoGeslo(input);
+          if (input.value) premakniNaprej(input);
+        });
+        input.addEventListener('click', () => {
+          prikaziOpis(x, y);
+        });
+      }
+      grid.appendChild(cell);
     }
   }
 
-  for (let i = 0; i < vnosPolja.length; i++) {
-  const inp = vnosPolja[i];
-  const znak = inp.value.toUpperCase();
-
-  inp.classList.remove('correct', 'incorrect');
-
-  if (!znak.match(/[A-ZČŠŽ]/)) continue;
-
-  const indexVnosa = geslo.smer === 'across'
-    ? +inp.dataset.x - geslo.x
-    : +inp.dataset.y - geslo.y;
-
-  if (znak === resitev[indexVnosa]) {
-    inp.classList.add('correct');
-  } else {
-    inp.classList.add('incorrect');
-  }
-}
-
-
-  preveriUspeh();
-}
-function normalizirajNaziv(niz) {
-  return niz
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/\s+/g, '_')
-    .replace(/[()\-:]/g, '')
-    .replace(/\.+/g, '')
-    .replace(/[^a-zA-Z0-9_]/g, '')
-    .replace(/_+/g, '_')          // 🔁 novo: zamenja __ z _
-    .toLowerCase()
-    .split('_')
-    .slice(0, 8)
-    .join('_')
-    .slice(0, 64);
-}
-
-
-
   function prikaziOpis(x, y) {
-    const slikaDiv = document.getElementById('slikaGesla');
-    slikaDiv.innerHTML = '';
-    const opisPolje = document.getElementById('opisPolje');
+    document.querySelectorAll('.cell').forEach(c => c.classList.remove('highlight'));
     const geslo = gesla_opisi.find(g =>
-      (trenutnaSmer === g.smer && ((g.smer === 'across' && g.y === y && x >= g.x && x < g.x + g.dolzina) ||
-      (g.smer === 'down' && g.x === x && y >= g.y && y < g.y + g.dolzina)))
-    );
+      g.smer === trenutnaSmer &&
+      ((g.smer === 'across' && g.y === y && x >= g.x && x < g.x + g.dolzina) ||
+       (g.smer === 'down' && g.x === x && y >= g.y && y < g.y + g.dolzina)));
+    const opisPolje = document.getElementById('opisPolje');
+    const slikaDiv = document.getElementById('slikaGesla');
     if (geslo) {
-      const pot = `/static/Images/${normalizirajNaziv(geslo.opis)}.jpg`;
+      for (let i = 0; i < geslo.dolzina; i++) {
+        const tx = geslo.smer === 'across' ? geslo.x + i : geslo.x;
+        const ty = geslo.smer === 'down' ? geslo.y + i : geslo.y;
+        const inp = document.querySelector(`input[data-x='${tx}'][data-y='${ty}']`);
+        if (inp) inp.parentElement.classList.add('highlight');
+      }
+      const opis = `${geslo.stevilka}. ${geslo.opis}`;
+      opisPolje.textContent = opis;
       const img = document.createElement('img');
-      img.src = pot;
+      img.src = `/static/Images/${normalizirajNaziv(geslo.opis)}.jpg`;
       img.alt = geslo.opis;
       img.style.maxWidth = '100%';
       img.style.maxHeight = '200px';
+      slikaDiv.innerHTML = '';
       img.onerror = () => { slikaDiv.innerHTML = ''; };
       slikaDiv.appendChild(img);
+    } else {
+      opisPolje.textContent = 'Klikni na polje za prikaz opisa';
+      slikaDiv.innerHTML = '';
     }
-    opisPolje.textContent = geslo ? `${geslo.stevilka}. ${geslo.opis}` : 'Klikni na polje za prikaz opisa';
   }
 
-  function oznaciGeslo(x, y) {
-    document.querySelectorAll('.cell').forEach(c => c.classList.remove('highlight', 'highlight-across', 'highlight-down'));
-    gesla_opisi.forEach(g => {
-      if ((trenutnaSmer === 'across' && g.smer === 'across' && g.y === y && x >= g.x && x < g.x + g.dolzina) ||
-          (trenutnaSmer === 'down' && g.smer === 'down' && g.x === x && y >= g.y && y < g.y + g.dolzina)) {
-        for (let i = 0; i < g.dolzina; i++) {
-          const tx = g.smer === 'across' ? g.x + i : g.x;
-          const ty = g.smer === 'down' ? g.y + i : g.y;
-          const inp = document.querySelector(`input[data-x='${tx}'][data-y='${ty}']`);
-          if (inp) inp.parentElement.classList.add('highlight', `highlight-${trenutnaSmer}`);
-        }
+  function preveriCelotnoGeslo(input) {
+    const x = +input.dataset.x;
+    const y = +input.dataset.y;
+    const geslo = gesla_opisi.find(g =>
+      (g.smer === 'across' && g.y === y && x >= g.x && x < g.x + g.dolzina) ||
+      (g.smer === 'down' && g.x === x && y >= g.y && y < g.y + g.dolzina));
+    if (!geslo) return;
+    const vnosPolja = [];
+    let uporabnikovVnos = '';
+    for (let i = 0; i < geslo.dolzina; i++) {
+      const tx = geslo.smer === 'across' ? geslo.x + i : geslo.x;
+      const ty = geslo.smer === 'down' ? geslo.y + i : geslo.y;
+      const inp = document.querySelector(`input[data-x='${tx}'][data-y='${ty}']`);
+      if (inp) {
+        uporabnikovVnos += inp.value;
+        vnosPolja.push(inp);
       }
-    });
+    }
+    const resitev = geslo.solution.replace(/[^A-ZČŠŽ]/gi, '').toUpperCase();
+    for (let i = 0; i < vnosPolja.length; i++) {
+      const inp = vnosPolja[i];
+      const znak = inp.value.toUpperCase();
+      inp.classList.remove('correct', 'incorrect');
+      if (!znak.match(/[A-ZČŠŽ]/)) continue;
+      const index = geslo.smer === 'across' ? +inp.dataset.x - geslo.x : +inp.dataset.y - geslo.y;
+      if (znak === resitev[index]) {
+        inp.classList.add('correct');
+      } else {
+        inp.classList.add('incorrect');
+      }
+    }
   }
+});
 </script>
+
 {% endblock %}

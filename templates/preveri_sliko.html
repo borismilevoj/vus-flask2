@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="sl">
+<head>
+    <meta charset="UTF-8">
+    <title>Preveri sliko iz opisa</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 30px;
+        }
+
+        textarea {
+            font-size: 16px;
+            padding: 8px;
+            width: 600px;
+        }
+
+        button {
+            font-size: 16px;
+            padding: 8px 16px;
+            margin-left: 10px;
+            background-color: gold;
+            border: none;
+            cursor: pointer;
+        }
+
+        img {
+            margin-top: 20px;
+            border: 1px solid #ccc;
+            max-width: 400px;
+        }
+
+        #napaka-slike {
+            color: red;
+            margin-top: 10px;
+        }
+
+        #kopirano-obvestilo {
+            color: green;
+            font-weight: bold;
+            margin-top: 10px;
+            display: none;
+        }
+
+        #rezultat-podcrtaji {
+            font-size: 16px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h2>🔍 Preveri sliko glede na opis</h2>
+
+    <textarea id="opis-gesla" placeholder="Vnesi opis gesla..." rows="4" cols="80"></textarea>
+    <button onclick="pretvoriOpis()">Prikaži sliko</button>
+    <button onclick="kopirajIme()">📋 Kopiraj ime slike</button>
+
+    <p><strong>Ime slike:</strong><br>
+        <input type="text" id="rezultat-podcrtaji" readonly onclick="this.select()">
+    </p>
+    <p id="kopirano-obvestilo">✅ Ime slike je bilo kopirano!</p>
+
+    <img id="predogled-slike" src="" alt="Slika se bo prikazala tukaj" style="display:none;">
+    <p id="napaka-slike" style="display:none;">❌ Slika ni bila najdena.</p>
+
+    <script>
+        function pretvoriOpis() {
+            const opis = document.getElementById('opis-gesla').value;
+
+            const rezultat = opis
+                .normalize('NFD')
+                .replace(/[̀-ͯ]/g, '')
+                .replace(/[-–—−]/g, ' ')
+                .replace(/[†]/g, '')
+                .replace(/[().,;:!?]/g, '')
+                .toLowerCase()
+                .replace(/[^a-z0-9\s]/g, '')
+                .trim()
+                .split(/\s+/)
+                .slice(0, 15)
+                .join('_');
+
+            console.log("NORMALIZIRANO IME:", rezultat);
+
+            const rezultatInput = document.getElementById('rezultat-podcrtaji');
+            rezultatInput.value = rezultat;
+
+            const slika = document.getElementById('predogled-slike');
+            const napaka = document.getElementById('napaka-slike');
+            const pot = `/static/Images/${rezultat}.jpg`;
+
+            slika.onload = () => {
+                slika.style.display = "block";
+                napaka.style.display = "none";
+            };
+
+            slika.onerror = () => {
+                slika.style.display = "none";
+                napaka.style.display = "block";
+            };
+
+            slika.src = pot;
+        }
+
+        function kopirajIme() {
+            const rezultatInput = document.getElementById('rezultat-podcrtaji');
+            const obvestilo = document.getElementById('kopirano-obvestilo');
+
+            rezultatInput.select();
+            navigator.clipboard.writeText(rezultatInput.value).then(() => {
+                obvestilo.style.display = 'inline';
+                setTimeout(() => {
+                    obvestilo.style.display = 'none';
+                }, 2000);
+            }).catch(err => {
+                alert("Kopiranje ni uspelo: " + err);
+            });
+        }
+    </script>
+</body>
+</html>
