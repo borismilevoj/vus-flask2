@@ -1,29 +1,55 @@
+# arhiviranje_util.py
+
 import os
-from datetime import datetime
 import shutil
+from datetime import datetime
+
+POT = os.path.join("static", "CrosswordCompilerApp")
+
+TEZAVNOSTI = ["very_easy", "easy", "medium", "hard"]
+SUDOKU_POT = os.path.join("static")
+
+
+def premakni_krizanke_v_mesece():
+    danes = datetime.today()
+    mesec_map = danes.strftime("%Y-%m")
+    arhivna_mapa = os.path.join(POT, mesec_map)
+
+    if not os.path.exists(arhivna_mapa):
+        os.makedirs(arhivna_mapa)
+
+    premaknjeni = []
+    for ime in os.listdir(POT):
+        if ime.endswith(".xml") or ime.endswith(".js"):
+            if ime.startswith(danes.strftime("%Y-%m")):
+                polna_pot = os.path.join(POT, ime)
+                nova_pot = os.path.join(arhivna_mapa, ime)
+                shutil.move(polna_pot, nova_pot)
+                premaknjeni.append(ime)
+
+    return premaknjeni
+
+
+def premakni_sudoku_v_mesece():
+    danes = datetime.today()
+    mesec_map = danes.strftime("%Y-%m")
+    premaknjeni = []
+
+    for tezavnost in TEZAVNOSTI:
+        mapa = os.path.join(SUDOKU_POT, f"Sudoku_{tezavnost}")
+        arhiv = os.path.join(mapa, mesec_map)
+        if not os.path.exists(arhiv):
+            os.makedirs(arhiv)
+
+        for ime in os.listdir(mapa):
+            if ime.endswith(".js") and ime.startswith(danes.strftime("%Y-%m")):
+                polna_pot = os.path.join(mapa, ime)
+                nova_pot = os.path.join(arhiv, ime)
+                shutil.move(polna_pot, nova_pot)
+                premaknjeni.append(ime)
+
+    return premaknjeni
 
 
 def arhiviraj_danes():
-    danes = datetime.now().strftime("%Y-%m-%d")
-    mesecna_mapa = datetime.now().strftime("%Y-%m")
-
-    mape = {
-        "static/Krizanke/CrosswordCompilerApp": f"static/Arhiv/Krizanke/{mesecna_mapa}",
-        "static/Sudoku_very_easy": f"static/Arhiv/Sudoku_very_easy/{mesecna_mapa}",
-        "static/Sudoku_easy": f"static/Arhiv/Sudoku_easy/{mesecna_mapa}",
-        "static/Sudoku_medium": f"static/Arhiv/Sudoku_medium/{mesecna_mapa}",
-        "static/Sudoku_hard": f"static/Arhiv/Sudoku_hard/{mesecna_mapa}",
-    }
-
-    premaknjeni = []
-
-    for izvorna, ciljna in mape.items():
-        os.makedirs(ciljna, exist_ok=True)
-        for ime in os.listdir(izvorna):
-            if ime.startswith(danes):
-                pot_izvor = os.path.join(izvorna, ime)
-                pot_cilj = os.path.join(ciljna, ime)
-                shutil.move(pot_izvor, pot_cilj)
-                premaknjeni.append(pot_cilj)
-
-    return premaknjeni
+    return premakni_krizanke_v_mesece() + premakni_sudoku_v_mesece()

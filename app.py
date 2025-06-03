@@ -379,6 +379,10 @@ def prenesi_slike_zip():
     zip_buffer.seek(0)
     return send_file(zip_buffer, mimetype='application/zip', as_attachment=True, download_name='slike_static_Images.zip')
 
+@app.route('/preveri_sliko')
+def preveri_sliko():
+    return render_template('preveri_sliko.html')
+
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
