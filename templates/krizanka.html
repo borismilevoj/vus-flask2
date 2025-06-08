@@ -3,125 +3,115 @@
 {% block title %}Križanka | VUS{% endblock %}
 
 {% block content %}
-<div class="navodila-križanka" style="background-color:#f8f9fa; border:1px solid #ddd; padding:15px; border-radius:8px; margin-bottom:20px; font-family: Arial, sans-serif;">
-  <h3 style="color:#333; margin-bottom:10px;">🖌 Navodila za reševanje križanke</h3>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3 class="mb-0">🖌 Navodila za reševanje križanke</h3>
+  <a class="btn btn-secondary" href="/krizanka/arhiv">📂 Arhiv križank</a>
+</div>
+
+<div class="navodila-križanka" style="background-color:#f8f9fa; border:1px solid #ddd; padding:15px; border-radius:8px; margin-bottom:20px;">
   <ul style="line-height:1.6;">
-    <li><strong>En klik</strong> na polje označi aktivno geslo (polja se obarvajo).</li>
-    <li><strong>Gumb <span style="font-size: 1.2em;">🔁</span></strong> spodaj levo zamenja smer vnosa (vodoravno ↔ navpično).</li>
+    <li><strong>En klik</strong> na polje označi aktivno geslo (modri okvir).</li>
+    <li><strong>Gumb 🔁</strong> spodaj levo zamenja smer vnosa (vodoravno ↔ navpično).</li>
     <li>Gesla so iz slovarja VUS.</li>
   </ul>
 </div>
 
-<div style="display: grid; grid-template-columns: auto 250px; gap: 20px; align-items: start;">
-  <div id="grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(40px, 1fr)); gap: 2px;"></div>
+{% if podatki %}
+<div id="grid" style="display: grid; gap: 2px;"></div>
 
-  <div style="position: sticky; top: 10px; z-index: 500;">
-    <div id="slikaGesla" style="margin-bottom:10px;"></div>
-    <div id="opisPolje" style="font-weight: bold; font-size: 1.2rem; background:#f8f9fa; padding:10px; border:1px solid #ccc; border-radius:5px;">Klikni na polje za prikaz opisa</div>
-  </div>
+<!-- Plavajoč opis + slika -->
+<div class="floating-opis">
+  <div id="slikaGesla" style="margin-bottom:10px;"></div>
+  <div id="opisPolje" style="font-weight: bold; font-size: 1.1rem;">Klikni na polje za prikaz opisa</div>
 </div>
 
-<div id="uspeh" style="display:none; font-weight:bold; font-size:20px; margin-top:20px; color:green;"> 🎉 ČESTITAMO, USPEŠNO STE REŠILI KRIŽANKO! 🎉 </div>
+<!-- Lebdeči gumb za zamenjavo smeri -->
+<button onclick="zamenjajSmer()" class="btn btn-primary floating-smer-btn">🔁</button>
 
-<button onclick="if (confirm('Ali res želiš počistiti vnos?')) ponastaviKrizanko();" class="btn btn-warning mt-3">
-  🔄 Počisti križanko
-</button>
+<!-- Počisti gumb spodaj -->
+<div class="mt-3">
+  <button onclick="if (confirm('Ali res želiš počistiti vnos?')) location.reload();" class="btn btn-warning">🔄 Počisti križanko</button>
+</div>
+{% endif %}
+{% endblock %}
 
-<button id="menjajSmerBtn" onclick="zamenjajSmer()">🔁</button>
-
+{% block scripts %}
+{% if podatki %}
 <style>
-#menjajSmerBtn {
+.cell {
+  width: 40px;
+  height: 40px;
+  border: 1px solid #ccc;
+  position: relative;
+}
+
+.cell input {
+  width: 100%;
+  height: 100%;
+  text-transform: uppercase;
+  text-align: center;
+  border: none;
+  outline: none;
+  font-size: 20px;
+}
+
+.cell.black {
+  background-color: #333;
+}
+
+.cell-number {
+  position: absolute;
+  top: 2px;
+  left: 4px;
+  font-size: 0.65em;
+  color: #555;
+}
+
+.cell.highlight {
+  outline: 2px solid #007bff;
+  outline-offset: -1px;
+}
+
+.correct {
+  background-color: #d4edda;
+}
+
+.incorrect {
+  background-color: #f8d7da;
+}
+
+.floating-opis {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  width: 260px;
+  background: #f8f9fa;
+  border: 1px solid #ccc;
+  padding: 10px;
+  border-radius: 8px;
+  z-index: 999;
+}
+
+.floating-smer-btn {
   position: fixed;
   bottom: 20px;
   left: 20px;
   z-index: 1000;
-  background-color: #ffc107;
-  color: black;
-  border: none;
-  border-radius: 50%;
-  width: 50px;
-  height: 50px;
-  font-size: 24px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-  transition: background-color 0.3s ease;
-}
-#menjajSmerBtn:hover {
-  background-color: #e0a800;
-}
-
-.cell {
-  width: 40px;
-  height: 40px;
-  border: 1px solid #999;
-  position: relative;
-}
-.cell input {
-  width: 100%;
-  height: 100%;
-  border: none;
-  font-size: 1.2rem;
-  text-align: center;
-  text-transform: uppercase;
-}
-.cell.black {
-  background-color: #000;
-  pointer-events: none;
-  border: 1px solid #666;
-}
-.cell-number {
-  position: absolute;
-  top: 1px;
-  left: 3px;
-  font-size: 0.6rem;
-  color: #333;
-}
-
-.cell.highlight {
-  border: 2px solid #007bff !important;
-}
-
-.correct {
-  background-color: #d4edda !important;
-  color: #155724 !important;
-}
-.incorrect {
-  background-color: #f8d7da !important;
-  color: #721c24 !important;
-}
-
-@media (max-width: 768px) {
-  div[style*="grid-template-columns: auto 250px"] {
-    display: flex !important;
-    flex-direction: column;
-    align-items: center;
-  }
-
-  #grid {
-    width: 100% !important;
-    overflow-x: auto;
-  }
 }
 </style>
 
 <script>
 function normalizirajNaziv(opis) {
-  const rezultat = opis
+  return opis
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[-–—−]/g, ' ')
-    .replace(/[†]/g, '')
-    .replace(/[().,]/g, '')
+    .replace(/[-–—−†().,]/g, '')
     .toLowerCase()
     .replace(/[^a-z0-9\s]/g, '')
     .trim()
     .split(/\s+/)
     .slice(0, 15)
     .join('_');
-
-  console.log("=== NORMALIZIRANO ===");
-  console.log("Vhod:", opis);
-  console.log("Izhod:", rezultat);
-  return rezultat;
 }
 
 let trenutnaSmer = 'across';
@@ -188,35 +178,45 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function prikaziOpis(x, y) {
-    document.querySelectorAll('.cell').forEach(c => c.classList.remove('highlight'));
-    const geslo = gesla_opisi.find(g =>
-      g.smer === trenutnaSmer &&
-      ((g.smer === 'across' && g.y === y && x >= g.x && x < g.x + g.dolzina) ||
-       (g.smer === 'down' && g.x === x && y >= g.y && y < g.y + g.dolzina)));
-    const opisPolje = document.getElementById('opisPolje');
-    const slikaDiv = document.getElementById('slikaGesla');
-    if (geslo) {
-      for (let i = 0; i < geslo.dolzina; i++) {
-        const tx = geslo.smer === 'across' ? geslo.x + i : geslo.x;
-        const ty = geslo.smer === 'down' ? geslo.y + i : geslo.y;
-        const inp = document.querySelector(`input[data-x='${tx}'][data-y='${ty}']`);
-        if (inp) inp.parentElement.classList.add('highlight');
-      }
-      const opis = `${geslo.stevilka}. ${geslo.opis}`;
-      opisPolje.textContent = opis;
-      const img = document.createElement('img');
-      img.src = `/static/Images/${normalizirajNaziv(geslo.opis)}.jpg`;
-      img.alt = geslo.opis;
-      img.style.maxWidth = '100%';
-      img.style.maxHeight = '200px';
-      slikaDiv.innerHTML = '';
-      img.onerror = () => { slikaDiv.innerHTML = ''; };
-      slikaDiv.appendChild(img);
-    } else {
-      opisPolje.textContent = 'Klikni na polje za prikaz opisa';
-      slikaDiv.innerHTML = '';
+  document.querySelectorAll('.cell').forEach(c => c.classList.remove('highlight'));
+  const geslo = gesla_opisi.find(g =>
+    g.smer === trenutnaSmer &&
+    ((g.smer === 'across' && g.y === y && x >= g.x && x < g.x + g.dolzina) ||
+     (g.smer === 'down' && g.x === x && y >= g.y && y < g.y + g.dolzina)));
+
+  const opisPolje = document.getElementById('opisPolje');
+  const slikaDiv = document.getElementById('slikaGesla');
+
+  if (geslo) {
+    for (let i = 0; i < geslo.dolzina; i++) {
+      const tx = geslo.smer === 'across' ? geslo.x + i : geslo.x;
+      const ty = geslo.smer === 'down' ? geslo.y + i : geslo.y;
+      const inp = document.querySelector(`input[data-x='${tx}'][data-y='${ty}']`);
+      if (inp) inp.parentElement.classList.add('highlight');
     }
+
+    const opis = geslo.opis;  // samo opis brez številke
+    const opisZaPrikaz = `${geslo.stevilka}. ${geslo.opis}`;  // to pokažemo uporabniku
+
+    opisPolje.textContent = opisZaPrikaz;
+
+    const rezultat = normalizirajNaziv(opis);
+    const pot = `/static/Images/${rezultat}.jpg`;
+
+    const img = document.createElement('img');
+    img.src = pot;
+    img.alt = opis;
+    img.style.maxWidth = '100%';
+    img.style.maxHeight = '200px';
+    slikaDiv.innerHTML = '';
+    img.onerror = () => { slikaDiv.innerHTML = ''; };
+    slikaDiv.appendChild(img);
+  } else {
+    opisPolje.textContent = 'Klikni na polje za prikaz opisa';
+    slikaDiv.innerHTML = '';
   }
+}
+
 
   function preveriCelotnoGeslo(input) {
     const x = +input.dataset.x;
@@ -252,5 +252,5 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 });
 </script>
-
+{% endif %}
 {% endblock %}
