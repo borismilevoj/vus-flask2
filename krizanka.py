@@ -70,7 +70,7 @@ def pridobi_podatke_iz_xml(xml_pot):
             stevilke_ze_dodane.add((x, y))
 
     words = root.findall('.//{http://crossword.info/xml/rectangular-puzzle}word')
-    clues = root.findall('.//{http://crossword.info/xml/rectangular-puzzle}clues/{http://crossword.info/xml/rectangular-puzzle}clue')
+    clues = root.findall('.//{*}clues/{*}clue')  # to ujame vse, ne glede na namespace
 
     print("🔎 Vseh words:", len(words))
     print("🔎 Vseh clues:", len(clues))

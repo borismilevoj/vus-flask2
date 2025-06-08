@@ -8,6 +8,18 @@ from arhiviranje_util import arhiviraj_danes
 import sqlite3
 import os
 from flask import send_from_directory
+import glob
+
+def odstrani_cc_vrstico_iz_html(mapa):
+    for datoteka in glob.glob(os.path.join(mapa, "*.html")):
+        with open(datoteka, 'r', encoding='utf-8', errors='ignore') as f:
+            vrstice = f.readlines()
+        nove = [vr for vr in vrstice if "crossword-compiler.com" not in vr]
+        if len(nove) < len(vrstice):
+            with open(datoteka, 'w', encoding='utf-8') as f:
+                f.writelines(nove)
+            print(f"✂️ Očiščeno: {datoteka}")
+
 
 app = Flask(__name__, static_folder='static', static_url_path='/static')
 app.secret_key = "skrivnost"
@@ -323,15 +335,21 @@ from flask import request, flash, redirect, url_for
 def uvoz_datotek():
     if request.method == 'POST':
         tip = request.form.get('tip')
+
         if tip == 'krizanka':
             premakni_krizanke()
             flash("Križanke so bile uspešno uvožene.", "success")
+
         elif tip == 'sudoku':
             tezavnost = request.form.get('tezavnost')
             premakni_sudoku(tezavnost)
-            flash(f"Sudoku ({tezavnost}) je bil uspešno uvožen.", "success")
+            mapa = os.path.join("static", f"Sudoku_{tezavnost}")
+            odstrani_cc_vrstico_iz_html(mapa)
+            flash(f"Sudoku ({tezavnost}) je bil uspešno uvožen in očiščen.", "success")
+
         else:
             flash("Neznan tip uvoza.", "danger")
+
         return redirect(url_for('uvoz_datotek'))
 
     return render_template('uvoz.html')

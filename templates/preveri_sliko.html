@@ -65,9 +65,14 @@
 
     <script>
         function pretvoriOpis() {
-            const opis = document.getElementById('opis-gesla').value;
+            let opis = document.getElementById('opis-gesla').value;
+            console.log("PREVERI: vhodni opis:", opis);
 
-            const rezultat = opis
+            // za testno preverjanje: dodaj virtualno rešitev
+            const resitev = prompt("Vnesi rešitev (npr. Sagres):", "") || "";
+            const opisPlusResitev = opis + ' ' + resitev;
+
+            const rezultat = opisPlusResitev
                 .normalize('NFD')
                 .replace(/[̀-ͯ]/g, '')
                 .replace(/[-–—−]/g, ' ')
@@ -80,7 +85,7 @@
                 .slice(0, 15)
                 .join('_');
 
-            console.log("NORMALIZIRANO IME:", rezultat);
+            console.log("PREVERI: rezultat imena slike:", rezultat);
 
             const rezultatInput = document.getElementById('rezultat-podcrtaji');
             rezultatInput.value = rezultat;
@@ -88,6 +93,7 @@
             const slika = document.getElementById('predogled-slike');
             const napaka = document.getElementById('napaka-slike');
             const pot = `/static/Images/${rezultat}.jpg`;
+            console.log("PREVERI: pot do slike:", pot);
 
             slika.onload = () => {
                 slika.style.display = "block";
