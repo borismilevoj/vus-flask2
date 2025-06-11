@@ -35,9 +35,11 @@ def normaliziraj_ime(opis):
     opis = re.sub(r'[^a-z0-9 ]', '', opis)
     opis = opis.replace(' ', '_')
     return opis + '.jpg'
+from pretvornik import normaliziraj_ime
 
 def pridobi_podatke_iz_xml(xml_pot):
     import xml.etree.ElementTree as ET
+    from pretvornik import normaliziraj_ime  # če to uporabljaš
 
     tree = ET.parse(xml_pot)
     root = tree.getroot()
@@ -70,13 +72,12 @@ def pridobi_podatke_iz_xml(xml_pot):
             stevilke_ze_dodane.add((x, y))
 
     words = root.findall('.//{http://crossword.info/xml/rectangular-puzzle}word')
-    clues = root.findall('.//{*}clues/{*}clue')  # to ujame vse, ne glede na namespace
+    clues = root.findall('.//{*}clues/{*}clue')  # vse, ne glede na namespace
 
     print("🔎 Vseh words:", len(words))
     print("🔎 Vseh clues:", len(clues))
 
     slika_iz_opisa = None
-
     clue_map = {c.attrib['word']: c for c in clues}
 
     for word in words:
@@ -86,7 +87,6 @@ def pridobi_podatke_iz_xml(xml_pot):
             continue
 
         clue = clue_map[word_id]
-
         x_range = word.attrib['x']
         y_range = word.attrib['y']
         solution = word.attrib.get('solution')
@@ -101,6 +101,9 @@ def pridobi_podatke_iz_xml(xml_pot):
         x = int(x_range.split('-')[0]) - 1 if '-' in x_range else int(x_range) - 1
         y = int(y_range.split('-')[0]) - 1 if '-' in y_range else int(y_range) - 1
 
+        # ✅ Popravek: dolžina brez pomišljajev in presledkov
+        dolzina = len(solution.replace('-', '').replace(' ', ''))
+
         gesla_opisi.append({
             'x': x,
             'y': y,
@@ -108,7 +111,7 @@ def pridobi_podatke_iz_xml(xml_pot):
             'opis': prikaz_opis,
             'solution': solution,
             'smer': smer,
-            'dolzina': len(solution)
+            'dolzina': dolzina
         })
 
         if slika_iz_opisa is None:

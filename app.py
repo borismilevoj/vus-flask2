@@ -21,6 +21,10 @@ def odstrani_cc_vrstico_iz_html(mapa):
             print(f"✂️ Očiščeno: {datoteka}")
 
 
+
+
+
+
 app = Flask(__name__, static_folder='static', static_url_path='/static')
 app.secret_key = "skrivnost"
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
@@ -34,6 +38,7 @@ def get_db():
     conn = sqlite3.connect('VUS.db')
     conn.row_factory = sqlite3.Row
     return conn
+
 
 @app.route('/admin/arhiviraj', methods=['POST'])
 def sprozi_arhiviranje():

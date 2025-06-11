@@ -60,3 +60,22 @@ def normaliziraj_geslo(geslo):
     }
 
     return ''.join(pretvornik.get(char, char) for char in geslo)
+import unicodedata
+import re
+
+def normaliziraj_ime(opis):
+    # Pretvori vse črke z naglasi v ASCII ekvivalente
+    ime = unicodedata.normalize('NFD', opis).encode('ascii', 'ignore').decode('utf-8')
+    ime = ime.lower()
+
+    # Presledke pretvori v podčrtaje
+    ime = ime.replace(' ', '_')
+
+    # Odstrani vse, kar ni črka, številka ali podčrtaj
+    ime = re.sub(r'[^a-z0-9_]', '', ime)
+
+    # Po potrebi: omeji na prvih 15 "besed"
+    besede = ime.split('_')
+    ime = '_'.join(besede[:20])
+
+    return ime
