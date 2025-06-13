@@ -7,14 +7,6 @@
     <list default="true" id="7b096a74-7ed9-4344-af5e-d7be2fa85ca4" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/VUS.db" beforeDir="false" afterPath="$PROJECT_DIR$/VUS.db" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/krizanka.py" beforeDir="false" afterPath="$PROJECT_DIR$/krizanka.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pretvornik.py" beforeDir="false" afterPath="$PROJECT_DIR$/pretvornik.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/2025-06-12.xml" beforeDir="false" afterPath="$PROJECT_DIR$/static/CrosswordCompilerApp/2025-06-12.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/2025-06-14..js" beforeDir="false" afterPath="$PROJECT_DIR$/static/CrosswordCompilerApp/2025-06-14.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/2025-06-14..xml" beforeDir="false" afterPath="$PROJECT_DIR$/static/CrosswordCompilerApp/2025-06-14.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/Images/nekdanja hrvaška rock skupina.jpg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/Images/tursko_svicarski_nogometas_hakan_1977_nekd.jpg" beforeDir="false" afterPath="$PROJECT_DIR$/static/Images/tursko_svicarski_nogometas_hakan_1977_nekd.jpg" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
