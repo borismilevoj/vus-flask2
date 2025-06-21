@@ -286,6 +286,8 @@ def arhiv_krizank():
 def osnovni_sudoku():
     return redirect(url_for('prikazi_danasnji_sudoku', tezavnost='easy'))
 
+from flask import render_template_string
+
 @app.route('/sudoku/<tezavnost>/<datum>')
 def prikazi_sudoku(tezavnost, datum):
     mapa = os.path.join('static', f'Sudoku_{tezavnost}')
@@ -295,7 +297,10 @@ def prikazi_sudoku(tezavnost, datum):
     if not os.path.exists(pot):
         return render_template('napaka.html', sporocilo="Sudoku za ta datum ali težavnost ni na voljo.")
 
-    return send_from_directory(mapa, ime)
+    with open(pot, encoding="utf-8") as f:
+        vsebina = f.read()
+    return render_template_string(vsebina)
+
 
 
 @app.route('/sudoku/<tezavnost>')
@@ -306,6 +311,7 @@ def prikazi_danasnji_sudoku(tezavnost):
 @app.route('/sudoku/meni')
 def sudoku_meni():
     return render_template('sudoku_meni.html')
+
 
 
 from datetime import datetime
