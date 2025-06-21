@@ -16,21 +16,28 @@ opisi = [
 
 def normaliziraj_naziv(opis):
     opis = unicodedata.normalize('NFD', opis)
-    opis = re.sub(r'[\u0300-\u036f]', '', opis)
-    opis = re.sub(r'[-–—−]', ' ', opis)
-    opis = re.sub(r'[†().,;:!?]', '', opis)
+    opis = re.sub(r'[\u0300-\u036f]', '', opis)            # Odstrani diakritične
+    opis = re.sub(r'[-–—−]', '', opis)                     # Pomišljaje čisto odstrani
+    opis = re.sub(r'[†().,;:!?]', '', opis)                # Ostale znake odstrani
     opis = opis.lower()
     opis = re.sub(r'[^a-z0-9\s]', '', opis)
     besede = opis.strip().split()
     return '_'.join(besede[:15])
 
+
 manjkajoce_slike = []
 
 for opis in opisi:
-    ime = normaliziraj_naziv(opis) + ".jpg"
-    pot = os.path.join(MAPA_SLIK, ime)
-    if not os.path.exists(pot):
+    ime = normaliziraj_naziv(opis)
+    found = False
+    for ext in [".jpg", ".png"]:
+        pot = os.path.join(MAPA_SLIK, ime + ext)
+        if os.path.exists(pot):
+            found = True
+            break
+    if not found:
         manjkajoce_slike.append((opis, ime))
+
 
 print("=== Manjkajoče slike ===")
 for opis, ime in manjkajoce_slike:
