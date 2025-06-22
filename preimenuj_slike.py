@@ -2,26 +2,18 @@ import os
 import unicodedata
 import re
 
-def normaliziraj_naziv(ime, max_besed=8, max_znakov=64):
-    # 1. Odstrani šumnike
-    ime = unicodedata.normalize('NFD', ime).encode('ascii', 'ignore').decode('utf-8')
-    ime = ime.lower()
+def normaliziraj_naziv(opis):
+    import unicodedata
+    import re
+    opis = unicodedata.normalize('NFD', opis)
+    opis = re.sub(r'[\u0300-\u036f]', '', opis)
+    opis = re.sub(r'[-–—−]', '', opis)          # tukaj je glavna sprememba!
+    opis = re.sub(r'[†().,;:!?]', '', opis)
+    opis = opis.lower()
+    opis = re.sub(r'[^a-z0-9\s]', '', opis)
+    besede = opis.strip().split()
+    return '_'.join(besede[:15])
 
-    # 2. Pretvori vse vrste vezajev in ločil v presledke, PODČRTAJE pa OHRANI!
-    ime = re.sub(r'[–—−\-/(),.:;]', ' ', ime)  # ne vključimo _ tukaj!
-
-    # 3. Odstrani vse razen črk, številk, presledkov in _
-    ime = re.sub(r'[^a-z0-9\s_]', '', ime)
-
-    # 4. Zamenjaj vse vrste presledkov z enojnimi
-    ime = re.sub(r'\s+', ' ', ime)
-
-    # 5. Razbij v besede (tudi podcrtaji ostanejo)
-    besede = ime.strip().split()
-
-    # 6. Zdruzi z _
-    rezultat = '_'.join(besede[:max_besed])
-    return rezultat[:max_znakov]
 
 def preimenuj_slike(vhodna_mapa):
     datoteke = os.listdir(vhodna_mapa)
