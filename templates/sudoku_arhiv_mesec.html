@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Arhiv Sudoku – {{ tezavnost|capitalize }} {{ mesec }} | VUS{% endblock %}
+
+{% block content %}
+<h1>Arhiv sudokujev – {{ tezavnost|capitalize }} – {{ mesec }}</h1>
+<div class="d-flex flex-wrap">
+    {% for datum in datumi %}
+        <a href="{{ url_for('prikazi_sudoku', tezavnost=tezavnost, datum=datum) }}"
+           class="btn btn-warning m-2">{{ datum }}</a>
+    {% endfor %}
+</div>
+<a href="{{ url_for('arhiv_sudoku', tezavnost=tezavnost) }}" class="btn btn-outline-dark mt-4">Nazaj na arhiv</a>
+{% endblock %}

@@ -258,26 +258,48 @@ def prikazi_krizanko(datum):
 
 
 
-from datetime import datetime
-
 @app.route('/krizanka/arhiv')
 def arhiv_krizank():
     mapa = os.path.join('static', 'CrosswordCompilerApp')
-    danes = datetime.today().strftime('%Y-%m-%d')
+    vse_mape = [f for f in os.listdir(mapa) if os.path.isdir(os.path.join(mapa, f))]
+    meseci = sorted([m for m in vse_mape if len(m) == 7 and m[:4].isdigit() and m[5:7].isdigit()], reverse=True)
 
-    datoteke = []
+    danes = datetime.today().strftime('%Y-%m-%d')
+    aktualne = []
     for f in os.listdir(mapa):
-        if f.endswith('.xml'):
+        polna_pot = os.path.join(mapa, f)
+        if f.endswith('.xml') and os.path.isfile(polna_pot):
             datum = f.replace('.xml', '')
             try:
-                datetime.strptime(datum, "%Y-%m-%d")  # preveri, da je pravi format
+                datetime.strptime(datum, "%Y-%m-%d")
                 if datum < danes:
-                    datoteke.append(datum)
+                    aktualne.append(datum)
             except ValueError:
-                pass  # preskoči napačne datoteke
+                pass
 
+    aktualne.sort(reverse=True)
+
+    return render_template(
+        'arhiv.html',
+        aktualne=aktualne,
+        meseci=meseci
+    )
+
+@app.route('/krizanka/arhiv/<mesec>')
+def arhiv_krizank_mesec(mesec):
+    mapa = os.path.join('static', 'CrosswordCompilerApp', mesec)
+    datoteke = []
+    if os.path.exists(mapa):
+        for f in os.listdir(mapa):
+            if f.endswith('.xml'):
+                datum = f.replace('.xml', '')
+                try:
+                    datetime.strptime(datum, "%Y-%m-%d")
+                    datoteke.append(datum)
+                except ValueError:
+                    pass
     datoteke.sort(reverse=True)
-    return render_template('arhiv.html', datumi=datoteke)
+    return render_template('arhiv_mesec.html', mesec=mesec, datumi=datoteke)
 
 
 
@@ -314,26 +336,54 @@ def sudoku_meni():
 
 
 
+import os
 from datetime import datetime
+from flask import render_template
 
 @app.route('/sudoku/arhiv/<tezavnost>')
 def arhiv_sudoku(tezavnost):
     mapa_sudoku = os.path.join('static', f"Sudoku_{tezavnost}")
-    danes = datetime.today().strftime('%Y-%m-%d')
 
-    datumi = []
+    vse_mape = [f for f in os.listdir(mapa_sudoku) if os.path.isdir(os.path.join(mapa_sudoku, f))]
+    meseci = sorted([m for m in vse_mape if len(m) == 7 and m[:4].isdigit() and m[5:7].isdigit()], reverse=True)
+
+    aktualni = []
     for f in os.listdir(mapa_sudoku):
-        if f.endswith('.html'):
+        polna_pot = os.path.join(mapa_sudoku, f)
+        if f.endswith('.html') and os.path.isfile(polna_pot):
             datum = f.replace(f'Sudoku_{tezavnost}_', '').replace('.html', '')
             try:
                 datetime.strptime(datum, "%Y-%m-%d")
-                if datum < danes:
-                    datumi.append(datum)
+                aktualni.append(datum)
             except ValueError:
                 pass
+    aktualni.sort(reverse=True)
 
+    return render_template(
+        'sudoku_arhiv.html',
+        tezavnost=tezavnost,
+        meseci=meseci,
+        aktualni=aktualni
+    )
+
+
+@app.route('/sudoku/arhiv/<tezavnost>/<mesec>')
+def arhiv_sudoku_mesec(tezavnost, mesec):
+    mapa = os.path.join('static', f'Sudoku_{tezavnost}', mesec)
+    datumi = []
+    if os.path.exists(mapa):
+        for f in os.listdir(mapa):
+            if f.endswith('.html'):
+                datum = f.replace(f'Sudoku_{tezavnost}_', '').replace('.html', '')
+                try:
+                    datetime.strptime(datum, "%Y-%m-%d")
+                    datumi.append(datum)
+                except ValueError:
+                    pass
     datumi.sort(reverse=True)
-    return render_template('sudoku_arhiv.html', datumi=datumi, tezavnost=tezavnost)
+    return render_template('sudoku_arhiv_mesec.html', tezavnost=tezavnost, mesec=mesec, datumi=datumi)
+
+
 
 
 @app.route('/sudoku/arhiv')
