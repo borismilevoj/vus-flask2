@@ -5,47 +5,20 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="7b096a74-7ed9-4344-af5e-d7be2fa85ca4" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/premakni_mesec_sudoku.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/VUS.db" beforeDir="false" afterPath="$PROJECT_DIR$/VUS.db" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/arhiviranje_util.py" beforeDir="false" afterPath="$PROJECT_DIR$/arhiviranje_util.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/preimenuj_slike.py" beforeDir="false" afterPath="$PROJECT_DIR$/preimenuj_slike.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/2025-05-17.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/2025-05-17.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/2025-05-18.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/2025-05-18.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/2025-05-19.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/2025-05-19.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/2025-05-20.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/2025-05-20.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/2025-05-21.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/2025-05-21.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/2025-05-22.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/2025-05-23.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/2025-05-23.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/2025-05-24.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/2025-05-24.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/2025-05-25.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/2025-05-25.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/2025-05-26.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/2025-05-26.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/2025-05-27.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/2025-05-27.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/2025-05-28.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/2025-05-28.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/2025-05-29.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/2025-05-29.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/2025-05-30.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/2025-05-30.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/2025-05-31.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/CrosswordCompilerApp/2025-05-31.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/Images/francoski_slikar_louis_emile_18391937.jpg" beforeDir="false" afterPath="$PROJECT_DIR$/static/Images/francoski_slikar_louis_emile_18391937.jpg" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/Images/starodavno_mesto_v_italijanski_regiji_abruci_abruzzo.jpg" beforeDir="false" afterPath="$PROJECT_DIR$/static/Images/starodavno_mesto_v_italijanski_regiji_abruci_abruzzo.jpg" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/Images/v_grski_mitologiji_bog_srecnega_oziroma_pravega_trenutka_ki_se_pojavi_samo_enkrat_v_zivljenju.jpg" beforeDir="false" afterPath="$PROJECT_DIR$/static/Images/v_grski_mitologiji_bog_srecnega_oziroma_pravega_trenutka_ki_se_pojavi_samo_enkrat_v_zivljenju.jpg" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/arhiv.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/arhiv.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/sudoku_arhiv.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/sudoku_arhiv.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/sudoku_arhiv_glavni.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/sudoku_arhiv_glavni.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Images/ameriski_profesionalni_boksar_in_druzbeni_aktivist_ki_velja_za_najboljsega_boksarja_v_tezki_kategoriji_vseh.jpg" beforeDir="false" afterPath="$PROJECT_DIR$/static/Images/ameriski_profesionalni_boksar_in_druzbeni_aktivist_ki_velja_za_najboljsega_boksarja_v_tezki_kategoriji_vseh.jpg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Images/celica_za_nespolno_razmnozevanje_pri_nizjih_rastlinah.jpg" beforeDir="false" afterPath="$PROJECT_DIR$/static/Images/celica_za_nespolno_razmnozevanje_pri_nizjih_rastlinah.jpg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Images/indijski_politik_bansi_19272004.jpg" beforeDir="false" afterPath="$PROJECT_DIR$/static/Images/indijski_politik_bansi_19272004.jpg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Images/pripadnik_ljudstva_ki_so_med_13_in_16_stoletjem_ustanovili_mogocen_imperij_v_andih_na.jpg" beforeDir="false" afterPath="$PROJECT_DIR$/static/Images/pripadnik_ljudstva_ki_so_med_13_in_16_stoletjem_ustanovili_mogocen_imperij_v_andih_na.jpg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Images/v_grski_mitologiji_sin_zevsa_in_egine_eginski_kralj_po_smrti_sod.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Images/varovalni_pripomocek_klin_ali_zatic_ki_se_uporablja_za_varovanje_plezalcav_alp.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Images/velik_odprt_notranji_prostor_v_stavbi_ki_omogoca_svetlobo_in_prezracevanje_v_anticni_arhitekturi_pa.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Images/velika_barvita_ptica_iz_druzine_fazanovk_znana_predvsem_po_svojem_znacilnem_razkosnem_repu_ki_ga.jpg" beforeDir="false" afterPath="$PROJECT_DIR$/static/Images/velika_barvita_ptica_iz_druzine_fazanovk_znana_predvsem_po_svojem_znacilnem_razkosnem_repu_ki_ga.jpg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Images/vran_golobje_velikosti_z_znacilno_svetlosivo_glavo_in_belim_ocesom.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Images/vrsta_sladkovodne_ribe_iz_druzine_postrvi_salmonidae_ki_je_znacilna_za_ciste_in_hladne_reke.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Images/zdravilisce_v_pokrajini_li_ge_belgija.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Images/zvezna_drzava_v_indiji_z_glavnim_mestom_dispur.jpg" beforeDir="false" afterPath="$PROJECT_DIR$/static/Images/zvezna_drzava_v_indiji_z_glavnim_mestom_dispur.jpg" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
