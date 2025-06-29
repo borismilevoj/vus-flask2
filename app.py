@@ -10,6 +10,22 @@ import os
 from flask import send_from_directory
 import glob
 
+import unicodedata
+import re
+
+def generiraj_ime_slike(opis, resitev):
+    def norm(txt):
+        txt = unicodedata.normalize('NFD', txt)
+        txt = re.sub(r'[\u0300-\u036f]', '', txt)
+        txt = txt.lower()
+        txt = re.sub(r'[^a-z0-9 ]', '', txt)
+        txt = '_'.join(txt.strip().split())
+        return txt
+    return f"{norm(opis)}_{norm(resitev)}"
+
+
+
+
 def odstrani_cc_vrstico_iz_html(mapa):
     for datoteka in glob.glob(os.path.join(mapa, "*.html")):
         with open(datoteka, 'r', encoding='utf-8', errors='ignore') as f:
@@ -438,10 +454,15 @@ def zamenjaj():
 
     # Vrni število dejanskih sprememb
     return jsonify({"spremembe": stevilo_zadetkov})
+
+
 from flask import send_file
 import zipfile
 import io
 import os
+
+
+
 
 @app.route('/prenesi_slike_zip')
 def prenesi_slike_zip():
@@ -458,10 +479,36 @@ def prenesi_slike_zip():
     zip_buffer.seek(0)
     return send_file(zip_buffer, mimetype='application/zip', as_attachment=True, download_name='slike_static_Images.zip')
 
-@app.route('/preveri_sliko')
-def preveri_sliko():
-    return render_template('preveri_sliko.html')
+from flask import request, render_template
+import os
 
+@app.route('/preveri_sliko', methods=['GET', 'POST'])
+def preveri_sliko():
+    ime_slike = None
+    obstaja = None
+    opis = ''
+    resitev = ''
+    koncnice = ['jpg', 'png', 'webp']
+    if request.method == 'POST':
+        opis = request.form.get('opis', '')
+        resitev = request.form.get('resitev', '')
+        osnovno_ime = generiraj_ime_slike(opis, resitev)
+        for ext in koncnice:
+            pot = os.path.join('static', 'Images', f"{osnovno_ime}.{ext}")
+            if os.path.exists(pot):
+                ime_slike = f"{osnovno_ime}.{ext}"
+                obstaja = True
+                break
+        if not ime_slike:
+            ime_slike = f"{osnovno_ime}.jpg"  # default prikazano ime
+            obstaja = False
+    return render_template(
+        'preveri_sliko.html',
+        opis=opis,
+        resitev=resitev,
+        ime_slike=ime_slike,
+        obstaja=obstaja
+    )
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
