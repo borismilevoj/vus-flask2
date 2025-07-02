@@ -6,7 +6,11 @@
   <component name="ChangeListManager">
     <list default="true" id="7b096a74-7ed9-4344-af5e-d7be2fa85ca4" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/VUS.db" beforeDir="false" afterPath="$PROJECT_DIR$/VUS.db" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/premakni_mesec_sudoku.py" beforeDir="false" afterPath="$PROJECT_DIR$/premakni_mesec_sudoku.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Images/ata_oce_ljubk.jpg" beforeDir="false" afterPath="$PROJECT_DIR$/static/Images/ata_oce_ljubk.jpg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Images/globinsko_obmocje_morij_oceanov_in_globokih_jezer_ki_se_nahaja_med_priblizno_1700_in_6000.jpg" beforeDir="false" afterPath="$PROJECT_DIR$/static/Images/globinsko_obmocje_morij_oceanov_in_globokih_jezer_ki_se_nahaja_med_priblizno_1700_in_6000.jpg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Images/mesto_v_zvezni_drzavi_sao_paulo_brazilija.jpg" beforeDir="false" afterPath="$PROJECT_DIR$/static/Images/mesto_v_zvezni_drzavi_sao_paulo_brazilija.jpg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Images/naselje_v_zupaniji_tolna_madzarska.jpg" beforeDir="false" afterPath="$PROJECT_DIR$/static/Images/naselje_v_zupaniji_tolna_madzarska.jpg" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
