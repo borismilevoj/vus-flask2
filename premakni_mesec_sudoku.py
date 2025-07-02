@@ -1,7 +1,7 @@
 import os
 import shutil
 
-mesec = "2025-05"  # Spremeni po potrebi!
+mesec = "2025-06"  # Spremeni po potrebi!
 težavnosti = ["very_easy", "easy", "medium", "hard"]
 
 for tezavnost in težavnosti:
