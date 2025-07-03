@@ -12,7 +12,7 @@ SUDOKU_POT = os.path.join("static")
 def premakni_krizanke_v_mesece(mesec=None):
     if mesec is None:
         danes = datetime.today()
-        mesec_map = danes.strftime("2025-05")
+        mesec_map = danes.strftime("%Y-%m")
     else:
         mesec_map = mesec
     arhivna_mapa = os.path.join(POT, mesec_map)
@@ -31,7 +31,7 @@ def premakni_krizanke_v_mesece(mesec=None):
 def premakni_sudoku_v_mesece(mesec=None):
     if mesec is None:
         danes = datetime.today()
-        mesec_map = danes.strftime("2025-05")
+        mesec_map = danes.strftime("%Y-%m")
     else:
         mesec_map = mesec
     premaknjeni = []

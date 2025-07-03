@@ -1,9 +1,6 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, session, send_from_directory
-from datetime import datetime
-from werkzeug.utils import secure_filename
-from pretvornik import normaliziraj_geslo
+from flask import Flask, jsonify
 from krizanka import pridobi_podatke_iz_xml
-from uvoz_datotek import premakni_krizanke, premakni_sudoku
+from Stare_skripte.uvoz_datotek import premakni_krizanke, premakni_sudoku
 from arhiviranje_util import arhiviraj_danes
 import sqlite3
 import os
@@ -71,7 +68,7 @@ def ping():
     return "OK iz Flaska!"
 
 import shutil
-from datetime import datetime
+
 
 def varnostna_kopija_baze():
     danes = datetime.now().strftime('%Y%m%d_%H%M%S')
@@ -257,10 +254,20 @@ def prikazi_krizanko(datum):
 
     ime_datoteke = f"{datum}.xml"
     osnovna_pot = os.path.dirname(os.path.abspath(__file__))
-    pot_do_datoteke = os.path.join(osnovna_pot, 'static', 'CrosswordCompilerApp', ime_datoteke)
-    print("📁 Iščem datoteko tukaj:", pot_do_datoteke)
 
-    if not os.path.exists(pot_do_datoteke):
+    # Najprej poskusi v podmapi (arhiv za mesec)
+    mesec = datum[:7]
+    pot_arhiv = os.path.join(osnovna_pot, 'static', 'CrosswordCompilerApp', mesec, ime_datoteke)
+    pot_glavna = os.path.join(osnovna_pot, 'static', 'CrosswordCompilerApp', ime_datoteke)
+
+    print("📁 Iščem arhivsko datoteko:", pot_arhiv)
+    print("📁 Iščem v glavni mapi:", pot_glavna)
+
+    if os.path.exists(pot_arhiv):
+        pot_do_datoteke = pot_arhiv
+    elif os.path.exists(pot_glavna):
+        pot_do_datoteke = pot_glavna
+    else:
         return render_template('napaka.html', sporocilo="Križanka za ta datum še ni objavljena.")
 
     try:
@@ -271,7 +278,6 @@ def prikazi_krizanko(datum):
         return render_template('napaka.html', sporocilo=f"Napaka pri branju križanke: {e}")
 
     return render_template('krizanka.html', podatki=podatki)
-
 
 
 @app.route('/krizanka/arhiv')
@@ -358,10 +364,8 @@ def sudoku_meni():
     return render_template('sudoku_meni.html')
 
 
-
-import os
 from datetime import datetime
-from flask import render_template
+
 
 @app.route('/sudoku/arhiv/<tezavnost>')
 def arhiv_sudoku(tezavnost):
@@ -413,7 +417,7 @@ def arhiv_sudoku_mesec(tezavnost, mesec):
 def arhiv_sudoku_pregled():
     return render_template('sudoku_arhiv_glavni.html')
 
-from flask import request, flash, redirect, url_for
+from flask import flash, redirect, url_for
 
 @app.route('/uvoz', methods=['GET', 'POST'])
 def uvoz_datotek():
@@ -466,9 +470,6 @@ def zamenjaj():
 from flask import send_file
 import zipfile
 import io
-import os
-
-
 
 
 @app.route('/prenesi_slike_zip')
