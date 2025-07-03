@@ -326,19 +326,26 @@ def osnovni_sudoku():
 
 from flask import render_template_string
 
+
 @app.route('/sudoku/<tezavnost>/<datum>')
 def prikazi_sudoku(tezavnost, datum):
-    mapa = os.path.join('static', f'Sudoku_{tezavnost}')
+    leto_mesec = datum[:7]  # "2025-06"
     ime = f'Sudoku_{tezavnost}_{datum}.html'
-    pot = os.path.join(mapa, ime)
+    # Najprej preveri v podmapi (arhiv za mesec)
+    pot_arhiv = os.path.join('static', f'Sudoku_{tezavnost}', leto_mesec, ime)
+    # Če ni tam, preveri še v glavni mapi (za aktualne)
+    pot_aktualno = os.path.join('static', f'Sudoku_{tezavnost}', ime)
 
-    if not os.path.exists(pot):
+    if os.path.exists(pot_arhiv):
+        pot = pot_arhiv
+    elif os.path.exists(pot_aktualno):
+        pot = pot_aktualno
+    else:
         return render_template('napaka.html', sporocilo="Sudoku za ta datum ali težavnost ni na voljo.")
 
     with open(pot, encoding="utf-8") as f:
         vsebina = f.read()
     return render_template_string(vsebina)
-
 
 
 @app.route('/sudoku/<tezavnost>')

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Sudoku - VUS</title>
-  <script src="/static/Sudoku_easy/Sudoku_easy_2025-06-01.js"></script>
+  
   <style>
     body { font-family: sans-serif; text-align: center; margin-top: 20px; }
     #sudoku-container { display: grid; grid-template-columns: repeat(9, 40px); width: fit-content; margin: auto; }
@@ -14,19 +14,27 @@
   </style>
 </head>
 <body>
-  <h1>Sudoku - 2025-06-01</h1>
-  <div id="sudoku-container"></div>
 
-  <script>
-    const container = document.getElementById("sudoku-container");
-    sudokuData.forEach((row, i) => {
-      row.forEach((val, j) => {
-        const cell = document.createElement("div");
-        cell.className = "cell";
-        cell.textContent = val === 0 ? "" : val;
-        container.appendChild(cell);
-      });
-    });
-  </script>
+<script src="/static/Sudoku_easy/CrosswordCompilerApp/jquery.js"></script>
+<script src="/static/Sudoku_easy/CrosswordCompilerApp/raphael.js"></script>
+<script src="/static/Sudoku_easy/CrosswordCompilerApp/crosswordCompiler.js"></script>
+<script src="/static/Sudoku_easy/2025-06/Sudoku_easy_2025-06-01.js"></script>
+<script>
+$(function(){ $("#CrosswordCompilerPuz").CrosswordCompiler(CrosswordPuzzleData,null,    {SUBMITMETHOD:"POST",SAVE   :   "",PROGRESS :  "" } );});
+</script>
+<div id="CrosswordCompilerPuz"></div>
+
+
+
+
+
+
+
+
+
+  <h1>Sudoku - 2025-06-01</h1>
+  
+
+  
 </body>
 </html>
