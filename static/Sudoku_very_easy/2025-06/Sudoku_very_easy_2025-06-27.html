@@ -34,16 +34,20 @@ BODY, .Clues, .GridClues { font-size: 11pt; font-family: Times New Roman,Times; 
 </HEAD>
 
 <BODY TEXT="#000000" BGCOLOR="#ffffff">
+
+<script src="/static/Sudoku_very_easy/CrosswordCompilerApp/jquery.js"></script>
+<script src="/static/Sudoku_very_easy/CrosswordCompilerApp/raphael.js"></script>
+<script src="/static/Sudoku_very_easy/CrosswordCompilerApp/crosswordCompiler.js"></script>
+<script src="/static/Sudoku_very_easy/2025-06/Sudoku_very_easy_2025-06-27.js"></script>
+<script>
+$(function(){ $("#CrosswordCompilerPuz").CrosswordCompiler(CrosswordPuzzleData,null,    {SUBMITMETHOD:"POST",SAVE   :   "",PROGRESS :  "" } );});
+</script>
+<div id="CrosswordCompilerPuz"></div>
+
     
 
     
-        <div class="PuzContainer">
-    
-    <script src="/static/Sudoku_very_easy/CrosswordCompilerApp/jquery.js"></script><script src="/static/Sudoku_very_easy/CrosswordCompilerApp/raphael.js"></script><script src="/static/Sudoku_very_easy/CrosswordCompilerApp/crosswordCompiler.js"></script><script src="/static/Sudoku_very_easy/Sudoku_very_easy_2025-06-27.js"></script><script>
-$(function(){ $("#CrosswordCompilerPuz").CrosswordCompiler(CrosswordPuzzleData,null,    {SUBMITMETHOD:"POST",SAVE   :   "",PROGRESS :  "" } );});</script>
-<div id="CrosswordCompilerPuz"></div>
         
-            </div>
         
         
         

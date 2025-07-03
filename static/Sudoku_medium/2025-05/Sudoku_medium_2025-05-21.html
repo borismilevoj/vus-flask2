@@ -36,16 +36,20 @@ BODY, .Clues, .GridClues { font-size: 11pt; font-family: Times New Roman,Times; 
 </HEAD>
 
 <BODY TEXT="#000000" BGCOLOR="#ffffff">
+
+<script src="/static/Sudoku_medium/CrosswordCompilerApp/jquery.js"></script>
+<script src="/static/Sudoku_medium/CrosswordCompilerApp/raphael.js"></script>
+<script src="/static/Sudoku_medium/CrosswordCompilerApp/crosswordCompiler.js"></script>
+<script src="/static/Sudoku_medium/2025-05/Sudoku_medium_2025-05-21.js"></script>
+<script>
+$(function(){ $("#CrosswordCompilerPuz").CrosswordCompiler(CrosswordPuzzleData,null,    {SUBMITMETHOD:"POST",SAVE   :   "",PROGRESS :  "" } );});
+</script>
+<div id="CrosswordCompilerPuz"></div>
+
     
 
     
-        <div class="PuzContainer">
-    
-    <script src="/static/CrosswordCompilerApp/jquery.js"></script><script src="/static/CrosswordCompilerApp/raphael.js"></script><script src="/static/CrosswordCompilerApp/crosswordCompiler.js"></script><script src="/static/Sudoku_medium/Sudoku_medium_2025-05-21.js"></script><script>
-$(function(){ $("#CrosswordCompilerPuz").CrosswordCompiler(CrosswordPuzzleData,null,    {SUBMITMETHOD:"POST",SAVE   :   "",PROGRESS :  "" } );});</script>
-<div id="CrosswordCompilerPuz"></div>
         
-            </div>
         
         
         
