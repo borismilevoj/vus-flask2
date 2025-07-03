@@ -24,7 +24,7 @@ def popravi_sumnike(besedilo):
             .replace('Ă§', 'ç')
             .replace('ĂŹ', 'í'))
 
-import xml.etree.ElementTree as ET
+
 import re
 
 def normaliziraj_ime(opis):
@@ -35,11 +35,11 @@ def normaliziraj_ime(opis):
     opis = re.sub(r'[^a-z0-9 ]', '', opis)
     opis = opis.replace(' ', '_')
     return opis + '.jpg'
-from pretvornik import normaliziraj_ime
+
 
 def pridobi_podatke_iz_xml(xml_pot):
     import xml.etree.ElementTree as ET
-    from pretvornik import normaliziraj_ime  # če to uporabljaš
+    from Stare_skripte.pretvornik import normaliziraj_ime  # če to uporabljaš
 
     tree = ET.parse(xml_pot)
     root = tree.getroot()

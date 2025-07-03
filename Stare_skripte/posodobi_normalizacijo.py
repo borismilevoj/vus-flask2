@@ -1,5 +1,5 @@
 import sqlite3
-from pretvornik import normaliziraj_geslo
+from Stare_skripte.pretvornik import normaliziraj_geslo
 
 conn = sqlite3.connect('VUS.db')
 cur = conn.cursor()

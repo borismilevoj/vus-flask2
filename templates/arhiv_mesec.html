@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Arhiv križank – {{ mesec }} | VUS{% endblock %}
+
+{% block content %}
+<h1>Arhiv križank – {{ mesec }}</h1>
+<div class="d-flex flex-wrap">
+    {% for datum in datumi %}
+        <a href="{{ url_for('prikazi_krizanko', datum=datum) }}"
+           class="btn btn-warning m-2">{{ datum }}</a>
+    {% endfor %}
+</div>
+<a href="{{ url_for('arhiv_krizank') }}" class="btn btn-outline-dark mt-4">Nazaj na arhiv</a>
+{% endblock %}
