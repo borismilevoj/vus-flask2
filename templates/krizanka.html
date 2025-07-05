@@ -11,7 +11,8 @@
 <div class="navodila-križanka" style="background-color:#f8f9fa; border:1px solid #ddd; padding:15px; border-radius:8px; margin-bottom:20px;">
   <ul style="line-height:1.6;">
     <li><strong>En klik</strong> na polje označi aktivno geslo (modri okvir).</li>
-    <li><strong>Gumb 🔁</strong> spodaj levo zamenja smer vnosa (vodoravno ↔ navpično).</li>
+    <li><strong>Gumb 🔁</strong> spodaj desno zamenja smer vnosa (vodoravno ↔ navpično).</li>
+    <li><strong>Gumb 🖼️</strong> zgoraj levo pokaže/skrije opis in sliko za geslo.</li>
     <li>Gesla so iz slovarja VUS.</li>
   </ul>
 </div>
@@ -19,14 +20,23 @@
 {% if podatki %}
 <div id="grid" style="display: grid; gap: 2px;"></div>
 
-<!-- Plavajoč opis + slika -->
-<div class="floating-opis">
-  <div id="slikaGesla" style="margin-bottom:10px;"></div>
-  <div id="opisPolje" style="font-weight: bold; font-size: 1.1rem;">Klikni na polje za prikaz opisa</div>
+<!-- Gumb za prikaz/skritje opisne kartice -->
+<button id="gumbKartica" onclick="preklopiKartico()" style="position:fixed;top:25px;left:25px;z-index:1200;font-size:1.5em;">🖼️ Opis/slika</button>
+
+<!-- Plavajoči opis/slika (kartica) -->
+<div id="opisKartica" class="floating-opis" style="display:none;">
+    <button class="close-btn" onclick="preklopiKartico()" style="position:absolute;top:7px;right:13px;">×</button>
+    <img id="karticaSlika" src="" alt="" />
+    <div id="karticaOpis" class="opis-besedilo"></div>
+</div>
+
+<!-- Status smeri (opcijsko) -->
+<div id="statusSmer" style="position:fixed;top:22px;right:30px;font-weight:600;font-size:1.12em;z-index:1050;color:#007bff;">
+  Smer vnosa: vodoravno
 </div>
 
 <!-- Lebdeči gumb za zamenjavo smeri -->
-<button onclick="zamenjajSmer()" class="btn btn-primary floating-smer-btn">🔁</button>
+<button onclick="zamenjajSmer()" class="floating-smer-btn">🔁</button>
 
 <!-- Počisti gumb spodaj -->
 <div class="mt-3">
@@ -44,7 +54,6 @@
   border: 1px solid #ccc;
   position: relative;
 }
-
 .cell input {
   width: 100%;
   height: 100%;
@@ -54,50 +63,72 @@
   outline: none;
   font-size: 20px;
 }
-
-.cell.black {
-  background-color: #333;
-}
-
+.cell.black { background-color: #333; }
 .cell-number {
   position: absolute;
-  top: 2px;
-  left: 4px;
-  font-size: 0.65em;
-  color: #555;
+  top: 2px; left: 4px;
+  font-size: 0.65em; color: #555;
 }
+.cell.highlight { outline: 2px solid #007bff; outline-offset: -1px; }
+.correct { background-color: #d4edda; }
+.incorrect { background-color: #f8d7da; }
 
-.cell.highlight {
-  outline: 2px solid #007bff;
-  outline-offset: -1px;
-}
-
-.correct {
-  background-color: #d4edda;
-}
-
-.incorrect {
-  background-color: #f8d7da;
-}
-
+/* ======== PLAVAJOCI OKVIR (KARTICA) ========= */
 .floating-opis {
   position: fixed;
   top: 80px;
   right: 20px;
-  width: 260px;
-  background: #f8f9fa;
+  max-width: 310px;
+  min-width: 150px;
+  background: #fff;
+  border-radius: 14px;
   border: 1px solid #ccc;
-  padding: 10px;
+  box-shadow: 0 6px 32px rgba(0,0,0,0.15);
+  padding: 10px 13px 14px 13px;
+  z-index: 1100;
+  font-size: 1em;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: box-shadow 0.25s;
+}
+.floating-opis img {
+  max-width: 180px;
+  max-height: 120px;
   border-radius: 8px;
-  z-index: 999;
+  margin-bottom: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.09);
 }
-
+.floating-opis .close-btn {
+  position: absolute;
+  top: 7px; right: 13px;
+  background: none; border: none;
+  font-size: 1.4em; color: #888; cursor: pointer; padding: 0;
+}
+.floating-opis .opis-besedilo {
+  margin-top: 5px; font-size: 1.03em; text-align: center; font-weight: 600; color: #222;
+}
+/* RESPONSIVE – NA OZKEM EKRANU NAJ GRE KARTICA SPODAJ MREŽE */
+@media (max-width: 800px) {
+  .floating-opis {
+    position: static !important;
+    margin: 0 auto 10px auto;
+    width: 96vw; max-width: 98vw;
+    top: unset !important; right: unset !important; left: unset !important;
+    font-size: 0.96em;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.09);
+  }
+  .floating-opis img { max-width: 90vw; max-height: 45vw; }
+}
 .floating-smer-btn {
-  position: fixed;
-  bottom: 20px;
-  left: 20px;
-  z-index: 1000;
+  position: fixed; bottom: 20px; right: 20px; z-index: 1000;
+  font-size: 2em; border-radius: 50%;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.13);
+  padding: 13px; background: #fff;
+  border: 1px solid #ddd; color: #007bff;
+  cursor: pointer; transition: background 0.2s, color 0.2s;
 }
+.floating-smer-btn:hover { background: #f7f9fc; color: #0056b3; }
 </style>
 
 <script>
@@ -115,10 +146,21 @@ function normalizirajNaziv(opis) {
 }
 
 let trenutnaSmer = 'across';
+let aktivniX = null;
+let aktivniY = null;
 
 function zamenjajSmer() {
   trenutnaSmer = (trenutnaSmer === 'across') ? 'down' : 'across';
-  document.getElementById('opisPolje').textContent = "Smer vnosa: " + (trenutnaSmer === 'across' ? 'vodoravno' : 'navpično');
+  let smerTxt = (trenutnaSmer === 'across' ? 'vodoravno' : 'navpično');
+  document.getElementById('statusSmer').textContent = "Smer vnosa: " + smerTxt;
+  if (aktivniX !== null && aktivniY !== null) {
+    prikaziOpis(aktivniX, aktivniY);
+  }
+}
+
+function preklopiKartico() {
+  const kartica = document.getElementById('opisKartica');
+  kartica.style.display = (kartica.style.display === "none" || kartica.style.display === "") ? "flex" : "none";
 }
 
 function premakniNaprej(input) {
@@ -178,45 +220,48 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function prikaziOpis(x, y) {
-  document.querySelectorAll('.cell').forEach(c => c.classList.remove('highlight'));
-  const geslo = gesla_opisi.find(g =>
-    g.smer === trenutnaSmer &&
-    ((g.smer === 'across' && g.y === y && x >= g.x && x < g.x + g.dolzina) ||
-     (g.smer === 'down' && g.x === x && y >= g.y && y < g.y + g.dolzina)));
+    aktivniX = x;
+    aktivniY = y;
+    document.getElementById('opisKartica').style.display = "flex";
+    document.querySelectorAll('.cell').forEach(c => c.classList.remove('highlight'));
+    const geslo = gesla_opisi.find(g =>
+      g.smer === trenutnaSmer &&
+      ((g.smer === 'across' && g.y === y && x >= g.x && x < g.x + g.dolzina) ||
+        (g.smer === 'down' && g.x === x && y >= g.y && y < g.y + g.dolzina)));
 
-  const opisPolje = document.getElementById('opisPolje');
-  const slikaDiv = document.getElementById('slikaGesla');
+    const opisPolje = document.getElementById('karticaOpis');
+    const slikaDiv = document.getElementById('karticaSlika');
 
-  if (geslo) {
-    for (let i = 0; i < geslo.dolzina; i++) {
-      const tx = geslo.smer === 'across' ? geslo.x + i : geslo.x;
-      const ty = geslo.smer === 'down' ? geslo.y + i : geslo.y;
-      const inp = document.querySelector(`input[data-x='${tx}'][data-y='${ty}']`);
-      if (inp) inp.parentElement.classList.add('highlight');
+    if (geslo) {
+      for (let i = 0; i < geslo.dolzina; i++) {
+        const tx = geslo.smer === 'across' ? geslo.x + i : geslo.x;
+        const ty = geslo.smer === 'down' ? geslo.y + i : geslo.y;
+        const inp = document.querySelector(`input[data-x='${tx}'][data-y='${ty}']`);
+        if (inp) inp.parentElement.classList.add('highlight');
+      }
+
+      const opis = geslo.opis;
+      const opisZaPrikaz = `${geslo.stevilka}. ${geslo.opis}`;
+      opisPolje.textContent = opisZaPrikaz;
+
+      // Pametno išči sliko (jpg, png, webp)
+      const rezultat = normalizirajNaziv(opis);
+      const koncnice = ['jpg', 'png', 'webp'];
+      function nastaviSliko(indeks) {
+        if (indeks >= koncnice.length) {
+          slikaDiv.src = "";
+          return;
+        }
+        const pot = `/static/Images/${rezultat}.${koncnice[indeks]}`;
+        slikaDiv.src = pot;
+        slikaDiv.onerror = function() { nastaviSliko(indeks + 1); };
+      }
+      nastaviSliko(0);
+    } else {
+      opisPolje.textContent = 'Klikni na polje za prikaz opisa';
+      slikaDiv.src = "";
     }
-
-    const opis = geslo.opis;  // samo opis brez številke
-    const opisZaPrikaz = `${geslo.stevilka}. ${geslo.opis}`;  // to pokažemo uporabniku
-
-    opisPolje.textContent = opisZaPrikaz;
-
-    const rezultat = normalizirajNaziv(opis);
-    const pot = `/static/Images/${rezultat}.jpg`;
-
-    const img = document.createElement('img');
-    img.src = pot;
-    img.alt = opis;
-    img.style.maxWidth = '100%';
-    img.style.maxHeight = '200px';
-    slikaDiv.innerHTML = '';
-    img.onerror = () => { slikaDiv.innerHTML = ''; };
-    slikaDiv.appendChild(img);
-  } else {
-    opisPolje.textContent = 'Klikni na polje za prikaz opisa';
-    slikaDiv.innerHTML = '';
   }
-}
-
 
   function preveriCelotnoGeslo(input) {
     const x = +input.dataset.x;

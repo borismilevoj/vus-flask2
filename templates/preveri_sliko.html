@@ -4,54 +4,21 @@
     <meta charset="UTF-8">
     <title>Preveri sliko iz opisa</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            padding: 30px;
-        }
-
-        textarea {
-            font-size: 16px;
-            padding: 8px;
-            width: 600px;
-        }
-
-        button {
-            font-size: 16px;
-            padding: 8px 16px;
-            margin-left: 10px;
-            background-color: gold;
-            border: none;
-            cursor: pointer;
-        }
-
-        img {
-            margin-top: 20px;
-            border: 1px solid #ccc;
-            max-width: 400px;
-        }
-
-        #napaka-slike {
-            color: red;
-            margin-top: 10px;
-        }
-
-        #kopirano-obvestilo {
-            color: green;
-            font-weight: bold;
-            margin-top: 10px;
-            display: none;
-        }
-
-        #rezultat-podcrtaji {
-            font-size: 16px;
-            width: 100%;
-        }
+        body { font-family: Arial, sans-serif; padding: 30px; }
+        textarea { font-size: 16px; padding: 8px; width: 600px; }
+        input[type="text"] { font-size: 16px; padding: 8px; width: 600px; margin-top: 8px; }
+        button { font-size: 16px; padding: 8px 16px; margin-left: 10px; background-color: gold; border: none; cursor: pointer; }
+        img { margin-top: 20px; border: 1px solid #ccc; max-width: 400px; }
+        #napaka-slike { color: red; margin-top: 10px; }
+        #kopirano-obvestilo { color: green; font-weight: bold; margin-top: 10px; display: none; }
+        #rezultat-podcrtaji { font-size: 16px; width: 100%; }
     </style>
 </head>
 <body>
     <h2>🔍 Preveri sliko glede na opis</h2>
 
-    <textarea id="opis-gesla" placeholder="Vnesi opis gesla..." rows="4" cols="80"></textarea>
+    <textarea id="opis-gesla" placeholder="Vnesi opis gesla..." rows="4" cols="80"></textarea><br>
+    <input type="text" id="resitev" placeholder="Vnesi rešitev (npr. Sagres)">
     <button onclick="pretvoriOpis()">Prikaži sliko</button>
     <button onclick="kopirajIme()">📋 Kopiraj ime slike</button>
 
@@ -66,10 +33,7 @@
     <script>
         function pretvoriOpis() {
             let opis = document.getElementById('opis-gesla').value;
-            console.log("PREVERI: vhodni opis:", opis);
-
-            // za testno preverjanje: dodaj virtualno rešitev
-            const resitev = prompt("Vnesi rešitev (npr. Sagres):", "") || "";
+            let resitev = document.getElementById('resitev').value || '';
             const opisPlusResitev = opis + ' ' + resitev;
 
             const rezultat = opisPlusResitev
@@ -85,27 +49,30 @@
                 .slice(0, 15)
                 .join('_');
 
-            console.log("PREVERI: rezultat imena slike:", rezultat);
-
-            const rezultatInput = document.getElementById('rezultat-podcrtaji');
-            rezultatInput.value = rezultat;
+            document.getElementById('rezultat-podcrtaji').value = rezultat;
 
             const slika = document.getElementById('predogled-slike');
             const napaka = document.getElementById('napaka-slike');
-            const pot = `/static/Images/${rezultat}.jpg`;
-            console.log("PREVERI: pot do slike:", pot);
+            const koncnice = ['jpg', 'png', 'webp'];
 
-            slika.onload = () => {
-                slika.style.display = "block";
-                napaka.style.display = "none";
-            };
+            function preveriNaslednjoKoncnico(indeks) {
+                if (indeks >= koncnice.length) {
+                    slika.style.display = "none";
+                    napaka.style.display = "block";
+                    return;
+                }
+                const pot = `/static/Images/${rezultat}.${koncnice[indeks]}`;
+                slika.onload = () => {
+                    slika.style.display = "block";
+                    napaka.style.display = "none";
+                };
+                slika.onerror = () => {
+                    preveriNaslednjoKoncnico(indeks + 1);
+                };
+                slika.src = pot;
+            }
 
-            slika.onerror = () => {
-                slika.style.display = "none";
-                napaka.style.display = "block";
-            };
-
-            slika.src = pot;
+            preveriNaslednjoKoncnico(0);
         }
 
         function kopirajIme() {
