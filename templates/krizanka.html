@@ -149,6 +149,28 @@ let trenutnaSmer = 'across';
 let aktivniX = null;
 let aktivniY = null;
 
+// Unikaten ključ za localStorage (npr. po url ali datumu)
+const krizankaKey = "krizanka-rezultat-" + location.pathname;
+
+// --- SHRANJEVANJE KRIŽANKE ---
+function shraniKrizanko() {
+    let polja = Array.from(document.querySelectorAll("#grid input"))
+        .map(inp => ({x: inp.dataset.x, y: inp.dataset.y, val: inp.value}));
+    localStorage.setItem(krizankaKey, JSON.stringify(polja));
+}
+// --- OBNOVA KRIŽANKE ---
+function obnoviKrizanko() {
+    const shrani = localStorage.getItem(krizankaKey);
+    if (shrani) {
+        const polja = JSON.parse(shrani);
+        for (const p of polja) {
+            let inp = document.querySelector(`input[data-x='${p.x}'][data-y='${p.y}']`);
+            if (inp) inp.value = p.val;
+        }
+    }
+}
+
+// --- OSTALE FUNKCIJE ---
 function zamenjajSmer() {
   trenutnaSmer = (trenutnaSmer === 'across') ? 'down' : 'across';
   let smerTxt = (trenutnaSmer === 'across' ? 'vodoravno' : 'navpično');
@@ -210,6 +232,7 @@ document.addEventListener('DOMContentLoaded', function () {
         input.addEventListener('input', () => {
           preveriCelotnoGeslo(input);
           if (input.value) premakniNaprej(input);
+          shraniKrizanko();
         });
         input.addEventListener('click', () => {
           prikaziOpis(x, y);
@@ -218,6 +241,9 @@ document.addEventListener('DOMContentLoaded', function () {
       grid.appendChild(cell);
     }
   }
+
+  // -- OBNOVA napredka ob nalaganju --
+  obnoviKrizanko();
 
   function prikaziOpis(x, y) {
     aktivniX = x;
@@ -247,6 +273,7 @@ document.addEventListener('DOMContentLoaded', function () {
       // Pametno išči sliko (jpg, png, webp)
       const rezultat = normalizirajNaziv(opis);
       const koncnice = ['jpg', 'png', 'webp'];
+      let found = false;
       function nastaviSliko(indeks) {
         if (indeks >= koncnice.length) {
           slikaDiv.src = "";
@@ -297,5 +324,6 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 });
 </script>
+
 {% endif %}
 {% endblock %}
