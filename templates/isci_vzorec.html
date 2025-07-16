@@ -105,11 +105,10 @@
 
   <div class="result-container" id="rezultati"></div>
 
-  <div class="navigation-links">
-    <a href="{{ url_for('home') }}" class="btn btn-secondary">Domov</a>
-    <!--<a href="{{ url_for('isci_opis') }}" class="btn btn-secondary">Išči po opisu</a>-->
-    <a href="{{ url_for('prispevaj_geslo') }}" class="btn btn-secondary">Prispevaj geslo</a>
-  </div>
+  <div style="display: flex; justify-content: flex-end; gap: 18px; margin-top: 26px;">
+  <a href="{{ url_for('home') }}" class="btn btn-secondary">Domov</a>
+  <a href="{{ url_for('prispevaj_geslo') }}" class="btn btn-secondary">Prispevaj geslo</a>
+</div>
 </div>
 {% endblock %}
 
