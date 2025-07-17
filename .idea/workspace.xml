@@ -7,10 +7,9 @@
     <list default="true" id="7b096a74-7ed9-4344-af5e-d7be2fa85ca4" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/VUS.db" beforeDir="false" afterPath="$PROJECT_DIR$/VUS.db" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/Sudoku_hard/2025-08-05.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/Sudoku_hard/2025-08-05.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/Sudoku_hard/2025-08-05.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/isci_vzorec.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/isci_vzorec.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Images/ata_oce_ljubk.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/login.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/login.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -73,11 +72,11 @@
       <recent name="C:\Users\bormi\Documents\vus-flask2\stare_skripte" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\bormi\Documents\vus-flask2\static\CrosswordCompilerApp" />
       <recent name="C:\Users\bormi\Documents\vus-flask2\Stare_skripte" />
       <recent name="C:\Users\bormi\Documents\Stare_skripte" />
       <recent name="C:\Users\bormi\Documents\vus-flask2\static\Sudoku_very_easy\static" />
       <recent name="C:\Users\bormi\Documents\vus-flask2\static\Sudoku_very_easy\static\Sudoku_very_easy" />
-      <recent name="C:\Users\bormi\Documents\vus-flask2\static\Sudoku_easy" />
     </key>
   </component>
   <component name="RunManager" selected="Python.test_baze">
