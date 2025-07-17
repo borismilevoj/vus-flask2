@@ -1,14 +1,51 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, session, redirect, url_for, request, render_template, flash, send_from_directory
+from functools import wraps
+import sqlite3
+import os
+import glob
+import unicodedata
+import re
 from krizanka import pridobi_podatke_iz_xml
 from Stare_skripte.uvoz_datotek import premakni_krizanke, premakni_sudoku
 from arhiviranje_util import arhiviraj_danes
-import sqlite3
-import os
-from flask import send_from_directory
-import glob
+import shutil
+from datetime import datetime
 
-import unicodedata
-import re
+# **Samo ENA inicializacija!**
+app = Flask(__name__, static_folder='static', static_url_path='/static')
+app.secret_key = "skrivnost"
+app.config['UPLOAD_FOLDER'] = 'static/uploads'
+app.config['PROPAGATE_EXCEPTIONS'] = True
+
+if not os.path.exists(app.config['UPLOAD_FOLDER']):
+    os.makedirs(app.config['UPLOAD_FOLDER'])
+
+GESLO = "Tifumannam1_vus-flask2.onrender.com"
+
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'prijavljen' not in session:
+            return redirect(url_for('login', next=request.path))
+        return f(*args, **kwargs)
+    return decorated_function
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    napaka = None
+    if request.method == 'POST':
+        if request.form.get('geslo') == GESLO:
+            session['prijavljen'] = True
+            next_url = request.args.get('next') or url_for('home')
+            return redirect(next_url)
+        else:
+            napaka = "Napačno geslo."
+    return render_template('login.html', napaka=napaka)
+
+@app.route('/logout')
+def logout():
+    session.pop('prijavljen', None)
+    return redirect(url_for('login'))
 
 def generiraj_ime_slike(opis, resitev):
     def norm(txt):
@@ -20,9 +57,6 @@ def generiraj_ime_slike(opis, resitev):
         return txt
     return f"{norm(opis)}_{norm(resitev)}"
 
-
-
-
 def odstrani_cc_vrstico_iz_html(mapa):
     for datoteka in glob.glob(os.path.join(mapa, "*.html")):
         with open(datoteka, 'r', encoding='utf-8', errors='ignore') as f:
@@ -33,25 +67,10 @@ def odstrani_cc_vrstico_iz_html(mapa):
                 f.writelines(nove)
             print(f"✂️ Očiščeno: {datoteka}")
 
-
-
-
-
-
-app = Flask(__name__, static_folder='static', static_url_path='/static')
-app.secret_key = "skrivnost"
-app.config['UPLOAD_FOLDER'] = 'static/uploads'
-app.config['PROPAGATE_EXCEPTIONS'] = True
-
-if not os.path.exists(app.config['UPLOAD_FOLDER']):
-    os.makedirs(app.config['UPLOAD_FOLDER'])
-
-# Database connection
 def get_db():
     conn = sqlite3.connect('VUS.db')
     conn.row_factory = sqlite3.Row
     return conn
-
 
 @app.route('/admin/arhiviraj', methods=['POST'])
 def sprozi_arhiviranje():
@@ -67,16 +86,13 @@ def test():
 def ping():
     return "OK iz Flaska!"
 
-import shutil
-
-
 def varnostna_kopija_baze():
     danes = datetime.now().strftime('%Y%m%d_%H%M%S')
     shutil.copy('VUS.db', f'backup/VUS_backup_{danes}.db')
     print("✅ Varnostna kopija shranjena.")
 
-
 @app.route('/admin')
+@login_required
 def admin():
     try:
         conn = sqlite3.connect('VUS.db')
@@ -88,15 +104,11 @@ def admin():
     except Exception as e:
         return f"<h1>Napaka v admin: {e}</h1>"
 
-
-
+@app.route('/')
 @app.route('/home')
+@login_required
 def home():
     return render_template('home.html')
-
-@app.route('/')
-def redirect_to_home():
-    return redirect(url_for('home'))
 
 
 @app.route('/preveri', methods=['POST'])
