@@ -1,6 +1,6 @@
 import sqlite3
 
-conn = sqlite3.connect('VUS.db')
+conn = sqlite3.connect('Stare_skripte/VUS.db')
 cur = conn.cursor()
 
 cur.execute('''

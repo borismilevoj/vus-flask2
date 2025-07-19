@@ -1,7 +1,7 @@
 import sqlite3
 
 def razveljavi_podcrtaj_opise():
-    conn = sqlite3.connect('../VUS.db')
+    conn = sqlite3.connect('VUS.db')
     cur = conn.cursor()
 
     cur.execute("SELECT ID, OPIS FROM slovar")

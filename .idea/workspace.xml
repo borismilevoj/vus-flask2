@@ -5,11 +5,20 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="7b096a74-7ed9-4344-af5e-d7be2fa85ca4" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/Stare_skripte/VUS-backup.db" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/sortiraj_opise.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/VUS.db" beforeDir="false" afterPath="$PROJECT_DIR$/VUS.db" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Stare_skripte/razveljavi_podcrtaj_opise.py" beforeDir="false" afterPath="$PROJECT_DIR$/Stare_skripte/razveljavi_podcrtaj_opise.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Stare_skripte/zapolni_presledke_v_opisih.py" beforeDir="false" afterPath="$PROJECT_DIR$/Stare_skripte/zapolni_presledke_v_opisih.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/VUS.db" beforeDir="false" afterPath="$PROJECT_DIR$/Stare_skripte/VUS.db" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/Images/ata_oce_ljubk.jpg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/login.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/login.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/init_db.py" beforeDir="false" afterPath="$PROJECT_DIR$/init_db.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Images/(v grški mitologiji) sin Zevsa in Evrope, mogočen kretski kralj, po smrti sodnik v podzemlju.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Images/(v zen budizmu) paradoksalno besedilo in besedilo velike jezikovne zgoščenosti.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Images/3175553e2f192f6384dc_63115026.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Images/63_cesar_japonske_in_del_dinastije_yamato_867931.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Images/NEKEGA LEPEGA JUTRA.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Images/a5544311-8f3a-5f6b-a6b7-202f8e398795.jpg" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -49,31 +58,31 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;DefaultHtmlFileTemplate&quot;: &quot;HTML File&quot;,
-    &quot;Python.init_db.executor&quot;: &quot;Run&quot;,
-    &quot;Python.popravi_gesla.executor&quot;: &quot;Run&quot;,
-    &quot;Python.test_baze.executor&quot;: &quot;Run&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
-    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/bormi/Documents/vus-flask2/static&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "DefaultHtmlFileTemplate": "HTML File",
+    "Python.init_db.executor": "Run",
+    "Python.popravi_gesla.executor": "Run",
+    "Python.test_baze.executor": "Run",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "main",
+    "ignore.virus.scanning.warn.message": "true",
+    "last_opened_file_path": "C:/Users/bormi/Documents/vus-flask2/Stare_skripte",
+    "settings.editor.selected.configurable": "preferences.pluginManager"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
-      <recent name="C:\Users\bormi\Documents\vus-flask2\static" />
+      <recent name="C:\Users\bormi\Documents\vus-flask2\Stare_skripte" />
       <recent name="C:\Users\bormi\Documents\vus-flask2" />
+      <recent name="C:\Users\bormi\Documents\vus-flask2\static" />
       <recent name="C:\Users\bormi\Documents\vus-flask2\templates" />
       <recent name="C:\Users\bormi\Documents\vus-flask2\static\Krizanke" />
-      <recent name="C:\Users\bormi\Documents\vus-flask2\stare_skripte" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
-      <recent name="C:\Users\bormi\Documents\vus-flask2\static\CrosswordCompilerApp" />
       <recent name="C:\Users\bormi\Documents\vus-flask2\Stare_skripte" />
+      <recent name="C:\Users\bormi\Documents\vus-flask2\static\CrosswordCompilerApp" />
       <recent name="C:\Users\bormi\Documents\Stare_skripte" />
       <recent name="C:\Users\bormi\Documents\vus-flask2\static\Sudoku_very_easy\static" />
       <recent name="C:\Users\bormi\Documents\vus-flask2\static\Sudoku_very_easy\static\Sudoku_very_easy" />
