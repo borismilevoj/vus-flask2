@@ -1,7 +1,7 @@
 import sqlite3
 
 def zapolni_presledke_v_opisih():
-    conn = sqlite3.connect('../VUS.db')
+    conn = sqlite3.connect('VUS.db')
     cur = conn.cursor()
 
     # Preberi vse opise

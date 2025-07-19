@@ -68,7 +68,7 @@ def odstrani_cc_vrstico_iz_html(mapa):
             print(f"✂️ Očiščeno: {datoteka}")
 
 def get_db():
-    conn = sqlite3.connect('VUS.db')
+    conn = sqlite3.connect('Stare_skripte/VUS.db')
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -88,14 +88,14 @@ def ping():
 
 def varnostna_kopija_baze():
     danes = datetime.now().strftime('%Y%m%d_%H%M%S')
-    shutil.copy('VUS.db', f'backup/VUS_backup_{danes}.db')
+    shutil.copy('Stare_skripte/VUS.db', f'backup/VUS_backup_{danes}.db')
     print("✅ Varnostna kopija shranjena.")
 
 @app.route('/admin')
 @login_required
 def admin():
     try:
-        conn = sqlite3.connect('VUS.db')
+        conn = sqlite3.connect('Stare_skripte/VUS.db')
         cur = conn.cursor()
         cur.execute("SELECT COUNT(*) FROM slovar")
         stevilo = cur.fetchone()[0]
@@ -241,7 +241,7 @@ def prispevaj_geslo():
 
 @app.route('/stevec_gesel')
 def stevec_gesel():
-    conn = sqlite3.connect('VUS.db')
+    conn = sqlite3.connect('Stare_skripte/VUS.db')
     cur = conn.cursor()
     cur.execute("SELECT COUNT(*) FROM slovar")
     steviloGesel = cur.fetchone()[0]
