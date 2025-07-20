@@ -68,7 +68,7 @@ def odstrani_cc_vrstico_iz_html(mapa):
             print(f"✂️ Očiščeno: {datoteka}")
 
 def get_db():
-    conn = sqlite3.connect('Stare_skripte/VUS.db')
+    conn = sqlite3.connect(r'C:\Users\bormi\Documents\vus-flask2\VUS.db')
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -94,8 +94,10 @@ def varnostna_kopija_baze():
 @app.route('/admin')
 @login_required
 def admin():
+    import os
+    print("UPORABLJAM BAZO:", os.path.abspath('VUS.db'))
     try:
-        conn = sqlite3.connect('Stare_skripte/VUS.db')
+        conn = sqlite3.connect('VUS.db')
         cur = conn.cursor()
         cur.execute("SELECT COUNT(*) FROM slovar")
         stevilo = cur.fetchone()[0]
@@ -104,6 +106,8 @@ def admin():
     except Exception as e:
         return f"<h1>Napaka v admin: {e}</h1>"
 
+
+import os
 @app.route('/')
 @app.route('/home')
 @login_required
