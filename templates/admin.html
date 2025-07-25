@@ -130,7 +130,7 @@ dodajForm.addEventListener('submit', function(e) {
       fetch('/stevec_gesel')
         .then(resp => resp.json())
         .then(data => {
-          document.getElementById('stevec-gesel').textContent = data.steviloGesel;
+          document.getElementById('stevec-gesel').textContent = data.stevilo_gesel;
         });
     });
 });
@@ -210,7 +210,7 @@ function izbrisiGeslo(id) {
       fetch('/stevec_gesel')
         .then(resp => resp.json())
         .then(data => {
-          document.getElementById('stevec-gesel').textContent = data.steviloGesel;
+          document.getElementById('stevec-gesel').textContent = data.stevilo_gesel;
         });
     });
 }
@@ -223,5 +223,6 @@ function kopirajRezultat() {
     .then(() => alert("Besedilo skopirano."))
     .catch(err => alert("Napaka pri kopiranju."));
 }
+
 </script>
 {% endblock %}
