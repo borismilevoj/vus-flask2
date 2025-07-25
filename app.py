@@ -245,12 +245,13 @@ def prispevaj_geslo():
 
 @app.route('/stevec_gesel')
 def stevec_gesel():
-    conn = sqlite3.connect('Stare_skripte/VUS.db')
+    conn = get_db()
     cur = conn.cursor()
     cur.execute("SELECT COUNT(*) FROM slovar")
-    steviloGesel = cur.fetchone()[0]
+    st = cur.fetchone()[0]
     conn.close()
-    return jsonify({"steviloGesel": steviloGesel})
+    return jsonify({"stevilo_gesel": st})
+
 
 # Ta route mora biti ZUNAJ vseh funkcij!
 @app.route('/krizanka/static/<path:filename>')
