@@ -90,139 +90,147 @@
 <script>
 function pretvoriOpis() {
     const opis = document.getElementById('opis-podcrtaji').value;
-  const rezultat = opis
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .replace(/[–—−]/g, '-')
-    .replace(/[^a-z0-9\s]/g, '')
-    .replace(/-/g, ' ')
-    .replace(/\s+/g, '_')
-    .substring(0, 64);
-  const izpis = document.getElementById('rezultat-podcrtaji');
-  while (izpis.firstChild) izpis.removeChild(izpis.firstChild);
-  izpis.textContent = rezultat;
-
-
-  }
-
-function zamenjajMaleVelike() {
-  const polje = document.getElementById('geslo-oblikuj');
-  const val = polje.value;
-  const rezultat = [...val].map(c => c === c.toUpperCase() ? c.toLowerCase() : c.toUpperCase()).join('');
-  polje.value = rezultat;
-  document.getElementById('rezultat-oblikuj').textContent = rezultat;
+    const rezultat = opis
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[–—−]/g, '-')
+      .replace(/[^a-z0-9\s]/g, '')
+      .replace(/-/g, ' ')
+      .replace(/\s+/g, '_')
+      .substring(0, 64);
+    const izpis = document.getElementById('rezultat-podcrtaji');
+    while (izpis.firstChild) izpis.removeChild(izpis.firstChild);
+    izpis.textContent = rezultat;
 }
 
+function zamenjajMaleVelike() {
+    const polje = document.getElementById('geslo-oblikuj');
+    const val = polje.value;
+    const rezultat = [...val].map(c => c === c.toUpperCase() ? c.toLowerCase() : c.toUpperCase()).join('');
+    polje.value = rezultat;
+    document.getElementById('rezultat-oblikuj').textContent = rezultat;
+}
+
+function kopirajRezultat() {
+    const polje = document.getElementById('rezultat-podcrtaji');
+    polje.select();
+    polje.setSelectionRange(0, 99999);
+    navigator.clipboard.writeText(polje.value)
+      .then(() => alert("Besedilo skopirano."))
+      .catch(err => alert("Napaka pri kopiranju."));
+}
+
+// === ŠTEVEC GESEL ===
+function osveziStevecGesel() {
+    fetch('/stevec_gesel')
+      .then(resp => resp.json())
+      .then(data => {
+        document.getElementById('stevec-gesel').textContent = data.stevilo_gesel;
+      })
+      .catch(() => {
+        document.getElementById('stevec-gesel').textContent = 'napaka';
+      });
+}
+// Zaženi ob nalaganju strani
+window.addEventListener('DOMContentLoaded', osveziStevecGesel);
+
+// === DODAJANJE GESEL ===
 const dodajForm = document.getElementById('dodaj-form');
 dodajForm.addEventListener('submit', function(e) {
-  e.preventDefault();
-  const geslo = document.getElementById('geslo').value;
-  const opis = document.getElementById('opis').value;
-  fetch('/dodaj_geslo', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ geslo, opis })
-  })
-    .then(resp => resp.json())
-    .then(data => {
-      alert(data.sporocilo);
-      dodajForm.reset();
-      fetch('/stevec_gesel')
-        .then(resp => resp.json())
-        .then(data => {
-          document.getElementById('stevec-gesel').textContent = data.stevilo_gesel;
-        });
-    });
-});
-
-const zamenjajForm = document.getElementById('zamenjaj-form');
-zamenjajForm.addEventListener('submit', function(e) {
-  e.preventDefault();
-  const original = document.getElementById('original').value;
-  const zamenjava = document.getElementById('zamenjava').value;
-  fetch('/zamenjaj', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ original, zamenjava })
-  })
-    .then(resp => resp.json())
-    .then(data => {
-      alert(`Zamenjanih: ${data.spremembe}`);
-      zamenjajForm.reset();
-    });
-});
-
-const preveriForm = document.getElementById('preveri-form');
-preveriForm.addEventListener('submit', function(e) {
-  e.preventDefault();
-  const vnos = document.getElementById('preveri-vnos').value;
-  fetch('/preveri', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ geslo: vnos })
-  })
-    .then(resp => resp.json())
-    .then(data => {
-      const rezultat = document.getElementById('preveri-rezultat');
-      rezultat.innerHTML = '';
-      if (data.obstaja) {
-        rezultat.innerHTML = data.gesla.map(g => `
-  <div class="text-dark">
-    ✅ <strong>${g.geslo}</strong> – ${g.opis}
-    <button class="btn btn-sm btn-outline-secondary ms-2" onclick="urediGeslo(${g.id}, '${g.opis.replace(/'/g, "\'")}')">Uredi</button>
-    <button class="btn btn-sm btn-danger ms-1" onclick="izbrisiGeslo(${g.id})">Briši</button>
-  </div>`).join('');
-        rezultat.style.color = 'black';
-      } else {
-        rezultat.textContent = "❌ Gesla ni v bazi.";
-        rezultat.style.color = 'red';
-      }
-    });
-});
-
-function urediGeslo(id, opis) {
-  const novo = prompt("Popravi opis:", opis);
-  if (novo !== null) {
-    fetch('/uredi_geslo', {
+    e.preventDefault();
+    const geslo = document.getElementById('geslo').value;
+    const opis = document.getElementById('opis').value;
+    fetch('/dodaj_geslo', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, opis: novo })
+      body: JSON.stringify({ geslo, opis })
+    })
+      .then(resp => resp.json())
+      .then(data => {
+        alert(data.sporocilo);
+        dodajForm.reset();
+        osveziStevecGesel(); // <- osveži števec takoj po dodajanju
+      });
+});
+
+// === ZAMENJAVA IZRAZA ===
+const zamenjajForm = document.getElementById('zamenjaj-form');
+zamenjajForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const original = document.getElementById('original').value;
+    const zamenjava = document.getElementById('zamenjava').value;
+    fetch('/zamenjaj', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ original, zamenjava })
+    })
+      .then(resp => resp.json())
+      .then(data => {
+        alert(`Zamenjanih: ${data.spremembe}`);
+        zamenjajForm.reset();
+      });
+});
+
+// === PREVERJANJE GESEL ===
+const preveriForm = document.getElementById('preveri-form');
+preveriForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const vnos = document.getElementById('preveri-vnos').value;
+    fetch('/preveri', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ geslo: vnos })
+    })
+      .then(resp => resp.json())
+      .then(data => {
+        const rezultat = document.getElementById('preveri-rezultat');
+        rezultat.innerHTML = '';
+        if (data.obstaja) {
+          rezultat.innerHTML = data.gesla.map(g => `
+            <div class="text-dark">
+              ✅ <strong>${g.geslo}</strong> – ${g.opis}
+              <button class="btn btn-sm btn-outline-secondary ms-2" onclick="urediGeslo(${g.id}, '${g.opis.replace(/'/g, "\\'")}')">Uredi</button>
+              <button class="btn btn-sm btn-danger ms-1" onclick="izbrisiGeslo(${g.id})">Briši</button>
+            </div>`).join('');
+          rezultat.style.color = 'black';
+        } else {
+          rezultat.textContent = "❌ Gesla ni v bazi.";
+          rezultat.style.color = 'red';
+        }
+      });
+});
+
+// === UREJANJE IN BRISANJE GESEL ===
+function urediGeslo(id, opis) {
+    const novo = prompt("Popravi opis:", opis);
+    if (novo !== null) {
+      fetch('/uredi_geslo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, opis: novo })
+      })
+        .then(resp => resp.json())
+        .then(data => {
+          alert(data.sporocilo);
+          document.getElementById('preveri-form').dispatchEvent(new Event('submit'));
+        });
+    }
+}
+
+function izbrisiGeslo(id) {
+    if (!confirm("Res želiš izbrisati geslo?")) return;
+    fetch('/brisi_geslo', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id })
     })
       .then(resp => resp.json())
       .then(data => {
         alert(data.sporocilo);
         document.getElementById('preveri-form').dispatchEvent(new Event('submit'));
+        osveziStevecGesel(); // <- osveži števec po brisanju!
       });
-  }
 }
-
-function izbrisiGeslo(id) {
-  if (!confirm("Res želiš izbrisati geslo?")) return;
-  fetch('/brisi_geslo', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id })
-  })
-    .then(resp => resp.json())
-    .then(data => {
-      alert(data.sporocilo);
-      document.getElementById('preveri-form').dispatchEvent(new Event('submit'));
-      fetch('/stevec_gesel')
-        .then(resp => resp.json())
-        .then(data => {
-          document.getElementById('stevec-gesel').textContent = data.stevilo_gesel;
-        });
-    });
-}
-
-function kopirajRezultat() {
-  const polje = document.getElementById('rezultat-podcrtaji');
-  polje.select();
-  polje.setSelectionRange(0, 99999);
-  navigator.clipboard.writeText(polje.value)
-    .then(() => alert("Besedilo skopirano."))
-    .catch(err => alert("Napaka pri kopiranju."));
-}
-
 </script>
 {% endblock %}
+
