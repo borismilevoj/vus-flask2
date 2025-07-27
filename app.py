@@ -20,7 +20,7 @@ app.config['PROPAGATE_EXCEPTIONS'] = True
 if not os.path.exists(app.config['UPLOAD_FOLDER']):
     os.makedirs(app.config['UPLOAD_FOLDER'])
 
-GESLO = "Tifumannam1_vus-flask2.onrender.com"
+GESLO = "skrivnost"
 
 def login_required(f):
     @wraps(f)
@@ -113,7 +113,6 @@ def admin():
 import os
 @app.route('/')
 @app.route('/home')
-@login_required
 def home():
     return render_template('home.html')
 
@@ -141,10 +140,6 @@ def preveri():
         'obstaja': len(rezultati) > 0,
         'gesla': [{'id': r['ID'], 'geslo': r['geslo'], 'opis': r['opis']} for r in rezultati]
     })
-
-
-
-
 
 
 @app.route('/dodaj_geslo', methods=['POST'])
