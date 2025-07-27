@@ -3,83 +3,98 @@
 {% block title %}Križanka | VUS{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <h3 class="mb-0">🖌 Navodila za reševanje križanke</h3>
-  <a class="btn btn-secondary" href="/krizanka/arhiv">📂 Arhiv križank</a>
+<!-- POPOLN PREDLOG: glava, navodila, arhiv, smer vnosa, gumbi, kartica, mobile support -->
+
+<div class="d-flex flex-column align-items-center mb-2 mt-1" style="gap:5px;">
+  <!-- Navodila za reševanje križanke -->
+  <div class="navodila-križanka mb-2 mt-1" style="background-color:#f8f9fa; border:1px solid #ddd; padding:12px 17px 12px 17px; border-radius:8px; max-width:480px; width:100%; text-align:left;">
+    <h4 class="mb-2">🖌 Navodila za reševanje križanke</h4>
+    <ul style="line-height:1.6;margin-bottom:0;">
+      <li><strong>En klik</strong> na polje označi aktivno geslo (modri okvir).</li>
+      <li><strong>Gumb 🔁</strong> spodaj desno zamenja smer vnosa (vodoravno ↔ navpično).</li>
+      <li><strong>Gumb 🖼️</strong> zgoraj levo pokaže/skrije opis in sliko za geslo.</li>
+      <li>Gesla so iz slovarja VUS.</li>
+    </ul>
+  </div>
+  <!-- Gumb Arhiv križank -->
+  <a class="btn btn-secondary px-4 py-2 fw-bold mt-1 mb-2" href="/krizanka/arhiv" style="z-index:30;max-width:310px;">📂 Arhiv križank</a>
+  <!-- Smer vnosa -->
+  <span id="statusSmer" style="font-size:1.23em;font-weight:700;color:#1a73e8;text-shadow:1px 1px 4px #fff;z-index:25;">Smer vnosa: vodoravno</span>
 </div>
 
-<div class="navodila-križanka" style="background-color:#f8f9fa; border:1px solid #ddd; padding:15px; border-radius:8px; margin-bottom:20px;">
-  <ul style="line-height:1.6;">
-    <li><strong>En klik</strong> na polje označi aktivno geslo (modri okvir).</li>
-    <li><strong>Gumb 🔁</strong> spodaj desno zamenja smer vnosa (vodoravno ↔ navpično).</li>
-    <li><strong>Gumb 🖼️</strong> zgoraj levo pokaže/skrije opis in sliko za geslo.</li>
-    <li>Gesla so iz slovarja VUS.</li>
-  </ul>
-</div>
-
-{% if podatki %}
-<div id="grid" style="display: grid; gap: 2px;"></div>
-
-<!-- Gumb za prikaz/skritje opisne kartice -->
+<!-- Gumb za prikaz/skritje opisne kartice (zgoraj levo) -->
 <button id="gumbKartica" onclick="preklopiKartico()" style="position:fixed;top:25px;left:25px;z-index:1200;font-size:1.5em;">🖼️ Opis/slika</button>
 
-<!-- Plavajoči opis/slika (kartica) -->
-<div id="opisKartica" class="floating-opis" style="display:none;">
+<!-- PLAVAJOČA KARTICA, celoten okvir draggable (ne le ročaj): -->
+<div id="opisKartica" class="floating-opis" style="display:none; top: 85px; left: 50%; transform: translateX(-50%); cursor: grab;">
     <button class="close-btn" onclick="preklopiKartico()" style="position:absolute;top:7px;right:13px;">×</button>
     <img id="karticaSlika" src="" alt="" />
     <div id="karticaOpis" class="opis-besedilo"></div>
 </div>
 
-<!-- Status smeri (opcijsko) -->
-<div id="statusSmer" style="position:fixed;top:22px;right:30px;font-weight:600;font-size:1.12em;z-index:1050;color:#007bff;">
-  Smer vnosa: vodoravno
-</div>
+<script>
+(function() {
+    let kartica = document.getElementById('opisKartica');
+    let dragging = false;
+    let offsetX = 0, offsetY = 0;
+    // Desktop
+    kartica.addEventListener('mousedown', function(e) {
+        // ignoriraj klik na close (×)
+        if (e.target.classList.contains('close-btn')) return;
+        dragging = true;
+        offsetX = e.clientX - kartica.offsetLeft;
+        offsetY = e.clientY - kartica.offsetTop;
+        kartica.style.transition = 'none';
+    });
+    document.addEventListener('mousemove', function(e) {
+        if (dragging) {
+            kartica.style.left = (e.clientX - offsetX) + 'px';
+            kartica.style.top = (e.clientY - offsetY) + 'px';
+        }
+    });
+    document.addEventListener('mouseup', function() {
+        dragging = false;
+        kartica.style.transition = '';
+    });
+    // Mobilniki (touch)
+    kartica.addEventListener('touchstart', function(e) {
+        if (e.target.classList.contains('close-btn')) return;
+        dragging = true;
+        offsetX = e.touches[0].clientX - kartica.offsetLeft;
+        offsetY = e.touches[0].clientY - kartica.offsetTop;
+        kartica.style.transition = 'none';
+    });
+    document.addEventListener('touchmove', function(e) {
+        if (dragging && e.touches && e.touches[0]) {
+            kartica.style.left = (e.touches[0].clientX - offsetX) + 'px';
+            kartica.style.top = (e.touches[0].clientY - offsetY) + 'px';
+        }
+    });
+    document.addEventListener('touchend', function() {
+        dragging = false;
+        kartica.style.transition = '';
+    });
+})();
+</script>
 
-<!-- Lebdeči gumb za zamenjavo smeri -->
+
+
+<!-- Lebdeči gumb za zamenjavo smeri (spodaj desno) -->
 <button onclick="zamenjajSmer()" class="floating-smer-btn">🔁</button>
 
-<!-- Počisti gumb spodaj -->
-<div class="mt-3">
-  <button onclick="if (confirm('Ali res želiš počistiti vnos?')) location.reload();" class="btn btn-warning">🔄 Počisti križanko</button>
-</div>
-{% endif %}
-{% endblock %}
-
-{% block scripts %}
+<!-- ...tukaj tvoja mreža/križanka... -->
 {% if podatki %}
+  <div id="grid" style="display: grid; gap: 2px;"></div>
+{% endif %}
+<!-- CSS (kot prej, lahko prekopiraš): -->
 <style>
-.cell {
-  width: 40px;
-  height: 40px;
-  border: 1px solid #ccc;
-  position: relative;
-}
-.cell input {
-  width: 100%;
-  height: 100%;
-  text-transform: uppercase;
-  text-align: center;
-  border: none;
-  outline: none;
-  font-size: 20px;
-}
-.cell.black { background-color: #333; }
-.cell-number {
-  position: absolute;
-  top: 2px; left: 4px;
-  font-size: 0.65em; color: #555;
-}
-.cell.highlight { outline: 2px solid #007bff; outline-offset: -1px; }
-.correct { background-color: #d4edda; }
-.incorrect { background-color: #f8d7da; }
-
-/* ======== PLAVAJOCI OKVIR (KARTICA) ========= */
 .floating-opis {
   position: fixed;
-  top: 80px;
-  right: 20px;
-  max-width: 310px;
-  min-width: 150px;
+  top: 85px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 325px;
+  min-width: 160px;
   background: #fff;
   border-radius: 14px;
   border: 1px solid #ccc;
@@ -108,7 +123,6 @@
 .floating-opis .opis-besedilo {
   margin-top: 5px; font-size: 1.03em; text-align: center; font-weight: 600; color: #222;
 }
-/* RESPONSIVE – NA OZKEM EKRANU NAJ GRE KARTICA SPODAJ MREŽE */
 @media (max-width: 800px) {
   .floating-opis {
     position: static !important;
@@ -324,6 +338,4 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 });
 </script>
-
-{% endif %}
 {% endblock %}
