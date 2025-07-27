@@ -118,23 +118,33 @@ def home():
     return render_template('home.html')
 
 
+import re
+
 @app.route('/preveri', methods=['POST'])
 def preveri():
     geslo = request.json['geslo']
-    # normalizacija: odstrani presledke, pomišljaje, podčrtaje
-    iskalno = geslo.replace(' ', '').replace('-', '').replace('_', '').upper()
+    iskalno = re.sub(r'[^A-Z0-9]', '', geslo.upper())
 
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute("""
-        SELECT ID, geslo, opis FROM slovar
-        WHERE UPPER(REPLACE(REPLACE(REPLACE(geslo, ' ', ''), '-', ''), '_', '')) = ?
-    """, (iskalno,))
-    rezultati = cursor.fetchall()
+    # Pobereš kandidate, ki se ujemajo po velikih črkah (veliko manj kot cela baza!)
+    cursor.execute('''
+        SELECT ID, geslo, opis FROM slovar WHERE UPPER(geslo) LIKE ?
+    ''', (f"%{geslo.strip().upper()}%",))
+    kandidati = cursor.fetchall()
+
+    def norm(s):
+        return re.sub(r'[^A-Z0-9]', '', s.upper())
+
+    rezultati = [r for r in kandidati if norm(r['geslo']) == iskalno]
     return jsonify({
         'obstaja': len(rezultati) > 0,
         'gesla': [{'id': r['ID'], 'geslo': r['geslo'], 'opis': r['opis']} for r in rezultati]
     })
+
+
+
+
 
 
 @app.route('/dodaj_geslo', methods=['POST'])

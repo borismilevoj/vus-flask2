@@ -5,9 +5,9 @@
 {% block content %}
 <div class="container mt-4">
   <div class="d-flex justify-content-between align-items-center mb-3">
-    <h2>Administracija VUS</h2>
-    <span class="text-primary fw-bold">Gesel v bazi: <span id="stevec-gesel">{{ stevilo_gesel }}</span></span>
-  </div>
+  <h2>Administracija VUS</h2>
+  <span class="text-primary fw-bold">Gesel v bazi: <span id="stevec-gesel"></span></span>
+</div>
 
   <div class="row mb-4">
     <div class="col-md-6">
@@ -231,6 +231,20 @@ function izbrisiGeslo(id) {
         osveziStevecGesel(); // <- osveži števec po brisanju!
       });
 }
+  function osveziStevecGesel() {
+  fetch('/stevec_gesel')
+    .then(resp => resp.json())
+    .then(data => {
+      // console.log('stevilo_gesel:', data.stevilo_gesel); // Za debug!
+      document.getElementById('stevec-gesel').textContent = data.stevilo_gesel;
+    })
+    .catch(() => {
+      document.getElementById('stevec-gesel').textContent = 'napaka';
+    });
+}
+
+window.addEventListener('DOMContentLoaded', osveziStevecGesel);
+
 </script>
 {% endblock %}
 
