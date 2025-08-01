@@ -13,14 +13,14 @@ from datetime import datetime
 
 # **Samo ENA inicializacija!**
 app = Flask(__name__, static_folder='static', static_url_path='/static')
-app.secret_key = "skrivnost"
+app.secret_key = "Tifumannam1_vus-flask2.onrender.com"
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['PROPAGATE_EXCEPTIONS'] = True
 
 if not os.path.exists(app.config['UPLOAD_FOLDER']):
     os.makedirs(app.config['UPLOAD_FOLDER'])
 
-GESLO = "skrivnost"
+GESLO = "Tifumannam1_vus-flask2.onrender.com"
 
 def login_required(f):
     @wraps(f)
