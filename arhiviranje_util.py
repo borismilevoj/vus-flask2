@@ -41,12 +41,21 @@ def premakni_sudoku_v_mesece(mesec=None):
         if not os.path.exists(arhiv):
             os.makedirs(arhiv)
         for ime in os.listdir(mapa):
-            if ime.endswith(".js") and ime.startswith(mesec_map):
+            if ime.endswith(".js") and mesec_map in ime:
                 polna_pot = os.path.join(mapa, ime)
                 nova_pot = os.path.join(arhiv, ime)
+                print(f"Premikam: {polna_pot} → {nova_pot}")
                 shutil.move(polna_pot, nova_pot)
                 premaknjeni.append(os.path.join(f"Sudoku_{tezavnost}", ime))
     return premaknjeni
 
 def arhiviraj_danes():
     return premakni_krizanke_v_mesece() + premakni_sudoku_v_mesece()
+if __name__ == '__main__':
+    premaknjeni = arhiviraj_danes()
+    if premaknjeni:
+        print("Premaknjeni v arhiv:")
+        for f in premaknjeni:
+            print(f"  {f}")
+    else:
+        print("Ni datotek za premik (za danes/mesec ni novih datotek).")
