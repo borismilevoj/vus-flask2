@@ -109,12 +109,18 @@ def admin():
     except Exception as e:
         return f"<h1>Napaka v admin: {e}</h1>"
 
-
 import os
+
 @app.route('/')
 @app.route('/home')
 def home():
-    return render_template('home.html')
+    obvestilo = ""
+    try:
+        with open('obvestilo.txt', encoding="utf-8") as f:
+            obvestilo = f.read().strip()
+    except FileNotFoundError:
+        pass
+    return render_template('home.html', obvestilo=obvestilo)
 
 
 import re

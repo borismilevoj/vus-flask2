@@ -1,5 +1,11 @@
 {% extends "base.html" %}
 {% block title %}VUS – Veliki ugankarski slovar{% endblock %}
+{% if obvestilo %}
+<div style="background: #ffd966; color: #800000; padding: 10px; margin-bottom: 15px; border-radius: 8px; font-weight: bold;">
+    ⚠️ {{ obvestilo }}
+</div>
+{% endif %}
+
 
 {% block content %}
 <style>

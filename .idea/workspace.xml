@@ -4,7 +4,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="7b096a74-7ed9-4344-af5e-d7be2fa85ca4" name="Changes" comment="" />
+    <list default="true" id="7b096a74-7ed9-4344-af5e-d7be2fa85ca4" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/VUS.db" beforeDir="false" afterPath="$PROJECT_DIR$/VUS.db" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/home.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/home.html" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -68,9 +73,9 @@
     <key name="MoveFile.RECENT_KEYS">
       <recent name="C:\Users\bormi\Documents\vus-flask2\static\Sudoku_very_easy" />
       <recent name="C:\Users\bormi\Documents\vus-flask2\static\Sudoku_medium" />
-      <recent name="C:\Users\bormi\Documents\vus-flask2\static\Sudoku_medium\2025-07" />
       <recent name="C:\Users\bormi\Documents\vus-flask2\static\Sudoku_hard" />
       <recent name="C:\Users\bormi\Documents\vus-flask2\static\Sudoku_easy" />
+      <recent name="C:\Users\bormi\Documents\vus-flask2\static\Sudoku_medium\2025-07" />
     </key>
   </component>
   <component name="RunManager" selected="Python.test_baze">
@@ -187,7 +192,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/app.py</url>
-          <line>401</line>
+          <line>407</line>
           <option name="timeStamp" value="2" />
         </line-breakpoint>
       </breakpoints>
