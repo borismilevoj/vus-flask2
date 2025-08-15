@@ -1,28 +1,37 @@
-from flask import Flask, jsonify, session, redirect, url_for, request, render_template, flash, send_from_directory, render_template_string, send_file
+from flask import (
+    Flask, jsonify, session, redirect, url_for, request, render_template,
+    flash, send_from_directory, render_template_string, send_file
+)
 from functools import wraps
 import sqlite3
 import os
 import glob
 import unicodedata
 import re
+import shutil
+import zipfile
+import io
+from datetime import datetime
+
 from krizanka import pridobi_podatke_iz_xml
 from Stare_skripte.uvoz_datotek import premakni_krizanke, premakni_sudoku
 from arhiviranje_util import arhiviraj_danes
-import shutil
-from datetime import datetime
-import zipfile
-import io
 
-# **Samo ENA inicializacija!**
+# ==== Inicializacija ==========================================================
 app = Flask(__name__, static_folder='static', static_url_path='/static')
 app.secret_key = "Tifumannam1_vus-flask2.onrender.com"
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['PROPAGATE_EXCEPTIONS'] = True
 
-if not os.path.exists(app.config['UPLOAD_FOLDER']):
-    os.makedirs(app.config['UPLOAD_FOLDER'])
+# Varneje poskrbi za uploads: če obstaja datoteka z imenom 'static/uploads', jo izbriši in ustvari mapo
+if not os.path.isdir(app.config['UPLOAD_FOLDER']):
+    if os.path.exists(app.config['UPLOAD_FOLDER']):  # obstaja kot datoteka
+        os.remove(app.config['UPLOAD_FOLDER'])
+    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 GESLO = "Tifumannam1_vus-flask2.onrender.com"
+
+# ==== Pomožne funkcije ========================================================
 
 def login_required(f):
     @wraps(f)
@@ -31,23 +40,6 @@ def login_required(f):
             return redirect(url_for('login', next=request.path))
         return f(*args, **kwargs)
     return decorated_function
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    napaka = None
-    if request.method == 'POST':
-        if request.form.get('geslo') == GESLO:
-            session['prijavljen'] = True
-            next_url = request.args.get('next') or url_for('home')
-            return redirect(next_url)
-        else:
-            napaka = "Napačno geslo."
-    return render_template('login.html', napaka=napaka)
-
-@app.route('/logout')
-def logout():
-    session.pop('prijavljen', None)
-    return redirect(url_for('login'))
 
 def generiraj_ime_slike(opis, resitev):
     def norm(txt):
@@ -76,24 +68,68 @@ def get_db():
     conn.row_factory = sqlite3.Row
     return conn
 
-@app.route('/admin/arhiviraj', methods=['POST'])
-def sprozi_arhiviranje():
-    premaknjeni = arhiviraj_danes()
-    flash(f"Premaknjenih {len(premaknjeni)} datotek.", "success")
-    return redirect(url_for('admin'))
+def varnostna_kopija_baze():
+    danes = datetime.now().strftime('%Y%m%d_%H%M%S')
+    os.makedirs('backup', exist_ok=True)
+    shutil.copy('Stare_skripte/VUS.db', f'backup/VUS_backup_{danes}.db')
+    print("✅ Varnostna kopija shranjena.")
 
-@app.route("/test")
-def test():
-    return render_template("test.html")
+# ==== Diagnostika ==============================================================
+
+@app.route("/_routes")
+def show_routes():
+    lines = []
+    for rule in sorted(app.url_map.iter_rules(), key=lambda r: r.rule):
+        lines.append(f"{sorted(rule.methods)} {rule.rule}  ->  endpoint='{rule.endpoint}'")
+    return "<pre>" + "\n".join(lines) + "</pre>"
 
 @app.route("/ping")
 def ping():
     return "OK iz Flaska!"
 
-def varnostna_kopija_baze():
-    danes = datetime.now().strftime('%Y%m%d_%H%M%S')
-    shutil.copy('Stare_skripte/VUS.db', f'backup/VUS_backup_{danes}.db')
-    print("✅ Varnostna kopija shranjena.")
+@app.route("/test")
+def test():
+    return render_template("test.html")
+
+# ==== Avtentikacija ===========================================================
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    napaka = None
+    if request.method == 'POST':
+        if request.form.get('geslo') == GESLO:
+            session['prijavljen'] = True
+            next_url = request.args.get('next') or url_for('home')
+            return redirect(next_url)
+        else:
+            napaka = "Napačno geslo."
+    return render_template('login.html', napaka=napaka)
+
+@app.route('/logout')
+def logout():
+    session.pop('prijavljen', None)
+    return redirect(url_for('login'))
+
+# ==== Domača stran (root + /home) =============================================
+
+@app.route('/')
+@app.route('/home')
+def home():
+    obvestilo = ""
+    try:
+        with open('obvestilo.txt', encoding="utf-8") as f:
+            obvestilo = f.read().strip()
+    except FileNotFoundError:
+        pass
+    return render_template('home.html', obvestilo=obvestilo)
+
+# ==== 404 handler =============================================================
+
+@app.errorhandler(404)
+def page_not_found(e):
+    return redirect(url_for("home"))
+
+# ==== Admin ===================================================================
 
 @app.route('/admin')
 @login_required
@@ -109,17 +145,14 @@ def admin():
     except Exception as e:
         return f"<h1>Napaka v admin: {e}</h1>"
 
-# Domača stran – **EDINI** root
-@app.route('/')
-@app.route('/home')
-def home():
-    obvestilo = ""
-    try:
-        with open('obvestilo.txt', encoding="utf-8") as f:
-            obvestilo = f.read().strip()
-    except FileNotFoundError:
-        pass
-    return render_template('home.html', obvestilo=obvestilo)
+@app.route('/admin/arhiviraj', methods=['POST'])
+@login_required
+def sprozi_arhiviranje():
+    premaknjeni = arhiviraj_danes()
+    flash(f"Premaknjenih {len(premaknjeni)} datotek.", "success")
+    return redirect(url_for('admin'))
+
+# ==== API-ji / CRUD ===========================================================
 
 @app.route('/preveri', methods=['POST'])
 def preveri():
@@ -174,6 +207,8 @@ def brisi_geslo():
     conn.commit()
     return jsonify({'sporocilo': 'Geslo izbrisano.'})
 
+# ==== Iskanje =================================================================
+
 @app.route('/test_iscenje')
 def test_iscenje():
     return render_template('isci_vzorec_test.html')
@@ -190,7 +225,6 @@ def isci_vzorec():
 
         vzorec = data.get('vzorec', '').upper()
         dodatno = data.get('dodatno', '')
-
         dolzina_vzorca = len(vzorec)
 
         conn = get_db()
@@ -199,7 +233,7 @@ def isci_vzorec():
         query = """
             SELECT ID, GESLO, OPIS FROM slovar
             WHERE LENGTH(REPLACE(REPLACE(REPLACE(GESLO, ' ', ''), '-', ''), '_', '')) = ?
-            AND OPIS LIKE ?
+              AND OPIS LIKE ?
         """
         params = [dolzina_vzorca, f'%{dodatno}%']
 
@@ -218,8 +252,7 @@ def isci_vzorec():
             "OPIS": row["OPIS"]
         } for row in results])
 
-    else:
-        return render_template('isci_vzorec.html')
+    return render_template('isci_vzorec.html')
 
 @app.route('/isci_opis', methods=['GET', 'POST'])
 def isci_opis():
@@ -250,7 +283,8 @@ def stevec_gesel():
     conn.close()
     return jsonify({"stevilo_gesel": st})
 
-# Statika za križanke
+# ==== Križanka =================================================================
+
 @app.route('/krizanka/static/<path:filename>')
 def krizanka_static_file(filename):
     pot = os.path.join('static', 'Krizanke', 'CrosswordCompilerApp')
@@ -310,7 +344,6 @@ def arhiv_krizank():
                 pass
 
     aktualne.sort(reverse=True)
-
     return render_template('arhiv.html', aktualne=aktualne, meseci=meseci)
 
 @app.route('/krizanka/arhiv/<mesec>')
@@ -329,14 +362,15 @@ def arhiv_krizank_mesec(mesec):
     datoteke.sort(reverse=True)
     return render_template('arhiv_mesec.html', mesec=mesec, datumi=datoteke)
 
-# Sudoku
+# ==== Sudoku ==================================================================
+
 @app.route('/sudoku')
 def osnovni_sudoku():
     return redirect(url_for('prikazi_danasnji_sudoku', tezavnost='easy'))
 
 @app.route('/sudoku/<tezavnost>/<datum>')
 def prikazi_sudoku(tezavnost, datum):
-    leto_mesec = datum[:7]  # "2025-06"
+    leto_mesec = datum[:7]  # "YYYY-MM"
     ime = f'Sudoku_{tezavnost}_{datum}.html'
     pot_arhiv = os.path.join('static', f'Sudoku_{tezavnost}', leto_mesec, ime)
     pot_aktualno = os.path.join('static', f'Sudoku_{tezavnost}', ime)
@@ -402,6 +436,8 @@ def arhiv_sudoku_mesec(tezavnost, mesec):
 def arhiv_sudoku_pregled():
     return render_template('sudoku_arhiv_glavni.html')
 
+# ==== Uvoz / utility ==========================================================
+
 @app.route('/uvoz', methods=['GET', 'POST'])
 def uvoz_datotek():
     if request.method == 'POST':
@@ -438,8 +474,10 @@ def zamenjaj():
     stevilo_zadetkov = cur.fetchone()[0]
 
     if stevilo_zadetkov > 0:
-        cur.execute("UPDATE slovar SET OPIS = REPLACE(OPIS, ?, ?) WHERE OPIS LIKE ?",
-                    (original, zamenjava, f"%{original}%"))
+        cur.execute(
+            "UPDATE slovar SET OPIS = REPLACE(OPIS, ?, ?) WHERE OPIS LIKE ?",
+            (original, zamenjava, f"%{original}%")
+        )
         conn.commit()
 
     conn.close()
@@ -454,7 +492,6 @@ def prenesi_slike_zip():
         for koren, _, datoteke in os.walk(pot_mape):
             for ime_datoteke in datoteke:
                 polna_pot = os.path.join(koren, ime_datoteke)
-                # shrani relativno pot znotraj ZIP-a
                 rel_pot = os.path.relpath(polna_pot, pot_mape)
                 zipf.write(polna_pot, rel_pot)
 
@@ -465,7 +502,6 @@ def prenesi_slike_zip():
         as_attachment=True,
         download_name='slike_static_Images.zip'
     )
-
 
 @app.route('/preveri_sliko', methods=['GET', 'POST'])
 def preveri_sliko():
@@ -489,18 +525,7 @@ def preveri_sliko():
             obstaja = False
     return render_template('preveri_sliko.html', opis=opis, resitev=resitev, ime_slike=ime_slike, obstaja=obstaja)
 
-# --- EN SAM 404 handler ---
-@app.errorhandler(404)
-def page_not_found(e):
-    return redirect(url_for("home"))
-
-# Diagnostično: seznam route-ov
-@app.route("/_routes")
-def _routes():
-    lines = []
-    for rule in sorted(app.url_map.iter_rules(), key=lambda r: r.rule):
-        lines.append(f"{rule.methods} {rule.rule}  ->  endpoint='{rule.endpoint}'")
-    return "<pre>" + "\n".join(lines) + "</pre>"
+# ==== Main ====================================================================
 
 if __name__ == "__main__":
     app.run(debug=True)
