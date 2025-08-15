@@ -87,6 +87,10 @@ def show_routes():
 def ping():
     return "OK iz Flaska!"
 
+@app.route("/health", methods=["GET", "HEAD"])
+def health():
+    return "ok", 200
+
 @app.route("/test")
 def test():
     return render_template("test.html")
@@ -526,6 +530,12 @@ def preveri_sliko():
     return render_template('preveri_sliko.html', opis=opis, resitev=resitev, ime_slike=ime_slike, obstaja=obstaja)
 
 # ==== Main ====================================================================
+import os
+
+@app.route("/version")
+def version():
+    return f"branch={os.getenv('RENDER_GIT_BRANCH')} commit={os.getenv('RENDER_GIT_COMMIT')}"
+
 
 if __name__ == "__main__":
     app.run(debug=True)
