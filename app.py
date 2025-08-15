@@ -23,7 +23,7 @@ app.secret_key = "Tifumannam1_vus-flask2.onrender.com"
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['PROPAGATE_EXCEPTIONS'] = True
 
-# Varneje poskrbi za uploads: če obstaja datoteka z imenom 'static/uploads', jo izbriši in ustvari mapo
+# Varneje poskrbi za uploads: če obstaja datoteka z istim imenom, jo odstrani, nato ustvari mapo
 if not os.path.isdir(app.config['UPLOAD_FOLDER']):
     if os.path.exists(app.config['UPLOAD_FOLDER']):  # obstaja kot datoteka
         os.remove(app.config['UPLOAD_FOLDER'])
@@ -68,20 +68,42 @@ def get_db():
     conn.row_factory = sqlite3.Row
     return conn
 
-def varnostna_kopija_baze():
-    danes = datetime.now().strftime('%Y%m%d_%H%M%S')
-    os.makedirs('backup', exist_ok=True)
-    shutil.copy('Stare_skripte/VUS.db', f'backup/VUS_backup_{danes}.db')
-    print("✅ Varnostna kopija shranjena.")
+# --- sortiranje po imenu (osebe najprej) ---
+def normalize_ascii(text: str) -> str:
+    if not text:
+        return ""
+    s = unicodedata.normalize('NFD', text)
+    s = ''.join(c for c in s if not unicodedata.combining(c))
+    return ' '.join(s.lower().split())
 
-# ==== Diagnostika ==============================================================
+def ime_za_sort(opis: str) -> str:
+    if not opis or ' - ' not in opis:
+        return ""
+    blok = opis.split(' - ', 1)[1].strip()
+    if '(' in blok:
+        blok = blok.split('(', 1)[0].strip()
+    if ',' in blok:
+        blok = blok.split(',', 1)[1].strip()
+    ime = blok.split()[0] if blok else ""
+    return normalize_ascii(ime)
 
-@app.route("/_routes")
-def show_routes():
-    lines = []
-    for rule in sorted(app.url_map.iter_rules(), key=lambda r: r.rule):
-        lines.append(f"{sorted(rule.methods)} {rule.rule}  ->  endpoint='{rule.endpoint}'")
-    return "<pre>" + "\n".join(lines) + "</pre>"
+def sort_key_opis(opis: str):
+    je_oseba = 0 if ' - ' in (opis or '') else 1
+    return (je_oseba, ime_za_sort(opis), normalize_ascii(opis))
+
+# --- indeks za hitro /preveri (brez before_first_request v Flask 3.1) ---
+def ensure_indexes():
+    conn = get_db()
+    conn.execute("""
+        CREATE INDEX IF NOT EXISTS idx_slovar_norm_expr
+        ON slovar(replace(replace(replace(upper(GESLO),' ',''),'-',''),'_',''));
+    """)
+    conn.close()
+
+with app.app_context():
+    ensure_indexes()
+
+# ==== Diagnostika / Health ====================================================
 
 @app.route("/ping")
 def ping():
@@ -90,6 +112,13 @@ def ping():
 @app.route("/health", methods=["GET", "HEAD"])
 def health():
     return "ok", 200
+
+@app.route("/_routes")
+def show_routes():
+    lines = []
+    for rule in sorted(app.url_map.iter_rules(), key=lambda r: r.rule):
+        lines.append(f"{sorted(rule.methods)} {rule.rule}  ->  endpoint='{rule.endpoint}'")
+    return "<pre>" + "\n".join(lines) + "</pre>"
 
 @app.route("/test")
 def test():
@@ -160,7 +189,6 @@ def sprozi_arhiviranje():
 
 @app.route('/preveri', methods=['POST'])
 def preveri():
-    # podpiraj JSON in (za vsak slučaj) form POST
     payload = request.get_json(silent=True) or {}
     if not payload and request.form:
         payload = request.form
@@ -169,8 +197,7 @@ def preveri():
     if not geslo:
         return jsonify({'obstaja': False, 'gesla': []})
 
-    # normalizacija mora biti IDENTIČNA tisti v SQL poizvedbi in indeksu:
-    # replace(replace(replace(upper(GESLO),' ',''),'-',''),'_','')
+    # normalizacija IDENTIČNA kot v indeksu/poizvedbi
     iskalno = geslo.upper().replace(' ', '').replace('-', '').replace('_', '')
 
     conn = get_db()
@@ -183,78 +210,13 @@ def preveri():
     rezultati = cur.fetchall()
     conn.close()
 
-    # Sortiranje: osebe (z ' - ') najprej, znotraj po IMENU; ostalo po opisu.
-    # Uporabi globalni sort_key_opis, če ga imaš; sicer fallback tukaj.
-    try:
-        rezultati = sorted(rezultati, key=lambda r: sort_key_opis(r['opis']))
-    except NameError:
-        import unicodedata
-        def _normalize_ascii(text: str) -> str:
-            s = unicodedata.normalize('NFD', text or '')
-            s = ''.join(c for c in s if not unicodedata.combining(c)).lower()
-            return ' '.join(s.split())
-        def _ime_za_sort(opis: str) -> str:
-            if not opis or ' - ' not in opis:
-                return ''
-            blok = opis.split(' - ', 1)[1].strip()
-            if '(' in blok:
-                blok = blok.split('(', 1)[0].strip()
-            if ',' in blok:
-                blok = blok.split(',', 1)[1].strip()
-            ime = blok.split()[0] if blok else ''
-            return _normalize_ascii(ime)
-        def _sort_key(opis: str):
-            je_oseba = 0 if ' - ' in (opis or '') else 1
-            return (je_oseba, _ime_za_sort(opis), _normalize_ascii(opis))
-        rezultati = sorted(rezultati, key=lambda r: _sort_key(r['opis']))
+    # sortiranje: osebe najprej, po imenu; ostalo po opisu
+    rezultati = sorted(rezultati, key=lambda r: sort_key_opis(r['opis']))
 
     return jsonify({
         'obstaja': len(rezultati) > 0,
         'gesla': [{'id': r['id'], 'geslo': r['geslo'], 'opis': r['opis']} for r in rezultati]
     })
-
-
-
-import unicodedata
-
-def normalize_ascii(text: str) -> str:
-    """Lowercase, odstrani šumnike/diakritiko in odvečne presledke."""
-    if not text:
-        return ""
-    s = unicodedata.normalize('NFD', text)
-    s = ''.join(c for c in s if not unicodedata.combining(c))
-    return ' '.join(s.lower().split())
-
-def ime_za_sort(opis: str) -> str:
-    """
-    Vrne IME za sortiranje, če je v opisu vzorec '… - Ime …' ali '… - Priimek, Ime …'.
-    Primeri:
-      'slovenska pevka - Gabi (1936–2025)'       -> 'gabi'
-      '… - Tršar, Marija (1934-)'                -> 'marija'
-      '… - Ivan-Očka (1898†1973)'                -> 'ivan-ocka'
-    Če ni oseba (ni ' - '), vrne ''.
-    """
-    if not opis or ' - ' not in opis:
-        return ""
-    blok = opis.split(' - ', 1)[1].strip()
-    # odreži karkoli od prve oklepaje naprej
-    if '(' in blok:
-        blok = blok.split('(', 1)[0].strip()
-    # 'Priimek, Ime' -> vzemi del za vejico
-    if ',' in blok:
-        blok = blok.split(',', 1)[1].strip()
-    # ime = prva “beseda”
-    ime = blok.split()[0] if blok else ""
-    return normalize_ascii(ime)
-
-def sort_key_opis(opis: str):
-    """
-    Osebe (z ' - ') najprej (bucket=0), znotraj po IMENU; ostalo za tem (bucket=1), po opisu.
-    """
-    je_oseba = 0 if ' - ' in (opis or '') else 1
-    return (je_oseba, ime_za_sort(opis), normalize_ascii(opis))
-
-
 
 @app.route('/dodaj_geslo', methods=['POST'])
 def dodaj_geslo():
@@ -268,30 +230,27 @@ def dodaj_geslo():
     conn = get_db()
     cur = conn.cursor()
 
-    # 1) najprej poglej vse obstoječe zapise za isto GESLO (neobčutljivo na velikost črk)
-    cur.execute("SELECT ID, GESLO, OPIS FROM slovar WHERE UPPER(GESLO) = UPPER(?)", (geslo,))
-    obstojece = cur.fetchall()
-
-    # 2) deduplikacija na osnovi normaliziranega OPIS-a (brez šumnikov, case-insensitive)
+    # deduplikacija po normaliziranem OPIS-u (brez šumnikov/case)
     opis_norm = normalize_ascii(opis)
+    cur.execute("SELECT ID, OPIS FROM slovar WHERE UPPER(GESLO) = UPPER(?)", (geslo,))
+    obstojece = cur.fetchall()
     for r in obstojece:
         if normalize_ascii(r['OPIS']) == opis_norm:
             conn.close()
             return jsonify({"sporocilo": "Ta zapis že obstaja – nič dodano."}), 200
 
-    # 3) vstavi nov zapis
     cur.execute("INSERT INTO slovar (GESLO, OPIS) VALUES (?, ?)", (geslo, opis))
     conn.commit()
     conn.close()
-
     return jsonify({"sporocilo": "Geslo uspešno dodano!"})
-
 
 @app.route('/uredi_geslo', methods=['POST'])
 def uredi_geslo():
-    data = request.json
-    id = data['id']
-    opis = data['opis']
+    data = request.json or {}
+    id = data.get('id')
+    opis = (data.get('opis') or '').strip()
+    if not id:
+        return jsonify({'napaka': 'Manjka ID.'}), 400
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute("UPDATE slovar SET OPIS = ? WHERE ID = ?", (opis, id))
@@ -300,8 +259,10 @@ def uredi_geslo():
 
 @app.route('/brisi_geslo', methods=['POST'])
 def brisi_geslo():
-    data = request.json
-    id = data['id']
+    data = request.json or {}
+    id = data.get('id')
+    if not id:
+        return jsonify({'napaka': 'Manjka ID.'}), 400
     conn = get_db()
     cur = conn.cursor()
     cur.execute("DELETE FROM slovar WHERE ID = ?", (id,))
@@ -326,6 +287,7 @@ def isci_vzorec():
 
         vzorec = data.get('vzorec', '').upper()
         dodatno = data.get('dodatno', '')
+
         dolzina_vzorca = len(vzorec)
 
         conn = get_db()
@@ -358,7 +320,7 @@ def isci_vzorec():
 @app.route('/isci_opis', methods=['GET', 'POST'])
 def isci_opis():
     if request.method == 'POST':
-        podatki = request.get_json()
+        podatki = request.get_json() or {}
         opis = podatki.get('opis', '')
 
         conn = get_db()
@@ -366,6 +328,9 @@ def isci_opis():
         cursor.execute("SELECT GESLO, OPIS FROM slovar WHERE OPIS LIKE ? LIMIT 100", (f"%{opis}%",))
         rezultat = cursor.fetchall()
         conn.close()
+
+        # opcijsko: sortiraj osebe najprej po imenu
+        rezultat = sorted(rezultat, key=lambda r: sort_key_opis(r['OPIS']))
 
         return jsonify([{'GESLO': r['GESLO'], 'OPIS': r['OPIS']} for r in rezultat])
 
@@ -564,9 +529,9 @@ def uvoz_datotek():
 
 @app.route('/zamenjaj', methods=['POST'])
 def zamenjaj():
-    data = request.json
-    original = data.get('original').strip()
-    zamenjava = data.get('zamenjava').strip()
+    data = request.json or {}
+    original = (data.get('original') or '').strip()
+    zamenjava = (data.get('zamenjava') or '').strip()
 
     conn = get_db()
     cur = conn.cursor()
@@ -627,12 +592,6 @@ def preveri_sliko():
     return render_template('preveri_sliko.html', opis=opis, resitev=resitev, ime_slike=ime_slike, obstaja=obstaja)
 
 # ==== Main ====================================================================
-import os
-
-@app.route("/version")
-def version():
-    return f"branch={os.getenv('RENDER_GIT_BRANCH')} commit={os.getenv('RENDER_GIT_COMMIT')}"
-
 
 if __name__ == "__main__":
     app.run(debug=True)
