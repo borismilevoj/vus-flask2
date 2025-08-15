@@ -549,5 +549,13 @@ def preveri_sliko():
         obstaja=obstaja
     )
 
-if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0')
+@app.route("/")
+def root_index():
+    return redirect(url_for("home"))  # ali pravo ime tvojega glavnega view-a
+
+@app.errorhandler(404)
+def page_not_found(e):
+    return redirect(url_for("home"))  # isto kot zgoraj
+
+if __name__ == "__main__":
+    app.run(debug=True)
