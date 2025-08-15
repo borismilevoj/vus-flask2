@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, session, redirect, url_for, request, render_template, flash, send_from_directory
+from flask import Flask, jsonify, session, redirect, url_for, request, render_template, flash, send_from_directory, render_template_string, send_file
 from functools import wraps
 import sqlite3
 import os
@@ -10,6 +10,8 @@ from Stare_skripte.uvoz_datotek import premakni_krizanke, premakni_sudoku
 from arhiviranje_util import arhiviraj_danes
 import shutil
 from datetime import datetime
+import zipfile
+import io
 
 # **Samo ENA inicializacija!**
 app = Flask(__name__, static_folder='static', static_url_path='/static')
@@ -67,7 +69,6 @@ def odstrani_cc_vrstico_iz_html(mapa):
                 f.writelines(nove)
             print(f"✂️ Očiščeno: {datoteka}")
 
-import os
 def get_db():
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     db_path = os.path.join(BASE_DIR, "VUS.db")
@@ -97,7 +98,6 @@ def varnostna_kopija_baze():
 @app.route('/admin')
 @login_required
 def admin():
-    import os
     print("UPORABLJAM BAZO:", os.path.abspath('VUS.db'))
     try:
         conn = sqlite3.connect('VUS.db')
@@ -109,8 +109,7 @@ def admin():
     except Exception as e:
         return f"<h1>Napaka v admin: {e}</h1>"
 
-import os
-
+# Domača stran – **EDINI** root
 @app.route('/')
 @app.route('/home')
 def home():
@@ -122,9 +121,6 @@ def home():
         pass
     return render_template('home.html', obvestilo=obvestilo)
 
-
-import re
-
 @app.route('/preveri', methods=['POST'])
 def preveri():
     geslo = request.json['geslo']
@@ -132,7 +128,6 @@ def preveri():
 
     conn = get_db()
     cursor = conn.cursor()
-    # Pobereš kandidate, ki se ujemajo po velikih črkah (veliko manj kot cela baza!)
     cursor.execute('''
         SELECT ID, geslo, opis FROM slovar WHERE UPPER(geslo) LIKE ?
     ''', (f"%{geslo.strip().upper()}%",))
@@ -147,7 +142,6 @@ def preveri():
         'gesla': [{'id': r['ID'], 'geslo': r['geslo'], 'opis': r['opis']} for r in rezultati]
     })
 
-
 @app.route('/dodaj_geslo', methods=['POST'])
 def dodaj_geslo():
     data = request.json
@@ -158,8 +152,6 @@ def dodaj_geslo():
     cur.execute("INSERT INTO slovar (GESLO, OPIS) VALUES (?, ?)", (geslo, opis))
     conn.commit()
     return jsonify({"sporocilo": "Geslo uspešno dodano!"})
-
-# UREJANJE GESLA
 
 @app.route('/uredi_geslo', methods=['POST'])
 def uredi_geslo():
@@ -186,14 +178,9 @@ def brisi_geslo():
 def test_iscenje():
     return render_template('isci_vzorec_test.html')
 
-
 @app.route('/isci_vzorec', methods=['GET', 'POST'])
 def isci_vzorec():
     if request.method == 'POST':
-        print("🔎 Zahtevek s telefona?")
-        print("request.is_json:", request.is_json)
-        print("request.data:", request.data)
-        print("request.get_json():", request.get_json(silent=True))
         if not request.is_json:
             return jsonify([])
 
@@ -234,7 +221,6 @@ def isci_vzorec():
     else:
         return render_template('isci_vzorec.html')
 
-
 @app.route('/isci_opis', methods=['GET', 'POST'])
 def isci_opis():
     if request.method == 'POST':
@@ -251,11 +237,9 @@ def isci_opis():
 
     return render_template('isci_opis.html')
 
-
 @app.route('/prispevaj_geslo')
 def prispevaj_geslo():
     return render_template('prispevaj.html')
-
 
 @app.route('/stevec_gesel')
 def stevec_gesel():
@@ -266,18 +250,15 @@ def stevec_gesel():
     conn.close()
     return jsonify({"stevilo_gesel": st})
 
-
-# Ta route mora biti ZUNAJ vseh funkcij!
+# Statika za križanke
 @app.route('/krizanka/static/<path:filename>')
 def krizanka_static_file(filename):
     pot = os.path.join('static', 'Krizanke', 'CrosswordCompilerApp')
     return send_from_directory(pot, filename)
 
-
 @app.route('/krizanka', defaults={'datum': None})
 @app.route('/krizanka/<datum>')
 def prikazi_krizanko(datum):
-
     if datum is None:
         datum = datetime.today().strftime('%Y-%m-%d')
 
@@ -286,7 +267,6 @@ def prikazi_krizanko(datum):
     ime_datoteke = f"{datum}.xml"
     osnovna_pot = os.path.dirname(os.path.abspath(__file__))
 
-    # Najprej poskusi v podmapi (arhiv za mesec)
     mesec = datum[:7]
     pot_arhiv = os.path.join(osnovna_pot, 'static', 'CrosswordCompilerApp', mesec, ime_datoteke)
     pot_glavna = os.path.join(osnovna_pot, 'static', 'CrosswordCompilerApp', ime_datoteke)
@@ -310,7 +290,6 @@ def prikazi_krizanko(datum):
 
     return render_template('krizanka.html', podatki=podatki)
 
-
 @app.route('/krizanka/arhiv')
 def arhiv_krizank():
     mapa = os.path.join('static', 'CrosswordCompilerApp')
@@ -332,11 +311,7 @@ def arhiv_krizank():
 
     aktualne.sort(reverse=True)
 
-    return render_template(
-        'arhiv.html',
-        aktualne=aktualne,
-        meseci=meseci
-    )
+    return render_template('arhiv.html', aktualne=aktualne, meseci=meseci)
 
 @app.route('/krizanka/arhiv/<mesec>')
 def arhiv_krizank_mesec(mesec):
@@ -354,23 +329,16 @@ def arhiv_krizank_mesec(mesec):
     datoteke.sort(reverse=True)
     return render_template('arhiv_mesec.html', mesec=mesec, datumi=datoteke)
 
-
-
-
+# Sudoku
 @app.route('/sudoku')
 def osnovni_sudoku():
     return redirect(url_for('prikazi_danasnji_sudoku', tezavnost='easy'))
-
-from flask import render_template_string
-
 
 @app.route('/sudoku/<tezavnost>/<datum>')
 def prikazi_sudoku(tezavnost, datum):
     leto_mesec = datum[:7]  # "2025-06"
     ime = f'Sudoku_{tezavnost}_{datum}.html'
-    # Najprej preveri v podmapi (arhiv za mesec)
     pot_arhiv = os.path.join('static', f'Sudoku_{tezavnost}', leto_mesec, ime)
-    # Če ni tam, preveri še v glavni mapi (za aktualne)
     pot_aktualno = os.path.join('static', f'Sudoku_{tezavnost}', ime)
 
     if os.path.exists(pot_arhiv):
@@ -384,7 +352,6 @@ def prikazi_sudoku(tezavnost, datum):
         vsebina = f.read()
     return render_template_string(vsebina)
 
-
 @app.route('/sudoku/<tezavnost>')
 def prikazi_danasnji_sudoku(tezavnost):
     danes = datetime.today().strftime('%Y-%m-%d')
@@ -393,10 +360,6 @@ def prikazi_danasnji_sudoku(tezavnost):
 @app.route('/sudoku/meni')
 def sudoku_meni():
     return render_template('sudoku_meni.html')
-
-
-from datetime import datetime
-
 
 @app.route('/sudoku/arhiv/<tezavnost>')
 def arhiv_sudoku(tezavnost):
@@ -417,13 +380,7 @@ def arhiv_sudoku(tezavnost):
                 pass
     aktualni.sort(reverse=True)
 
-    return render_template(
-        'sudoku_arhiv.html',
-        tezavnost=tezavnost,
-        meseci=meseci,
-        aktualni=aktualni
-    )
-
+    return render_template('sudoku_arhiv.html', tezavnost=tezavnost, meseci=meseci, aktualni=aktualni)
 
 @app.route('/sudoku/arhiv/<tezavnost>/<mesec>')
 def arhiv_sudoku_mesec(tezavnost, mesec):
@@ -441,14 +398,9 @@ def arhiv_sudoku_mesec(tezavnost, mesec):
     datumi.sort(reverse=True)
     return render_template('sudoku_arhiv_mesec.html', tezavnost=tezavnost, mesec=mesec, datumi=datumi)
 
-
-
-
 @app.route('/sudoku/arhiv')
 def arhiv_sudoku_pregled():
     return render_template('sudoku_arhiv_glavni.html')
-
-from flask import flash, redirect, url_for
 
 @app.route('/uvoz', methods=['GET', 'POST'])
 def uvoz_datotek():
@@ -473,7 +425,6 @@ def uvoz_datotek():
 
     return render_template('uvoz.html')
 
-
 @app.route('/zamenjaj', methods=['POST'])
 def zamenjaj():
     data = request.json
@@ -483,7 +434,6 @@ def zamenjaj():
     conn = get_db()
     cur = conn.cursor()
 
-    # Najprej preštej, koliko zapisov se ujema z originalnim izrazom
     cur.execute("SELECT COUNT(*) FROM slovar WHERE OPIS LIKE ?", (f"%{original}%",))
     stevilo_zadetkov = cur.fetchone()[0]
 
@@ -493,15 +443,7 @@ def zamenjaj():
         conn.commit()
 
     conn.close()
-
-    # Vrni število dejanskih sprememb
     return jsonify({"spremembe": stevilo_zadetkov})
-
-
-from flask import send_file
-import zipfile
-import io
-
 
 @app.route('/prenesi_slike_zip')
 def prenesi_slike_zip():
@@ -512,14 +454,18 @@ def prenesi_slike_zip():
         for koren, _, datoteke in os.walk(pot_mape):
             for ime_datoteke in datoteke:
                 polna_pot = os.path.join(koren, ime_datoteke)
+                # shrani relativno pot znotraj ZIP-a
                 rel_pot = os.path.relpath(polna_pot, pot_mape)
                 zipf.write(polna_pot, rel_pot)
 
     zip_buffer.seek(0)
-    return send_file(zip_buffer, mimetype='application/zip', as_attachment=True, download_name='slike_static_Images.zip')
+    return send_file(
+        zip_buffer,
+        mimetype='application/zip',
+        as_attachment=True,
+        download_name='slike_static_Images.zip'
+    )
 
-from flask import request, render_template
-import os
 
 @app.route('/preveri_sliko', methods=['GET', 'POST'])
 def preveri_sliko():
@@ -541,21 +487,20 @@ def preveri_sliko():
         if not ime_slike:
             ime_slike = f"{osnovno_ime}.jpg"  # default prikazano ime
             obstaja = False
-    return render_template(
-        'preveri_sliko.html',
-        opis=opis,
-        resitev=resitev,
-        ime_slike=ime_slike,
-        obstaja=obstaja
-    )
+    return render_template('preveri_sliko.html', opis=opis, resitev=resitev, ime_slike=ime_slike, obstaja=obstaja)
 
-@app.route("/")
-def root_index():
-    return redirect(url_for("home"))  # ali pravo ime tvojega glavnega view-a
-
+# --- EN SAM 404 handler ---
 @app.errorhandler(404)
 def page_not_found(e):
-    return redirect(url_for("home"))  # isto kot zgoraj
+    return redirect(url_for("home"))
+
+# Diagnostično: seznam route-ov
+@app.route("/_routes")
+def _routes():
+    lines = []
+    for rule in sorted(app.url_map.iter_rules(), key=lambda r: r.rule):
+        lines.append(f"{rule.methods} {rule.rule}  ->  endpoint='{rule.endpoint}'")
+    return "<pre>" + "\n".join(lines) + "</pre>"
 
 if __name__ == "__main__":
     app.run(debug=True)
