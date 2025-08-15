@@ -160,35 +160,132 @@ def sprozi_arhiviranje():
 
 @app.route('/preveri', methods=['POST'])
 def preveri():
-    geslo = request.json['geslo']
-    iskalno = re.sub(r'[^A-Z0-9]', '', geslo.upper())
+    # podpiraj JSON in (za vsak slučaj) form POST
+    payload = request.get_json(silent=True) or {}
+    if not payload and request.form:
+        payload = request.form
+
+    geslo = (payload.get('geslo') or '').strip()
+    if not geslo:
+        return jsonify({'obstaja': False, 'gesla': []})
+
+    # normalizacija mora biti IDENTIČNA tisti v SQL poizvedbi in indeksu:
+    # replace(replace(replace(upper(GESLO),' ',''),'-',''),'_','')
+    iskalno = geslo.upper().replace(' ', '').replace('-', '').replace('_', '')
 
     conn = get_db()
-    cursor = conn.cursor()
-    cursor.execute('''
-        SELECT ID, geslo, opis FROM slovar WHERE UPPER(geslo) LIKE ?
-    ''', (f"%{geslo.strip().upper()}%",))
-    kandidati = cursor.fetchall()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT ID AS id, GESLO AS geslo, OPIS AS opis
+        FROM slovar
+        WHERE replace(replace(replace(upper(GESLO),' ',''),'-',''),'_','') = ?
+    """, (iskalno,))
+    rezultati = cur.fetchall()
+    conn.close()
 
-    def norm(s):
-        return re.sub(r'[^A-Z0-9]', '', s.upper())
+    # Sortiranje: osebe (z ' - ') najprej, znotraj po IMENU; ostalo po opisu.
+    # Uporabi globalni sort_key_opis, če ga imaš; sicer fallback tukaj.
+    try:
+        rezultati = sorted(rezultati, key=lambda r: sort_key_opis(r['opis']))
+    except NameError:
+        import unicodedata
+        def _normalize_ascii(text: str) -> str:
+            s = unicodedata.normalize('NFD', text or '')
+            s = ''.join(c for c in s if not unicodedata.combining(c)).lower()
+            return ' '.join(s.split())
+        def _ime_za_sort(opis: str) -> str:
+            if not opis or ' - ' not in opis:
+                return ''
+            blok = opis.split(' - ', 1)[1].strip()
+            if '(' in blok:
+                blok = blok.split('(', 1)[0].strip()
+            if ',' in blok:
+                blok = blok.split(',', 1)[1].strip()
+            ime = blok.split()[0] if blok else ''
+            return _normalize_ascii(ime)
+        def _sort_key(opis: str):
+            je_oseba = 0 if ' - ' in (opis or '') else 1
+            return (je_oseba, _ime_za_sort(opis), _normalize_ascii(opis))
+        rezultati = sorted(rezultati, key=lambda r: _sort_key(r['opis']))
 
-    rezultati = [r for r in kandidati if norm(r['geslo']) == iskalno]
     return jsonify({
         'obstaja': len(rezultati) > 0,
-        'gesla': [{'id': r['ID'], 'geslo': r['geslo'], 'opis': r['opis']} for r in rezultati]
+        'gesla': [{'id': r['id'], 'geslo': r['geslo'], 'opis': r['opis']} for r in rezultati]
     })
+
+
+
+import unicodedata
+
+def normalize_ascii(text: str) -> str:
+    """Lowercase, odstrani šumnike/diakritiko in odvečne presledke."""
+    if not text:
+        return ""
+    s = unicodedata.normalize('NFD', text)
+    s = ''.join(c for c in s if not unicodedata.combining(c))
+    return ' '.join(s.lower().split())
+
+def ime_za_sort(opis: str) -> str:
+    """
+    Vrne IME za sortiranje, če je v opisu vzorec '… - Ime …' ali '… - Priimek, Ime …'.
+    Primeri:
+      'slovenska pevka - Gabi (1936–2025)'       -> 'gabi'
+      '… - Tršar, Marija (1934-)'                -> 'marija'
+      '… - Ivan-Očka (1898†1973)'                -> 'ivan-ocka'
+    Če ni oseba (ni ' - '), vrne ''.
+    """
+    if not opis or ' - ' not in opis:
+        return ""
+    blok = opis.split(' - ', 1)[1].strip()
+    # odreži karkoli od prve oklepaje naprej
+    if '(' in blok:
+        blok = blok.split('(', 1)[0].strip()
+    # 'Priimek, Ime' -> vzemi del za vejico
+    if ',' in blok:
+        blok = blok.split(',', 1)[1].strip()
+    # ime = prva “beseda”
+    ime = blok.split()[0] if blok else ""
+    return normalize_ascii(ime)
+
+def sort_key_opis(opis: str):
+    """
+    Osebe (z ' - ') najprej (bucket=0), znotraj po IMENU; ostalo za tem (bucket=1), po opisu.
+    """
+    je_oseba = 0 if ' - ' in (opis or '') else 1
+    return (je_oseba, ime_za_sort(opis), normalize_ascii(opis))
+
+
 
 @app.route('/dodaj_geslo', methods=['POST'])
 def dodaj_geslo():
-    data = request.json
-    geslo = data.get('geslo')
-    opis = data.get('opis')
+    data = request.json or {}
+    geslo = (data.get('geslo') or '').strip()
+    opis = (data.get('opis') or '').strip()
+
+    if not geslo or not opis:
+        return jsonify({"napaka": "Manjka geslo ali opis."}), 400
+
     conn = get_db()
     cur = conn.cursor()
+
+    # 1) najprej poglej vse obstoječe zapise za isto GESLO (neobčutljivo na velikost črk)
+    cur.execute("SELECT ID, GESLO, OPIS FROM slovar WHERE UPPER(GESLO) = UPPER(?)", (geslo,))
+    obstojece = cur.fetchall()
+
+    # 2) deduplikacija na osnovi normaliziranega OPIS-a (brez šumnikov, case-insensitive)
+    opis_norm = normalize_ascii(opis)
+    for r in obstojece:
+        if normalize_ascii(r['OPIS']) == opis_norm:
+            conn.close()
+            return jsonify({"sporocilo": "Ta zapis že obstaja – nič dodano."}), 200
+
+    # 3) vstavi nov zapis
     cur.execute("INSERT INTO slovar (GESLO, OPIS) VALUES (?, ?)", (geslo, opis))
     conn.commit()
+    conn.close()
+
     return jsonify({"sporocilo": "Geslo uspešno dodano!"})
+
 
 @app.route('/uredi_geslo', methods=['POST'])
 def uredi_geslo():
