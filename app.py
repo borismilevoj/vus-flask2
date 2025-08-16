@@ -278,43 +278,57 @@ def test_iscenje():
 @app.route('/isci_vzorec', methods=['GET', 'POST'])
 def isci_vzorec():
     if request.method == 'POST':
+        # 1) varno preberi JSON
         if not request.is_json:
             return jsonify([])
-
-        data = request.get_json(silent=True)
-        if not data or 'vzorec' not in data:
+        data = request.get_json(silent=True) or {}
+        if 'vzorec' not in data:
             return jsonify([])
 
-        vzorec = data.get('vzorec', '').upper()
+        vzorec = (data.get('vzorec') or '').upper()
         dodatno = data.get('dodatno', '')
-
         dolzina_vzorca = len(vzorec)
 
+        # 2) zgradi poizvedbo
         conn = get_db()
         cursor = conn.cursor()
-
         query = """
             SELECT ID, GESLO, OPIS FROM slovar
             WHERE LENGTH(REPLACE(REPLACE(REPLACE(GESLO, ' ', ''), '-', ''), '_', '')) = ?
               AND OPIS LIKE ?
         """
         params = [dolzina_vzorca, f'%{dodatno}%']
-
         for i, crka in enumerate(vzorec):
             if crka != '_':
-                query += f" AND SUBSTR(REPLACE(REPLACE(REPLACE(GESLO, ' ', ''), '-', ''), '_', ''), {i+1}, 1) = ?"
+                query += (
+                    f" AND SUBSTR("
+                    f"REPLACE(REPLACE(REPLACE(GESLO, ' ', ''), '-', ''), '_', ''), {i+1}, 1"
+                    f") = ?"
+                )
                 params.append(crka)
 
         cursor.execute(query, params)
         results = cursor.fetchall()
         conn.close()
 
-        return jsonify([{
-            "id": row["ID"],
-            "GESLO": row["GESLO"].strip(),
-            "OPIS": row["OPIS"]
-        } for row in results])
+        # 3) SORTIRAJ: osebe najprej, znotraj po imenu
+        results = sorted(results, key=lambda row: sort_key_opis(row["OPIS"]))
 
+        # 4) vrni tudi 'ime' + izklopi cache
+        payload = [
+            {
+                "id": row["ID"],
+                "GESLO": row["GESLO"].strip(),
+                "OPIS": row["OPIS"],
+                "ime": ime_za_sort(row["OPIS"])
+            }
+            for row in results
+        ]
+        resp = jsonify(payload)
+        resp.headers['Cache-Control'] = 'no-store'
+        return resp
+
+    # GET: vrni stran
     return render_template('isci_vzorec.html')
 
 @app.route('/isci_opis', methods=['GET', 'POST'])
