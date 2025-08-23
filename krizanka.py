@@ -1,5 +1,11 @@
+# -*- coding: utf-8 -*-
 
-def popravi_sumnike(besedilo):
+import re
+import os
+import xml.etree.ElementTree as ET
+
+
+def popravi_sumnike(besedilo: str) -> str:
     return (besedilo
             .replace('ÄŤ', 'č')
             .replace('Ä‡', 'ć')
@@ -25,26 +31,32 @@ def popravi_sumnike(besedilo):
             .replace('ĂŹ', 'í'))
 
 
-import re
+def normaliziraj_ime(opis: str) -> str:
+    """Iz opisa naredi ime slike (ASCII, spodnje črte, .jpg)."""
+    s = (opis or "").lower()
+    s = re.sub(r'[čć]', 'c', s)
+    s = re.sub(r'[š]', 's', s)
+    s = re.sub(r'[ž]', 'z', s)
+    s = re.sub(r'[^a-z0-9 ]', '', s)
+    s = s.replace(' ', '_')
+    return s + '.jpg'
 
-def normaliziraj_ime(opis):
-    opis = opis.lower()
-    opis = re.sub(r'[čć]', 'c', opis)
-    opis = re.sub(r'[š]', 's', opis)
-    opis = re.sub(r'[ž]', 'z', opis)
-    opis = re.sub(r'[^a-z0-9 ]', '', opis)
-    opis = opis.replace(' ', '_')
-    return opis + '.jpg'
+
+def _ns(tag: str) -> str:
+    """Pomožna: polni naziv z uradnim namespace za rectangular-puzzle."""
+    return f'{{http://crossword.info/xml/rectangular-puzzle}}{tag}'
 
 
-def pridobi_podatke_iz_xml(xml_pot):
-    import xml.etree.ElementTree as ET
-    from Stare_skripte.pretvornik import normaliziraj_ime  # če to uporabljaš
+def _clue_text_plain(clue_el: ET.Element) -> str:
+    """Vrne plain besedilo clua (vključno znotraj <i>, <b>, ...)."""
+    return ''.join(clue_el.itertext()).strip()
 
+
+def pridobi_podatke_iz_xml(xml_pot: str) -> dict:
     tree = ET.parse(xml_pot)
     root = tree.getroot()
 
-    grid = root.find('.//{http://crossword.info/xml/rectangular-puzzle}grid')
+    grid = root.find(f'.//{_ns("grid")}')
     if grid is None:
         raise ValueError("XML ne vsebuje <grid> elementa.")
 
@@ -54,7 +66,8 @@ def pridobi_podatke_iz_xml(xml_pot):
     crna_polja = []
     gesla_opisi = []
 
-    cells = grid.findall('{http://crossword.info/xml/rectangular-puzzle}cell')
+    # Vsi <cell>
+    cells = grid.findall(_ns('cell'))
     cell_numbers = {}
     stevilke_ze_dodane = set()
 
@@ -67,60 +80,79 @@ def pridobi_podatke_iz_xml(xml_pot):
         if cell_type == 'block' or not solution:
             crna_polja.append([x, y])
 
+        # številke clue-jev (samo enkrat na koordinati)
         if 'number' in cell.attrib and (x, y) not in stevilke_ze_dodane:
             cell_numbers[f"{x},{y}"] = cell.attrib['number']
             stevilke_ze_dodane.add((x, y))
 
-    words = root.findall('.//{http://crossword.info/xml/rectangular-puzzle}word')
-    clues = root.findall('.//{*}clues/{*}clue')  # vse, ne glede na namespace
+    # Vsi <word> elementi
+    words = root.findall(f'.//{_ns("word")}')
 
-    print("🔎 Vseh words:", len(words))
-    print("🔎 Vseh clues:", len(clues))
+    # Vsi <clue> (ne glede na namespace nad njimi)
+    clues = root.findall('.//{*}clues/{*}clue')
+
+    # Mapiranje word-id -> podatki o cluu
+    clue_map = {}
+    for c in clues:
+        wid = c.attrib.get('word')
+        if not wid:
+            continue
+        plain = _clue_text_plain(c)  # <-- tu je glavni popravek
+        number = c.attrib.get('number', '?')
+        clue_map[wid] = {
+            "plain": plain,
+            "number": number,
+        }
+
+    # Debug (po želji)
+    # print("🔎 words:", len(words), "clues:", len(clues))
 
     slika_iz_opisa = None
-    clue_map = {c.attrib['word']: c for c in clues}
 
     for word in words:
         word_id = word.attrib.get('id')
-        if word_id not in clue_map:
+        info = clue_map.get(word_id)
+        if not info:
             print(f"⚠️  Word ID brez pripadajočega clue: {word_id}")
             continue
 
-        clue = clue_map[word_id]
         x_range = word.attrib['x']
         y_range = word.attrib['y']
         solution = word.attrib.get('solution')
         if not solution:
             continue
 
-        number = clue.attrib.get('number', '?')
-        celi_opis = clue.text or ''
+        # Plain opis (lahko vsebuje vejice, oklepaje... iz itertext())
+        celi_opis = info["plain"] or ''
+        # Če v opisu uporabljaš # za ločevanje slike, odreži del po #
         prikaz_opis = celi_opis.split('#')[0].strip()
+
+        # Smer: across, če ima x razpon (npr. "10-12"), sicer down
         smer = 'across' if '-' in x_range else 'down'
 
+        # Začetne koordinate
         x = int(x_range.split('-')[0]) - 1 if '-' in x_range else int(x_range) - 1
         y = int(y_range.split('-')[0]) - 1 if '-' in y_range else int(y_range) - 1
 
-        # ✅ Popravek: dolžina brez pomišljajev in presledkov
+        # Dolžina brez presledkov/vezajev
         dolzina = len(solution.replace('-', '').replace(' ', ''))
 
         gesla_opisi.append({
             'x': x,
             'y': y,
-            'stevilka': cell_numbers.get(f"{x},{y}", '?'),
+            'stevilka': cell_numbers.get(f"{x},{y}", info.get("number", '?')),
             'opis': prikaz_opis,
             'solution': solution,
             'smer': smer,
             'dolzina': dolzina
         })
 
+        # Prvo najdeno besedilo lahko uporabimo kot vir za ime slike
         if slika_iz_opisa is None:
             slika_iz_opisa = celi_opis.strip()
 
-    if slika_iz_opisa:
-        slika_ime = normaliziraj_ime(slika_iz_opisa)
-    else:
-        slika_ime = None
+    # Ime slike iz prvega opisa (če obstaja)
+    slika_ime = normaliziraj_ime(slika_iz_opisa) if slika_iz_opisa else None
 
     return {
         'sirina': width,
@@ -130,12 +162,3 @@ def pridobi_podatke_iz_xml(xml_pot):
         'cell_numbers': cell_numbers,
         'slika': slika_ime
     }
-
-
-
-
-
-
-
-
-
