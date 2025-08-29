@@ -278,31 +278,42 @@ def test_iscenje():
 @app.route('/isci_vzorec', methods=['GET', 'POST'])
 def isci_vzorec():
     if request.method == 'POST':
-        # 1) varno preberi JSON
         if not request.is_json:
             return jsonify([])
+
         data = request.get_json(silent=True) or {}
-        if 'vzorec' not in data:
-            return jsonify([])
-
-        vzorec = (data.get('vzorec') or '').upper()
+        vzorec = (data.get('vzorec') or '').upper().replace(' ', '')
         dodatno = data.get('dodatno', '')
-        dolzina_vzorca = len(vzorec)
 
-        # 2) zgradi poizvedbo
+        # 💡 robustno: dolžino vzamemo iz payload-a, sicer iz spinnerja/rezervnih ključev, sicer iz len(vzorec)
+        try:
+            dolzina_vzorca = int(data.get('dolzina') or data.get('stevilo') or 0)
+        except Exception:
+            dolzina_vzorca = 0
+        if dolzina_vzorca <= 0:
+            dolzina_vzorca = len(vzorec)  # fallback
+
+        # Če vzorec nima vseh pozicij, ga DOPOLNI z '_' do izbrane dolžine
+        if len(vzorec) < dolzina_vzorca:
+            vzorec = vzorec + '_' * (dolzina_vzorca - len(vzorec))
+        elif len(vzorec) > dolzina_vzorca:
+            vzorec = vzorec[:dolzina_vzorca]
+
         conn = get_db()
         cursor = conn.cursor()
+
         query = """
             SELECT ID, GESLO, OPIS FROM slovar
             WHERE LENGTH(REPLACE(REPLACE(REPLACE(GESLO, ' ', ''), '-', ''), '_', '')) = ?
               AND OPIS LIKE ?
         """
         params = [dolzina_vzorca, f'%{dodatno}%']
+
         for i, crka in enumerate(vzorec):
             if crka != '_':
                 query += (
                     f" AND SUBSTR("
-                    f"REPLACE(REPLACE(REPLACE(GESLO, ' ', ''), '-', ''), '_', ''), {i+1}, 1"
+                    f"REPLACE(REPLACE(REPLACE(GESLO, ' ', ''), '-', ''), '_', ''), {i + 1}, 1"
                     f") = ?"
                 )
                 params.append(crka)
@@ -310,6 +321,8 @@ def isci_vzorec():
         cursor.execute(query, params)
         results = cursor.fetchall()
         conn.close()
+
+        # (ostanek tvojega konca: sortiranje + jsonify) ostane enak
 
         # 3) SORTIRAJ: osebe najprej, znotraj po imenu
         results = sorted(results, key=lambda row: sort_key_opis(row["OPIS"]))
