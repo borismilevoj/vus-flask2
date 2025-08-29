@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Sudoku – {{ tezavnost }} {{ datum }} | VUS{% endblock %}
+
+{% block content %}
+<div class="container mt-3">
+  <div class="ratio ratio-4x3">
+    <iframe
+      src="{{ sudoku_url }}"
+      title="Sudoku {{ tezavnost }} {{ datum }}"
+      style="width:100%; height:100%; border:1px solid #ddd; border-radius:8px;"
+      loading="lazy"
+    ></iframe>
+  </div>
+</div>
+{% endblock %}

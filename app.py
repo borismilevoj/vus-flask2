@@ -376,17 +376,11 @@ def prikazi_krizanko(datum):
     if datum is None:
         datum = datetime.today().strftime('%Y-%m-%d')
 
-    print(f"✅ KLICANO: prikazi_krizanko za datum: {datum}")
-
     ime_datoteke = f"{datum}.xml"
     osnovna_pot = os.path.dirname(os.path.abspath(__file__))
-
     mesec = datum[:7]
     pot_arhiv = os.path.join(osnovna_pot, 'static', 'CrosswordCompilerApp', mesec, ime_datoteke)
     pot_glavna = os.path.join(osnovna_pot, 'static', 'CrosswordCompilerApp', ime_datoteke)
-
-    print("📁 Iščem arhivsko datoteko:", pot_arhiv)
-    print("📁 Iščem v glavni mapi:", pot_glavna)
 
     if os.path.exists(pot_arhiv):
         pot_do_datoteke = pot_arhiv
@@ -398,11 +392,12 @@ def prikazi_krizanko(datum):
     try:
         podatki = pridobi_podatke_iz_xml(pot_do_datoteke)
     except Exception as e:
-        import traceback
-        traceback.print_exc()
+        import traceback; traceback.print_exc()
         return render_template('napaka.html', sporocilo=f"Napaka pri branju križanke: {e}")
 
-    return render_template('krizanka.html', podatki=podatki)
+    # >>> pomembno: posreduj datum v template
+    return render_template('krizanka.html', podatki=podatki, datum=datum)
+
 
 @app.route('/krizanka/arhiv')
 def arhiv_krizank():
@@ -447,24 +442,25 @@ def arhiv_krizank_mesec(mesec):
 @app.route('/sudoku')
 def osnovni_sudoku():
     return redirect(url_for('prikazi_danasnji_sudoku', tezavnost='easy'))
-
 @app.route('/sudoku/<tezavnost>/<datum>')
 def prikazi_sudoku(tezavnost, datum):
     leto_mesec = datum[:7]  # "YYYY-MM"
-    ime = f'Sudoku_{tezavnost}_{datum}.html'
-    pot_arhiv = os.path.join('static', f'Sudoku_{tezavnost}', leto_mesec, ime)
-    pot_aktualno = os.path.join('static', f'Sudoku_{tezavnost}', ime)
+    ime = f"Sudoku_{tezavnost}_{datum}.html"
+
+    pot_arhiv = os.path.join('static', f"Sudoku_{tezavnost}", leto_mesec, ime)
+    pot_aktualno = os.path.join('static', f"Sudoku_{tezavnost}", ime)
 
     if os.path.exists(pot_arhiv):
-        pot = pot_arhiv
+        rel_pot = f"Sudoku_{tezavnost}/{leto_mesec}/{ime}"
     elif os.path.exists(pot_aktualno):
-        pot = pot_aktualno
+        rel_pot = f"Sudoku_{tezavnost}/{ime}"
     else:
         return render_template('napaka.html', sporocilo="Sudoku za ta datum ali težavnost ni na voljo.")
 
-    with open(pot, encoding="utf-8") as f:
-        vsebina = f.read()
-    return render_template_string(vsebina)
+    sudoku_url = url_for('static', filename=rel_pot)
+    # >>> Ključno: zdaj gre stran skozi base.html, zato se naloži tudi GA oznaka
+    return render_template('sudoku_embed.html', sudoku_url=sudoku_url, tezavnost=tezavnost, datum=datum)
+
 
 @app.route('/sudoku/<tezavnost>')
 def prikazi_danasnji_sudoku(tezavnost):
