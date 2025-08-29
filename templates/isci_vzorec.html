@@ -120,90 +120,99 @@
   });
 
   function generirajPolja() {
-    const container = document.getElementById('inputsContainer');
-    container.innerHTML = '';
-    const stevilo = parseInt(document.getElementById('steviloCrk').value);
+  const container = document.getElementById('inputsContainer');
+  container.innerHTML = '';
+  const stevilo = parseInt(document.getElementById('steviloCrk').value, 10) || 0;
 
-    for (let i = 0; i < stevilo; i++) {
-      const input = document.createElement('input');
-      input.type = 'text';
-      input.maxLength = 1;
-      input.style.width = '45px';
-      input.style.height = '45px';
-      input.style.textAlign = 'center';
-      input.style.fontSize = '1.5rem';
-      input.style.margin = '5px';
+  for (let i = 0; i < stevilo; i++) {
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.maxLength = 1;
+    input.style.width = '45px';
+    input.style.height = '45px';
+    input.style.textAlign = 'center';
+    input.style.fontSize = '1.5rem';
+    input.style.margin = '5px';
 
-      input.addEventListener('input', () => {
-        if (input.value.length === 1) {
+    // 👉 vedno v velike črke
+    input.addEventListener('input', () => {
+      if (input.value) input.value = input.value.toUpperCase();
+      if (input.value.length === 1) {
+        const next = input.nextElementSibling;
+        if (next && next.tagName === 'INPUT') next.focus();
+      }
+    });
+
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Backspace' && !input.value) {
+        const prev = input.previousElementSibling;
+        if (prev && prev.tagName === 'INPUT') { prev.focus(); e.preventDefault(); }
+      }
+      if (e.key === 'Enter' || e.key === 'Tab') {
+        e.preventDefault();
+        if (e.shiftKey) {
+          const prev = input.previousElementSibling;
+          if (prev && prev.tagName === 'INPUT') prev.focus();
+        } else {
           const next = input.nextElementSibling;
           if (next && next.tagName === 'INPUT') next.focus();
+          // 👉 če smo na zadnjem polju, sproži iskanje
+          if (!next) window.isciVzorec();
         }
-      });
+      }
+    });
 
-      input.addEventListener('keydown', (e) => {
-        if (e.key === 'Backspace' && !input.value) {
-          const prev = input.previousElementSibling;
-          if (prev && prev.tagName === 'INPUT') {
-            prev.focus();
-            e.preventDefault();
-          }
-        }
-        if (e.key === 'Enter' || e.key === 'Tab') {
-          e.preventDefault();
-          if (e.shiftKey) {
-            const prev = input.previousElementSibling;
-            if (prev && prev.tagName === 'INPUT') prev.focus();
-          } else {
-            const next = input.nextElementSibling;
-            if (next && next.tagName === 'INPUT') next.focus();
-          }
-        }
-      });
-
-      container.appendChild(input);
-    }
-
-    const prva = container.querySelector('input');
-    if (prva) prva.focus();
+    container.appendChild(input);
   }
+  const prva = container.querySelector('input');
+  if (prva) prva.focus();
+}
+
 
   window.isciVzorec = function () {
-    const crke = Array.from(document.querySelectorAll('#inputsContainer input'))
-      .map(input => input.value || '_')
-      .join('');
-    const dodatno = document.getElementById('dodatno').value;
+  const stevilo = parseInt(document.getElementById('steviloCrk').value, 10) || 0;
 
-    fetch('/isci_vzorec', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ vzorec: crke, dodatno: dodatno })
-    })
-      .then(response => {
-        if (!response.ok) throw new Error("Napaka " + response.status);
-        return response.json();
-      })
-      .then(data => {
-        const container = document.getElementById('rezultati');
-        container.innerHTML = '';
+  // zberi znake; prazno -> '_', vedno UPPER
+  let vzorec = Array.from(document.querySelectorAll('#inputsContainer input'))
+    .map(inp => (inp.value || '_').toUpperCase())
+    .join('');
 
-        if (data.length > 0) {
-          container.innerHTML = `<div class="alert alert-info">Najdeno: ${data.length} zadetkov</div>`;
-          let tabela = `<table class="table table-bordered"><thead><tr><th>Geslo</th><th>Opis</th></tr></thead><tbody>`;
-          data.forEach(r => {
-            tabela += `<tr><td>${r.GESLO}</td><td>${r.OPIS}</td></tr>`;
-          });
-          tabela += '</tbody></table>';
-          container.innerHTML += tabela;
-        } else {
-          container.innerHTML = '<div class="alert alert-warning">Ni najdenih rezultatov.</div>';
-        }
-      })
-      .catch(err => {
-        console.error("NAPAKA PRI FETCHU:", err);
-        alert("Napaka: " + err.message);
-      });
+  // poravnaj na izbrano dolžino (padEnd/slice)
+  if (stevilo > 0) {
+    if (vzorec.length < stevilo) vzorec = vzorec.padEnd(stevilo, '_');
+    else if (vzorec.length > stevilo) vzorec = vzorec.slice(0, stevilo);
   }
+
+  const dodatno = (document.getElementById('dodatno').value || '').trim();
+
+  fetch('/isci_vzorec', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ vzorec: vzorec, dolzina: stevilo, dodatno: dodatno })
+  })
+  .then(response => {
+    if (!response.ok) throw new Error("Napaka " + response.status);
+    return response.json();
+  })
+  .then(data => {
+    const container = document.getElementById('rezultati');
+    container.innerHTML = '';
+    if (data.length > 0) {
+      container.innerHTML = `<div class="alert alert-info">Najdeno: ${data.length} zadetkov</div>`;
+      let tabela = `<table class="table table-bordered"><thead><tr><th>Geslo</th><th>Opis</th></tr></thead><tbody>`;
+      data.forEach(r => { tabela += `<tr><td>${r.GESLO}</td><td>${r.OPIS}</td></tr>`; });
+      tabela += '</tbody></table>';
+      container.innerHTML += tabela;
+    } else {
+      container.innerHTML = '<div class="alert alert-warning">Ni najdenih rezultatov.</div>';
+    }
+  })
+  .catch(err => {
+    console.error("NAPAKA PRI FETCHU:", err);
+    alert("Napaka: " + err.message);
+  });
+}
+
 
   window.ponastaviIskanje = function () {
     document.getElementById('dodatno').value = '';
