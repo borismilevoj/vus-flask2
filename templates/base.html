@@ -66,14 +66,19 @@
     </style>
     ...
     {% block styles %}{% endblock %}
-    <!-- Google Analytics GA4 -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-E14XLFV5NS"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-E14XLFV5NS');
-    </script>
+    <!-- GA4 -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-YB9MEPL26P"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){ dataLayer.push(arguments); }
+  gtag('js', new Date());
+  gtag('config', 'G-YB9MEPL26P', {
+    debug_mode: true,          // za DebugView
+    transport_type: 'beacon'   // zanesljivejši pošiljatelj
+    // NE nastavljaj send_page_view:false, razen če ročno pošiljaš page_view
+  });
+</script>
+
 </head>
 <body>
 ...
