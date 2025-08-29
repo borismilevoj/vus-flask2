@@ -458,7 +458,6 @@ def prikazi_sudoku(tezavnost, datum):
         return render_template('napaka.html', sporocilo="Sudoku za ta datum ali težavnost ni na voljo.")
 
     sudoku_url = url_for('static', filename=rel_pot)
-    # >>> Ključno: zdaj gre stran skozi base.html, zato se naloži tudi GA oznaka
     return render_template('sudoku_embed.html', sudoku_url=sudoku_url, tezavnost=tezavnost, datum=datum)
 
 
