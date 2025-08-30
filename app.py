@@ -68,6 +68,37 @@ def get_db():
     conn.row_factory = sqlite3.Row
     return conn
 
+import re
+import unicodedata
+
+def normalize_search(text: str) -> str:
+    """lowercase, odstrani šumnike, pobriši ločila, stisni presledke"""
+    if not text:
+        return ""
+    s = unicodedata.normalize('NFD', text)
+    s = ''.join(c for c in s if not unicodedata.combining(c))   # brez diakritike
+    s = re.sub(r'[^a-zA-Z0-9\s]', ' ', s)                       # ločila -> presledek
+    s = re.sub(r'\s+', ' ', s).strip().lower()
+    return s
+
+def parse_tokens(q: str):
+    """Vrne (include_tokens, exclude_tokens). Fraze v "..." so en token. -token izključi."""
+    if not q:
+        return [], []
+    parts = re.findall(r'"([^"]+)"|(\S+)', q)
+    inc, exc = [], []
+    for quoted, plain in parts:
+        tok = quoted or plain
+        tok = normalize_search(tok)
+        if not tok:
+            continue
+        if plain and plain.startswith('-') and tok:
+            exc.append(normalize_search(plain[1:]))
+        else:
+            inc.append(tok)
+    return inc, exc
+
+
 # --- sortiranje po imenu (osebe najprej) ---
 def normalize_ascii(text: str) -> str:
     if not text:
@@ -285,15 +316,15 @@ def isci_vzorec():
         vzorec = (data.get('vzorec') or '').upper().replace(' ', '')
         dodatno = data.get('dodatno', '')
 
-        # 💡 robustno: dolžino vzamemo iz payload-a, sicer iz spinnerja/rezervnih ključev, sicer iz len(vzorec)
+        # dolžina: pride iz front-enda (stevilo črk); fallback na len(vzorec)
         try:
             dolzina_vzorca = int(data.get('dolzina') or data.get('stevilo') or 0)
         except Exception:
             dolzina_vzorca = 0
         if dolzina_vzorca <= 0:
-            dolzina_vzorca = len(vzorec)  # fallback
+            dolzina_vzorca = len(vzorec)
 
-        # Če vzorec nima vseh pozicij, ga DOPOLNI z '_' do izbrane dolžine
+        # poravnava vzorca na izbrano dolžino
         if len(vzorec) < dolzina_vzorca:
             vzorec = vzorec + '_' * (dolzina_vzorca - len(vzorec))
         elif len(vzorec) > dolzina_vzorca:
@@ -302,19 +333,18 @@ def isci_vzorec():
         conn = get_db()
         cursor = conn.cursor()
 
+        # osnovni SQL – dolžina brez presledkov/vezajev/podčrtajev + “maskirano” ujemanje po črkah
         query = """
             SELECT ID, GESLO, OPIS FROM slovar
             WHERE LENGTH(REPLACE(REPLACE(REPLACE(GESLO, ' ', ''), '-', ''), '_', '')) = ?
-              AND OPIS LIKE ?
+              AND OPIS IS NOT NULL
         """
-        params = [dolzina_vzorca, f'%{dodatno}%']
+        params = [dolzina_vzorca]
 
         for i, crka in enumerate(vzorec):
             if crka != '_':
                 query += (
-                    f" AND SUBSTR("
-                    f"REPLACE(REPLACE(REPLACE(GESLO, ' ', ''), '-', ''), '_', ''), {i + 1}, 1"
-                    f") = ?"
+                    f" AND SUBSTR(REPLACE(REPLACE(REPLACE(GESLO, ' ', ''), '-', ''), '_', ''), {i+1}, 1) = ?"
                 )
                 params.append(crka)
 
@@ -322,27 +352,34 @@ def isci_vzorec():
         results = cursor.fetchall()
         conn.close()
 
-        # (ostanek tvojega konca: sortiranje + jsonify) ostane enak
+        # --- robusten filter po 'dodatno': AND logika, fraze v "...", izključitve z '-', brez šumnikov ---
+        inc, exc = parse_tokens(dodatno)
 
-        # 3) SORTIRAJ: osebe najprej, znotraj po imenu
+        def match_row(row):
+            if not inc and not exc:
+                return True
+            norm = normalize_search(row["OPIS"])
+            return all(t in norm for t in inc) and all(t not in norm for t in exc)
+
+        results = [row for row in results if match_row(row)]
+
+        # sortiraj (osebe najprej, znotraj po imenu)
         results = sorted(results, key=lambda row: sort_key_opis(row["OPIS"]))
 
-        # 4) vrni tudi 'ime' + izklopi cache
-        payload = [
-            {
-                "id": row["ID"],
-                "GESLO": row["GESLO"].strip(),
-                "OPIS": row["OPIS"],
-                "ime": ime_za_sort(row["OPIS"])
-            }
-            for row in results
-        ]
+        payload = [{
+            "id": row["ID"],
+            "GESLO": row["GESLO"].strip(),
+            "OPIS": row["OPIS"],
+            "ime": ime_za_sort(row["OPIS"])  # po želji za front-end
+        } for row in results]
+
         resp = jsonify(payload)
         resp.headers['Cache-Control'] = 'no-store'
         return resp
 
     # GET: vrni stran
     return render_template('isci_vzorec.html')
+
 
 @app.route('/isci_opis', methods=['GET', 'POST'])
 def isci_opis():
