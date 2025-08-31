@@ -12,62 +12,95 @@
   .highlight { outline:2px solid #3b82f6; outline-offset:-2px; }
   .correct { background:#e6ffe6 !important; }
   .incorrect { background:#ffe6e6 !important; }
-  #opisKartica { display:none; flex-direction:column; gap:12px; border:1px solid #ddd; border-radius:12px; padding:12px; background:#fafafa; }
+
+  /* --- Plavajoča (draggable) kartica z ročajem --- */
+  #opisKartica {
+    position: fixed;
+    top: 90px;
+    right: 16px;                 /* default: sidra na desni */
+    width: min(380px, 90vw);
+    max-height: 70vh;
+    overflow: auto;
+    z-index: 9999;
+    background: #fafafa;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.12);
+    touch-action: none;          /* omogoči drag na mobilnikih */
+    display: none;               /* pokažemo ob prvem kliku */
+  }
+  #opisKartica.dragging { cursor: grabbing; }
+  #karticaHandle {
+    display:flex; align-items:center; gap:8px;
+    padding:6px 10px; background:#eee; border-bottom:1px solid #ddd;
+    font-weight:600; user-select:none; cursor:grab;
+    border-top-left-radius: 12px; border-top-right-radius: 12px;
+  }
+  #karticaBody { padding: 10px; }
   #karticaOpis { font-size:16px; line-height:1.35; }
-  #karticaSlika { max-width:100%; height:auto; border-radius:8px; border:1px solid #eee; }
-  .toolbar { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+  #karticaSlika { max-width:100%; height:auto; border:1px solid #eee; border-radius:8px; }
+
+  /* --- Plavajoči gumb za smer (tudi draggable) --- */
+  #floatSmerBtn {
+    position: fixed;
+    left: 16px; bottom: 16px;
+    z-index: 10000;
+    width: 56px; height: 56px; border-radius: 50%;
+    box-shadow: 0 8px 24px rgba(0,0,0,.18);
+    touch-action: none;
+  }
 </style>
 
-<div class="toolbar">
-  <button class="btn btn-primary btn-sm" onclick="zamenjajSmer()">↕️ Zamenjaj smer</button>
-  <button class="btn btn-secondary btn-sm" onclick="preklopiKartico()">🛈 Prikaži/Skrij opis</button>
-  <span id="statusSmer" class="ms-2">Smer vnosa: vodoravno</span>
+<div class="d-flex justify-content-end mb-3">
+  <a class="btn btn-secondary" href="/krizanka/arhiv">📂 Arhiv križank</a>
 </div>
 
 <div id="wrap">
   <div id="grid" aria-label="Mreža križanke"></div>
-
-  <aside id="opisKartica">
-    <div id="karticaOpis">Klikni na polje za prikaz opisa</div>
-    <img id="karticaSlika" alt="Slika k opisu (če obstaja)">
-  </aside>
 </div>
 
+<!-- Plavajoča kartica z ročajem -->
+<aside id="opisKartica">
+  <div id="karticaHandle">☰ Opis</div>
+  <div id="karticaBody">
+    <div id="karticaOpis">Klikni na polje za prikaz opisa</div>
+    <img id="karticaSlika" alt="Slika k opisu (če obstaja)">
+  </div>
+</aside>
+
+<!-- Plavajoči gumb za spremembo smeri -->
+<button id="floatSmerBtn" class="btn btn-primary" title="Spremeni smer" onclick="zamenjajSmer()">↕️</button>
+
+{% endblock %}
+
+{% block scripts %}
 <script>
-// --- normalizacija naziva slike ---
+/* ====== Helper: ime slike iz opisa ====== */
 function normalizirajNaziv(opis) {
-  return opis
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
+  return (opis || '')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     .replace(/[-–—−†().,]/g, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, '')
-    .trim()
-    .split(/\s+/)
-    .slice(0, 15)
-    .join('_');
+    .toLowerCase().replace(/[^a-z0-9\s]/g, '')
+    .trim().split(/\s+/).slice(0, 15).join('_');
 }
 
+/* ====== Globalno stanje ====== */
 let trenutnaSmer = 'across';
-let aktivniX = null;
-let aktivniY = null;
+let aktivniX = null, aktivniY = null;
 
-// === DATUMSKO-VEZAN KLJUČ ZA SHRANJEVANJE STANJA ===
-const datumFromServer = "{{ datum|default('', true) }}"; // iz Flask-a
+/* ====== Datumsko vezan ID (za shranjevanje stanja in pozicij) ====== */
+const datumFromServer = "{{ datum|default('', true) }}";
 const datumFromUrl = (location.pathname.match(/\/krizanka\/(\d{4}-\d{2}-\d{2})/) || [,''])[1];
 const PUZZLE_ID = datumFromServer || datumFromUrl || new Date().toISOString().slice(0,10);
-// tip hrambe: localStorage (ohrani med sejami) ali sessionStorage (izbriše se ob zaprtju brskalnika)
+
+/* ====== Shrani / Obnovi vnos mreže (per-datum) ====== */
 const storage = window.localStorage;
 const krizankaKey = `krizanka-rezultat-${PUZZLE_ID}`;
-// enkratni cleanup starega ključa brez datuma (če si prej shranjeval na /krizanka)
-try { storage.removeItem("krizanka-rezultat-/krizanka"); } catch(e) {}
-
 function shraniKrizanko() {
   const polja = Array.from(document.querySelectorAll("#grid input"))
     .map(inp => ({x: inp.dataset.x, y: inp.dataset.y, val: inp.value}));
   try { storage.setItem(krizankaKey, JSON.stringify(polja)); } catch(e){}
 }
-
 function obnoviKrizanko() {
   try {
     const shrani = storage.getItem(krizankaKey);
@@ -80,38 +113,89 @@ function obnoviKrizanko() {
   } catch(e){}
 }
 
-function zamenjajSmer() {
-  trenutnaSmer = (trenutnaSmer === 'across') ? 'down' : 'across';
-  const smerTxt = (trenutnaSmer === 'across' ? 'vodoravno' : 'navpično');
-  document.getElementById('statusSmer').textContent = "Smer vnosa: " + smerTxt;
-  if (aktivniX !== null && aktivniY !== null) prikaziOpis(aktivniX, aktivniY);
-}
+/* ====== Povlečno (draggable) za kartico in gumb (shrani po datumu) ====== */
+(function(){
+  function makeDraggable(el, {handle=null, storageKey}) {
+    if (!el) return;
+    let startX=0,startY=0, elX=0,elY=0, dragging=false;
+    const h = handle || el;
 
-function preklopiKartico() {
-  const kartica = document.getElementById('opisKartica');
-  kartica.style.display = (kartica.style.display === "none" || kartica.style.display === "") ? "flex" : "none";
-}
+    // obnovi pozicijo
+    try {
+      const saved = JSON.parse(localStorage.getItem(storageKey) || 'null');
+      if (saved && typeof saved.x==='number' && typeof saved.y==='number') {
+        el.style.left = saved.x + 'px';
+        el.style.top  = saved.y + 'px';
+        el.style.right = 'auto';
+      }
+    } catch(_) {}
 
-function premakniNaprej(input) {
-  let x = +input.dataset.x;
-  let y = +input.dataset.y;
-  while (true) {
-    x = (trenutnaSmer === 'across') ? x + 1 : x;
-    y = (trenutnaSmer === 'down') ? y + 1 : y;
-    const next = document.querySelector(`input[data-x='${x}'][data-y='${y}']`);
-    if (!next) break;
-    if (!next.classList.contains('correct')) { next.focus(); break; }
+    const onDown = (e) => {
+      dragging = true;
+      el.classList.add('dragging');
+      const rect = el.getBoundingClientRect();
+      elX = rect.left; elY = rect.top;
+      startX = (e.touches?.[0]?.clientX ?? e.clientX);
+      startY = (e.touches?.[0]?.clientY ?? e.clientY);
+      el.style.left = rect.left + 'px';
+      el.style.top  = rect.top  + 'px';
+      el.style.right = 'auto';
+      window.addEventListener('pointermove', onMove, {passive:false});
+      window.addEventListener('pointerup', onUp, {once:true});
+      window.addEventListener('pointercancel', onUp, {once:true});
+      e.preventDefault();
+    };
+    const clamp = (v,min,max) => Math.max(min, Math.min(max, v));
+    const onMove = (e) => {
+      if (!dragging) return;
+      const cx = (e.touches?.[0]?.clientX ?? e.clientX);
+      const cy = (e.touches?.[0]?.clientY ?? e.clientY);
+      let nx = elX + (cx - startX);
+      let ny = elY + (cy - startY);
+      const maxX = window.innerWidth  - el.offsetWidth  - 4;
+      const maxY = window.innerHeight - el.offsetHeight - 4;
+      nx = clamp(nx, 4, Math.max(4, maxX));
+      ny = clamp(ny, 56, Math.max(56, maxY)); // pod navbar
+      el.style.left = nx + 'px';
+      el.style.top  = ny + 'px';
+      e.preventDefault();
+    };
+    const onUp = () => {
+      dragging = false;
+      el.classList.remove('dragging');
+      const rect = el.getBoundingClientRect();
+      try { localStorage.setItem(storageKey, JSON.stringify({x:Math.round(rect.left), y:Math.round(rect.top)})); } catch(_){}
+      window.removeEventListener('pointermove', onMove);
+    };
+
+    h.style.touchAction = 'none';
+    h.addEventListener('pointerdown', onDown);
+    window.addEventListener('resize', () => {
+      const rect = el.getBoundingClientRect();
+      const nx = Math.min(rect.left, window.innerWidth - el.offsetWidth - 4);
+      const ny = Math.min(rect.top,  window.innerHeight - el.offsetHeight - 4);
+      el.style.left = Math.max(4, nx) + 'px';
+      el.style.top  = Math.max(56, ny) + 'px';
+    });
   }
-}
 
+  window.addEventListener('DOMContentLoaded', () => {
+    makeDraggable(document.getElementById('opisKartica'), {handle: document.getElementById('karticaHandle'), storageKey: `pos-kartica-${PUZZLE_ID}`});
+    makeDraggable(document.getElementById('floatSmerBtn'), {storageKey: `pos-smerbtn-${PUZZLE_ID}`});
+  });
+})();
+
+/* ====== Tvoja mreža / podatki iz backenda ====== */
 document.addEventListener('DOMContentLoaded', function () {
   const grid = document.getElementById('grid');
   const width = {{ podatki.sirina }};
   const height = {{ podatki.visina }};
   const crna_polja = {{ podatki.crna_polja | tojson }};
   const gesla_opisi = {{ podatki.gesla_opisi | tojson }};
+
   grid.style.gridTemplateColumns = `repeat(${width}, 40px)`;
 
+  // zgradi mrežo
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       const cell = document.createElement('div');
@@ -126,7 +210,7 @@ document.addEventListener('DOMContentLoaded', function () {
         cell.appendChild(input);
 
         const geslo = gesla_opisi.find(g => g.x === x && g.y === y);
-        if (geslo && geslo.stevilka !== '?') {
+        if (geslo && geslo.stevilka && geslo.stevilka !== '?') {
           const numberDiv = document.createElement('div');
           numberDiv.classList.add('cell-number');
           numberDiv.textContent = geslo.stevilka;
@@ -134,6 +218,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         input.addEventListener('input', () => {
+          if (input.value) input.value = input.value.toUpperCase();
           preveriCelotnoGeslo(input);
           if (input.value) premakniNaprej(input);
           shraniKrizanko();
@@ -147,23 +232,47 @@ document.addEventListener('DOMContentLoaded', function () {
   // obnovi stanje za ta datum
   obnoviKrizanko();
 
-  function prikaziOpis(x, y) {
+  // ====== UI funkcije ======
+  window.zamenjajSmer = function () {
+    trenutnaSmer = (trenutnaSmer === 'across') ? 'down' : 'across';
+    if (aktivniX !== null && aktivniY !== null) prikaziOpis(aktivniX, aktivniY);
+  };
+
+  window.preklopiKartico = function () {
+    const k = document.getElementById('opisKartica');
+    k.style.display = (k.style.display === 'none' || !k.style.display) ? 'block' : 'none';
+  };
+
+  function premakniNaprej(input) {
+    let x = +input.dataset.x, y = +input.dataset.y;
+    while (true) {
+      x = (trenutnaSmer === 'across') ? x + 1 : x;
+      y = (trenutnaSmer === 'down')  ? y + 1 : y;
+      const next = document.querySelector(`input[data-x='${x}'][data-y='${y}']`);
+      if (!next) break;
+      if (!next.classList.contains('correct')) { next.focus(); break; }
+    }
+  }
+
+  window.prikaziOpis = function (x, y) {
     aktivniX = x; aktivniY = y;
-    document.getElementById('opisKartica').style.display = "flex";
+    const kartica = document.getElementById('opisKartica');
+    kartica.style.display = "block";
     document.querySelectorAll('.cell').forEach(c => c.classList.remove('highlight'));
 
     const geslo = gesla_opisi.find(g =>
       g.smer === trenutnaSmer &&
       ((g.smer === 'across' && g.y === y && x >= g.x && x < g.x + g.dolzina) ||
-       (g.smer === 'down' && g.x === x && y >= g.y && y < g.y + g.dolzina)));
+       (g.smer === 'down'  && g.x === x && y >= g.y && y < g.y + g.dolzina))
+    );
 
     const opisPolje = document.getElementById('karticaOpis');
-    const slikaImg = document.getElementById('karticaSlika');
+    const slikaImg  = document.getElementById('karticaSlika');
 
     if (geslo) {
       for (let i = 0; i < geslo.dolzina; i++) {
         const tx = geslo.smer === 'across' ? geslo.x + i : geslo.x;
-        const ty = geslo.smer === 'down' ? geslo.y + i : geslo.y;
+        const ty = geslo.smer === 'down'  ? geslo.y + i : geslo.y;
         const inp = document.querySelector(`input[data-x='${tx}'][data-y='${ty}']`);
         if (inp) inp.parentElement.classList.add('highlight');
       }
@@ -173,48 +282,43 @@ document.addEventListener('DOMContentLoaded', function () {
 
       // Pametno poišči sliko (jpg, png, webp)
       const rezultat = normalizirajNaziv(geslo.opis);
-      const koncnice = ['jpg', 'png', 'webp'];
-      function nastaviSliko(i) {
+      const koncnice = ['jpg','png','webp'];
+      (function nastaviSliko(i){
         if (i >= koncnice.length) { slikaImg.src = ""; return; }
         const pot = `/static/Images/${rezultat}.${koncnice[i]}`;
         slikaImg.src = pot;
-        slikaImg.onerror = () => nastaviSliko(i + 1);
-      }
-      nastaviSliko(0);
+        slikaImg.onerror = () => nastaviSliko(i+1);
+      })(0);
     } else {
       opisPolje.textContent = 'Klikni na polje za prikaz opisa';
       slikaImg.src = "";
     }
-  }
+  };
 
   function preveriCelotnoGeslo(input) {
-    const x = +input.dataset.x;
-    const y = +input.dataset.y;
+    const x = +input.dataset.x, y = +input.dataset.y;
     const geslo = gesla_opisi.find(g =>
       (g.smer === 'across' && g.y === y && x >= g.x && x < g.x + g.dolzina) ||
-      (g.smer === 'down' && g.x === x && y >= g.y && y < g.y + g.dolzina));
+      (g.smer === 'down'  && g.x === x && y >= g.y && y < g.y + g.dolzina)
+    );
     if (!geslo) return;
 
-    const vnosPolja = [];
+    const polja = [];
     for (let i = 0; i < geslo.dolzina; i++) {
       const tx = geslo.smer === 'across' ? geslo.x + i : geslo.x;
-      const ty = geslo.smer === 'down' ? geslo.y + i : geslo.y;
+      const ty = geslo.smer === 'down'  ? geslo.y + i : geslo.y;
       const inp = document.querySelector(`input[data-x='${tx}'][data-y='${ty}']`);
-      if (inp) vnosPolja.push(inp);
+      if (inp) polja.push(inp);
     }
 
-    // primerjaj znak-po-znak (upoštevaj ČŠŽ)
     const resitev = geslo.solution.replace(/[^A-ZČŠŽ]/gi, '').toUpperCase();
-    for (let i = 0; i < vnosPolja.length; i++) {
-      const inp = vnosPolja[i];
+    for (let i = 0; i < polja.length; i++) {
+      const inp = polja[i];
       const znak = (inp.value || '').toUpperCase();
-      inp.classList.remove('correct', 'incorrect');
+      inp.classList.remove('correct','incorrect');
       if (!znak.match(/[A-ZČŠŽ]/)) continue;
-      const index = (geslo.smer === 'across')
-        ? (+inp.dataset.x - geslo.x)
-        : (+inp.dataset.y - geslo.y);
-      if (znak === resitev[index]) inp.classList.add('correct');
-      else inp.classList.add('incorrect');
+      const idx = (geslo.smer === 'across') ? (+inp.dataset.x - geslo.x) : (+inp.dataset.y - geslo.y);
+      if (znak === resitev[idx]) inp.classList.add('correct'); else inp.classList.add('incorrect');
     }
   }
 });
