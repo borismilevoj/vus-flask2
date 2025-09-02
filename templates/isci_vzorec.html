@@ -188,51 +188,61 @@
   }
 
   window.isciVzorec = function () {
-    const stevilo = parseInt(document.getElementById('steviloCrk').value, 10) || 0;
+  const stevilo = parseInt(document.getElementById('steviloCrk').value, 10) || 0;
 
-    // zberi znake; prazno -> '_', vedno UPPER
-    let vzorec = Array.from(document.querySelectorAll('#inputsContainer input'))
-      .map(inp => (inp.value || '_').toUpperCase())
-      .join('');
+  // zberi znake; prazno -> '_', vedno UPPER
+  let vzorec = Array.from(document.querySelectorAll('#inputsContainer input'))
+    .map(inp => (inp.value || '_').toUpperCase())
+    .join('');
 
-    // poravnaj na izbrano dolžino (padEnd/slice)
-    if (stevilo > 0) {
-      if (vzorec.length < stevilo) vzorec = vzorec.padEnd(stevilo, '_');
-      else if (vzorec.length > stevilo) vzorec = vzorec.slice(0, stevilo);
-    }
-
-    const dodatno = (document.getElementById('dodatno').value || '').trim();
-
-    fetch('/isci_vzorec', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      // pošljemo tudi dolžino!
-      body: JSON.stringify({ vzorec, dolzina: stevilo, dodatno }),
-      cache: 'no-store'
-    })
-    .then(response => {
-      if (!response.ok) throw new Error("Napaka " + response.status);
-      return response.json();
-    })
-    .then(data => {
-      const container = document.getElementById('rezultati');
-      container.innerHTML = '';
-      if (data.length > 0) {
-        container.innerHTML = `<div class="alert alert-info">Najdeno: ${data.length} zadetkov</div>`;
-        let tabela = `<table class="table table-bordered">
-          <thead><tr><th>Geslo</th><th>Opis</th></tr></thead><tbody>`;
-        data.forEach(r => { tabela += `<tr><td>${r.GESLO}</td><td>${r.OPIS}</td></tr>`; });
-        tabela += '</tbody></table>';
-        container.innerHTML += tabela;
-      } else {
-        container.innerHTML = '<div class="alert alert-warning">Ni najdenih rezultatov.</div>';
-      }
-    })
-    .catch(err => {
-      console.error("NAPAKA PRI FETCHU:", err);
-      alert("Napaka: " + err.message);
-    });
+  // poravnaj na izbrano dolžino (padEnd/slice)
+  if (stevilo > 0) {
+    if (vzorec.length < stevilo) vzorec = vzorec.padEnd(stevilo, '_');
+    else if (vzorec.length > stevilo) vzorec = vzorec.slice(0, stevilo);
   }
+
+  const dodatno = (document.getElementById('dodatno').value || '').trim();
+
+  fetch('/isci_vzorec', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    // pošljemo tudi dolžino!
+    body: JSON.stringify({ vzorec, dolzina: stevilo, dodatno }),
+    cache: 'no-store'
+  })
+  .then(response => {
+    if (!response.ok) throw new Error("Napaka " + response.status);
+    return response.json();
+  })
+  .then(data => {
+    // --- GA dogodek: pattern_search (po prejemu rezultatov) ---
+    try {
+      if (typeof window.gtagEvent === 'function') {
+        gtagEvent('pattern_search', { letters: stevilo, pattern: vzorec, hits: data.length });
+      } else if (typeof window.gtag === 'function') {
+        gtag('event', 'pattern_search', { letters: stevilo, pattern: vzorec, hits: data.length });
+      }
+    } catch (_) {}
+
+    const container = document.getElementById('rezultati');
+    container.innerHTML = '';
+    if (data.length > 0) {
+      container.innerHTML = `<div class="alert alert-info">Najdeno: ${data.length} zadetkov</div>`;
+      let tabela = `<table class="table table-bordered">
+        <thead><tr><th>Geslo</th><th>Opis</th></tr></thead><tbody>`;
+      data.forEach(r => { tabela += `<tr><td>${r.GESLO}</td><td>${r.OPIS}</td></tr>`; });
+      tabela += '</tbody></table>';
+      container.innerHTML += tabela;
+    } else {
+      container.innerHTML = '<div class="alert alert-warning">Ni najdenih rezultatov.</div>';
+    }
+  })
+  .catch(err => {
+    console.error("NAPAKA PRI FETCHU:", err);
+    alert("Napaka: " + err.message);
+  });
+}
+
 
   window.ponastaviIskanje = function () {
     document.getElementById('dodatno').value = '';

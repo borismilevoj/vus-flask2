@@ -1,6 +1,6 @@
 from arhiviranje_util import premakni_krizanke_v_mesece, premakni_sudoku_v_mesece
 
-mesec = "2025-05"
+mesec = "2025-08"
 
 krizanke = premakni_krizanke_v_mesece(mesec)
 sudoku = premakni_sudoku_v_mesece(mesec)
