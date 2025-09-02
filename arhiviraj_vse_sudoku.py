@@ -11,7 +11,7 @@ tezavnosti = [
 ]
 
 # Nastavi mesec za arhiviranje (npr. "2025-07" ali input())
-mesec_za_arhiv = "2025-07"
+mesec_za_arhiv = "2025-08"
 
 for tezavnost in tezavnosti:
     sudoku_dir = os.path.join(base_path, tezavnost)

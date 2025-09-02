@@ -2,9 +2,22 @@
 {% block title %}Sudoku – {{ tezavnost }} {{ datum }} | VUS{% endblock %}
 
 {% block content %}
+<style>
+  /* Na manjših zaslonih povečaj razmerje (višino) okvirja */
+  @media (max-width: 576px) {
+    .ratio { --bs-aspect-ratio: 120%; } /* privzeto 4:3 -> ~1.2:1 */
+  }
+</style>
+
 <div class="container mt-3">
+  <div class="d-flex justify-content-between align-items-center mb-2">
+    <h2 class="h5 m-0">Sudoku – {{ tezavnost|capitalize }} ({{ datum }})</h2>
+    <a class="btn btn-outline-secondary btn-sm" href="{{ sudoku_url }}" target="_blank" rel="noopener">Odpri v novem oknu</a>
+  </div>
+
   <div class="ratio ratio-4x3">
     <iframe
+      id="sudoku-frame"
       src="{{ sudoku_url }}"
       title="Sudoku {{ tezavnost }} {{ datum }}"
       style="width:100%; height:100%; border:1px solid #ddd; border-radius:8px;"
@@ -13,3 +26,47 @@
   </div>
 </div>
 {% endblock %}
+
+{% block scripts %}
+<script>
+  // Po odprtju strani zabeleži "open" (če je gtagEvent na voljo iz base.html)
+  (function trackOpen() {
+    try {
+      if (typeof gtagEvent === 'function') {
+        gtagEvent('sudoku_open', { difficulty: '{{ tezavnost }}', date: '{{ datum }}' });
+      } else if (typeof gtag === 'function') {
+        gtag('event','sudoku_open',{ difficulty: '{{ tezavnost }}', date: '{{ datum }}' });
+      }
+    } catch(_) {}
+  })();
+
+  // Dodatno – zabeleži, ko se iframe naloži (ne podvaja "open" v GA, služi diagnostiki)
+  document.getElementById('sudoku-frame')?.addEventListener('load', () => {
+    try {
+      if (typeof gtagEvent === 'function') {
+        gtagEvent('sudoku_loaded', { difficulty: '{{ tezavnost }}', date: '{{ datum }}' });
+      } else if (typeof gtag === 'function') {
+        gtag('event','sudoku_loaded',{ difficulty: '{{ tezavnost }}', date: '{{ datum }}' });
+      }
+    } catch(_) {}
+  });
+
+  // (Neobvezno) Če bo Sudoku JS iz iframe-a poslal postMessage({type:'sudoku_complete'}),
+  // to tukaj zabeležimo kot konverzijo.
+  window.addEventListener('message', (e) => {
+    // varnost: sprejmi samo iz iste domene
+    if (e.origin !== location.origin) return;
+    const data = e.data || {};
+    if (data.type === 'sudoku_complete') {
+      try {
+        if (typeof gtagEvent === 'function') {
+          gtagEvent('sudoku_complete', { difficulty: '{{ tezavnost }}', date: '{{ datum }}' });
+        } else if (typeof gtag === 'function') {
+          gtag('event','sudoku_complete', { difficulty: '{{ tezavnost }}', date: '{{ datum }}' });
+        }
+      } catch(_) {}
+    }
+  });
+</script>
+{% endblock %}
+
