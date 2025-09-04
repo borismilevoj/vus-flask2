@@ -1,76 +1,95 @@
 import os
 import re
 
-seznam_map = ["Sudoku_very_easy", "Sudoku_easy", "Sudoku_medium", "Sudoku_hard"]
+# ✅ dodan very_hard
+seznam_map = ["Sudoku_very_easy", "Sudoku_easy", "Sudoku_medium", "Sudoku_hard", "Sudoku_very_hard"]
 static_path = "static"
 
-skripte = """
-<script src="/static/{mapa}/CrosswordCompilerApp/jquery.js"></script>
-<script src="/static/{mapa}/CrosswordCompilerApp/raphael.js"></script>
-<script src="/static/{mapa}/CrosswordCompilerApp/crosswordCompiler.js"></script>
+# ✅ ABSOLUTNE poti do CC knjižnic (brez {mapa}!)
+def zgradi_blok_skript(pot_do_js: str) -> str:
+    return f"""
+<script src="/static/CrosswordCompilerApp/jquery.js"></script>
+<script src="/static/CrosswordCompilerApp/raphael.js"></script>
+<script src="/static/CrosswordCompilerApp/crosswordCompiler.js"></script>
 <script src="/static/{pot_do_js}"></script>
 <script>
-$(function(){{ $("#CrosswordCompilerPuz").CrosswordCompiler(CrosswordPuzzleData,null,    {{SUBMITMETHOD:"POST",SAVE   :   "",PROGRESS :  "" }} );}});
+$(function(){{
+  $("#CrosswordCompilerPuz").CrosswordCompiler(
+    CrosswordPuzzleData, null,
+    {{ SUBMITMETHOD: "POST", SAVE: "", PROGRESS: "" }}
+  );
+}});
 </script>
 <div id="CrosswordCompilerPuz"></div>
-"""
+""".lstrip()
 
 def popravi_html_poti(cesta, mapa, datum):
-    # Izračunaj pot do .js glede na to, če je v arhivu ali ne
+    """
+    cesta = pot do .html
+    mapa  = npr. Sudoku_easy
+    datum = 'Sudoku_easy_2025-09-04.html' ali '2025-09/Sudoku_easy_2025-09-04.html'
+    """
+    # izračunamo pot do pripadajočega .js
     if "/" in datum:
-        parts = datum.split("/")
-        mesec = parts[0]
-        fname = parts[1]
+        mesec, fname = datum.split("/", 1)
         pot_do_js = f"{mapa}/{mesec}/{fname.replace('.html', '.js')}"
     else:
         pot_do_js = f"{mapa}/{datum.replace('.html', '.js')}"
-    with open(cesta, encoding="utf-8") as f:
+
+    with open(cesta, encoding="utf-8", errors="ignore") as f:
         html = f.read()
-    # Pobriši VSE <script ...> ... </script>
+
+    # pobriši VSE <script> ... </script> (pustimo čist canvas)
     html = re.sub(r'<script[\s\S]*?</script>', '', html, flags=re.IGNORECASE)
-    # Pobriši VSE golo JS klice $(function(){...}); kjerkoli (tudi izven <script>)
+
+    # pobriši goli jQuery init, če je izven <script> (varnostno)
     html = re.sub(r'\$\(\s*function\s*\([^)]*\)\s*\{[\s\S]*?\}\s*\);', '', html, flags=re.MULTILINE)
-    # Pobriši vse “Web page created by ...” ali “Software ... crossword-compiler.com” kjerkoli
+
+    # odstrani “Web page created by … crossword-compiler.com”
     html = re.sub(
         r'<[^>]*>\s*(Web page created by|Software|Page created by)[^<]*crossword-compiler\.com.*?</[^>]+>',
         '', html, flags=re.IGNORECASE)
     html = re.sub(
         r'(Web page created by|Software|Page created by)[^<]*crossword-compiler\.com\.?',
         '', html, flags=re.IGNORECASE)
-    # Pobriši prazne <span>, <div>, <footer>, <p>
+
+    # odstrani prazne elemente, ki ostanejo
     html = re.sub(r'<(span|div|footer|p)[^>]*>\s*</\1>', '', html)
-    # Če obstaja <div id="CrosswordCompilerPuz"> – vstavi skripte pred njo
+
+    blok = zgradi_blok_skript(pot_do_js)
+
+    # vstavimo naš blok pred obstoječi #CrosswordCompilerPuz ali tik za <body>
     if re.search(r'<div[^>]*id=["\']CrosswordCompilerPuz["\']', html, re.IGNORECASE):
-        html = re.sub(r'(<div[^>]*id=["\']CrosswordCompilerPuz["\'])', skripte.format(
-            mapa=mapa,
-            pot_do_js=pot_do_js
-        ) + r'\1', html, count=1, flags=re.IGNORECASE)
+        html = re.sub(r'(<div[^>]*id=["\']CrosswordCompilerPuz["\'])', blok + r'\1',
+                      html, count=1, flags=re.IGNORECASE)
     elif re.search(r'<body[^>]*>', html, re.IGNORECASE):
-        # Če <div id="CrosswordCompilerPuz"> NE obstaja, doda skripte in div takoj za <body>
-        html = re.sub(r'(<body[^>]*>)', r'\1\n' + skripte.format(
-            mapa=mapa,
-            pot_do_js=pot_do_js
-        ), html, count=1, flags=re.IGNORECASE)
+        html = re.sub(r'(<body[^>]*>)', r'\1\n' + blok, html, count=1, flags=re.IGNORECASE)
     else:
-        # Če je html popolnoma pokvarjen, dodaj na začetek
-        html = skripte.format(mapa=mapa, pot_do_js=pot_do_js) + html
+        html = blok + html
 
     with open(cesta, "w", encoding="utf-8") as f:
         f.write(html)
-    print("Popravljeno:", cesta)
+    print("✅ Popravljeno:", cesta)
 
+# ---- glavna zanka po mapah ----
 for mapa in seznam_map:
     base = os.path.join(static_path, mapa)
+    if not os.path.isdir(base):
+        continue
+
+    # datoteke v korenu težavnosti
     for f in os.listdir(base):
         if f.endswith('.html'):
             cesta = os.path.join(base, f)
             popravi_html_poti(cesta, mapa, f)
+
+    # datoteke v mesečnih podmapah YYYY-MM
     for podmapa in os.listdir(base):
         pmapa = os.path.join(base, podmapa)
-        if os.path.isdir(pmapa) and re.match(r'\d{4}-\d{2}', podmapa):
+        if os.path.isdir(pmapa) and re.match(r'^\d{4}-\d{2}$', podmapa):
             for f in os.listdir(pmapa):
                 if f.endswith('.html'):
                     cesta = os.path.join(pmapa, f)
                     popravi_html_poti(cesta, mapa, f"{podmapa}/{f}")
 
-print("Vse sudoku HTML datoteke so popravljene!")
+print("🎯 Vse Sudoku HTML datoteke so popravljene.")

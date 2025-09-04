@@ -14,15 +14,27 @@
   </style>
 </head>
 <body>
-
-<script src="/static/Sudoku_easy/CrosswordCompilerApp/jquery.js"></script>
-<script src="/static/Sudoku_easy/CrosswordCompilerApp/raphael.js"></script>
-<script src="/static/Sudoku_easy/CrosswordCompilerApp/crosswordCompiler.js"></script>
+<script src="/static/CrosswordCompilerApp/jquery.js"></script>
+<script src="/static/CrosswordCompilerApp/raphael.js"></script>
+<script src="/static/CrosswordCompilerApp/crosswordCompiler.js"></script>
 <script src="/static/Sudoku_easy/2025-05/Sudoku_easy_2025-05-21.js"></script>
 <script>
-$(function(){ $("#CrosswordCompilerPuz").CrosswordCompiler(CrosswordPuzzleData,null,    {SUBMITMETHOD:"POST",SAVE   :   "",PROGRESS :  "" } );});
+$(function(){
+  $("#CrosswordCompilerPuz").CrosswordCompiler(
+    CrosswordPuzzleData, null,
+    { SUBMITMETHOD: "POST", SAVE: "", PROGRESS: "" }
+  );
+});
 </script>
 <div id="CrosswordCompilerPuz"></div>
+
+
+
+
+
+
+
+
 
 
 

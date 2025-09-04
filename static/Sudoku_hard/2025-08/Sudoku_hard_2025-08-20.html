@@ -34,15 +34,27 @@ BODY, .Clues, .GridClues { font-size: 11pt; font-family: Times New Roman,Times; 
 </HEAD>
 
 <BODY TEXT="#000000" BGCOLOR="#ffffff">
-
-<script src="/static/Sudoku_hard/CrosswordCompilerApp/jquery.js"></script>
-<script src="/static/Sudoku_hard/CrosswordCompilerApp/raphael.js"></script>
-<script src="/static/Sudoku_hard/CrosswordCompilerApp/crosswordCompiler.js"></script>
-<script src="/static/Sudoku_hard/Sudoku_hard_2025-08-20.js"></script>
+<script src="/static/CrosswordCompilerApp/jquery.js"></script>
+<script src="/static/CrosswordCompilerApp/raphael.js"></script>
+<script src="/static/CrosswordCompilerApp/crosswordCompiler.js"></script>
+<script src="/static/Sudoku_hard/2025-08/Sudoku_hard_2025-08-20.js"></script>
 <script>
-$(function(){ $("#CrosswordCompilerPuz").CrosswordCompiler(CrosswordPuzzleData,null,    {SUBMITMETHOD:"POST",SAVE   :   "",PROGRESS :  "" } );});
+$(function(){
+  $("#CrosswordCompilerPuz").CrosswordCompiler(
+    CrosswordPuzzleData, null,
+    { SUBMITMETHOD: "POST", SAVE: "", PROGRESS: "" }
+  );
+});
 </script>
 <div id="CrosswordCompilerPuz"></div>
+
+
+
+
+
+
+
+
 
 
 
