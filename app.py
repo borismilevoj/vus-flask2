@@ -492,13 +492,32 @@ def arhiv_krizank_mesec(mesec):
 @app.route('/sudoku')
 def osnovni_sudoku():
     return redirect(url_for('prikazi_danasnji_sudoku', tezavnost='easy'))
+
+import re
+
+VALID_LEVELS = {"very_easy", "easy", "medium", "hard", "very_hard"}
+
+import re
+
+VALID_LEVELS = {"very_easy", "easy", "medium", "hard", "very_hard"}
+
 @app.route('/sudoku/<tezavnost>/<datum>')
 def prikazi_sudoku(tezavnost, datum):
-    leto_mesec = datum[:7]  # "YYYY-MM"
+    tezavnost = tezavnost.lower()
+    if tezavnost not in VALID_LEVELS:
+        return render_template('napaka.html', sporocilo="Neznana težavnost."), 400
+
+    # Vzemi samo začetni YYYY-MM-DD (odstrani morebitne repke, npr. ')')
+    m = re.match(r'^(\d{4}-\d{2}-\d{2})', datum)
+    if not m:
+        return render_template('napaka.html', sporocilo="Napačen datum."), 400
+    datum = m.group(1)
+
+    leto_mesec = datum[:7]
     ime = f"Sudoku_{tezavnost}_{datum}.html"
 
-    pot_arhiv = os.path.join('static', f"Sudoku_{tezavnost}", leto_mesec, ime)
-    pot_aktualno = os.path.join('static', f"Sudoku_{tezavnost}", ime)
+    pot_arhiv   = os.path.join('static', f"Sudoku_{tezavnost}", leto_mesec, ime)
+    pot_aktualno= os.path.join('static', f"Sudoku_{tezavnost}", ime)
 
     if os.path.exists(pot_arhiv):
         rel_pot = f"Sudoku_{tezavnost}/{leto_mesec}/{ime}"
@@ -509,6 +528,8 @@ def prikazi_sudoku(tezavnost, datum):
 
     sudoku_url = url_for('static', filename=rel_pot)
     return render_template('sudoku_embed.html', sudoku_url=sudoku_url, tezavnost=tezavnost, datum=datum)
+
+
 
 
 @app.route('/sudoku/<tezavnost>')
