@@ -218,41 +218,57 @@ document.addEventListener('DOMContentLoaded', function(){
     }
   }
 
-  window.prikaziOpis=function(x,y){
-    aktivniX=x; aktivniY=y;
-    const kartica=document.getElementById('opisKartica'); kartica.style.display="block";
-    document.querySelectorAll('.cell').forEach(c=>c.classList.remove('highlight'));
+  window.prikaziOpis = function (x, y) {
+  aktivniX = x; aktivniY = y;
+  const kartica = document.getElementById('opisKartica');
+  kartica.style.display = "block";
+  document.querySelectorAll('.cell').forEach(c => c.classList.remove('highlight'));
 
-    const g=gesla_opisi.find(t =>
-      t.smer===trenutnaSmer &&
-      ((t.smer==='across' && t.y===y && x>=t.x && x<t.x+t.dolzina) ||
-       (t.smer==='down'  && t.x===x && y>=t.y && y<t.y+t.dolzina))
-    );
+  const g = gesla_opisi.find(t =>
+    t.smer === trenutnaSmer &&
+    ((t.smer === 'across' && t.y === y && x >= t.x && x < t.x + t.dolzina) ||
+     (t.smer === 'down'  && t.x === x && y >= t.y && y < t.y + t.dolzina))
+  );
 
-    const opisPolje=document.getElementById('karticaOpis');
-    const slikaImg=document.getElementById('karticaSlika');
+  const opisPolje = document.getElementById('karticaOpis');
+  const slikaImg  = document.getElementById('karticaSlika');
 
-    if(g){
-      for(let i=0;i<g.dolzina;i++){
-        const tx=(g.smer==='across')? g.x+i : g.x;
-        const ty=(g.smer==='down') ? g.y+i : g.y;
-        const inp=document.querySelector(`input[data-x='${tx}'][data-y='${ty}']`);
-        if(inp) inp.parentElement.classList.add('highlight');
-      }
-
-      opisPolje.textContent=`${g.stevilka}. ${g.opis}`;
-
-      const base=normalizirajNaziv(g.opis); const ext=['jpg','png','webp'];
-      (function load(i){
-        if(i>=ext.length){ slikaImg.src=""; return; }
-        const p=`/static/Images/${base}.${ext[i]}`;
-        slikaImg.src=p; slikaImg.onerror=()=>load(i+1);
-      })(0);
-    }else{
-      opisPolje.textContent='Klikni na polje za prikaz opisa';
-      slikaImg.src="";
+  if (g) {
+    // highlight aktivnega gesla
+    for (let i = 0; i < g.dolzina; i++) {
+      const tx = (g.smer === 'across') ? g.x + i : g.x;
+      const ty = (g.smer === 'down')  ? g.y + i : g.y;
+      const inp = document.querySelector(`input[data-x='${tx}'][data-y='${ty}']`);
+      if (inp) inp.parentElement.classList.add('highlight');
     }
-  };
+
+    // opis
+    opisPolje.textContent = `${g.stevilka}. ${g.opis}`;
+
+    // --- SLIKA: najprej OPIS+REŠITEV, potem fallback na samo OPIS ---
+    const exti = ['jpg', 'png', 'webp'];
+    const baseOpis = normalizirajNaziv(g.opis);
+    const baseFull = g.solution ? `${baseOpis}_${normalizirajNaziv(g.solution)}` : null;
+
+    function nalozi(indExt, faza) {
+      // faza 0 = poskusi OPIS+REŠITEV (če imamo solution), faza 1 = samo OPIS
+      const base = (faza === 0 && baseFull) ? baseFull : baseOpis;
+      if (indExt >= exti.length) {
+        if (faza === 0 && baseFull) return nalozi(0, 1); // preklop na fallback
+        slikaImg.src = ""; // nič ni našel
+        return;
+      }
+      const pot = `/static/Images/${base}.${exti[indExt]}`;
+      slikaImg.src = pot;
+      slikaImg.onerror = () => nalozi(indExt + 1, faza);
+    }
+
+    nalozi(0, 0);
+  } else {
+    opisPolje.textContent = 'Klikni na polje za prikaz opisa';
+    slikaImg.src = "";
+  }
+};
 
 // ✓ končana križanka = noben input ni prazen in ni rdečih polj
 function checkSolved() {
