@@ -5,8 +5,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="7b096a74-7ed9-4344-af5e-d7be2fa85ca4" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/VUS.db" beforeDir="false" afterPath="$PROJECT_DIR$/VUS.db" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/italija_mesta_10k.txt" beforeDir="false" afterPath="$PROJECT_DIR$/italija_mesta_10k.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/gen_italija_mesta_10k.py" beforeDir="false" afterPath="$PROJECT_DIR$/Stare_skripte/gen_italija_mesta_10k.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/italija_mesta_10k.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Images/ameriski_glasbenik_kitarist_les_19152009.webp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Images/avtoritarna_drzava_na_korejskem_polotoku_znana_po_strogi_izolaciji_totalitarnem_rezimu_in_jedrskih_ambicijah.webp" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
