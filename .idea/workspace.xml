@@ -5,13 +5,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="7b096a74-7ed9-4344-af5e-d7be2fa85ca4" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/preglej_duplikate_mesta.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/uvozi_csv_vus.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/VUS.db" beforeDir="false" afterPath="$PROJECT_DIR$/VUS.db" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/gen_mesta_batch.py" beforeDir="false" afterPath="$PROJECT_DIR$/gen_mesta_batch.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/nedorasel_samec_goveda_mlad_bik.jpg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/slika.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Sudoku_hard/2025-09-19.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Sudoku_hard/2025-09-19.xml" beforeDir="false" afterPath="$PROJECT_DIR$/static/Sudoku_hard/2025-09/2025-09-19.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Sudoku_hard/2025-09/Sudoku_hard_2025-09-04.html" beforeDir="false" afterPath="$PROJECT_DIR$/static/Sudoku_hard/2025-09/Sudoku_hard_2025-09-04.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Sudoku_hard/2025-09/Sudoku_hard_2025-09-04.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/Sudoku_hard/2025-09/Sudoku_hard_2025-09-04.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Sudoku_hard/Sudoku_hard_2025-07-01.xml" beforeDir="false" afterPath="$PROJECT_DIR$/static/Sudoku_hard/2025-07/Sudoku_hard_2025-07-01.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -74,11 +73,11 @@
       <recent name="C:\Users\bormi\Documents\vus-flask2\static\Krizanke" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\bormi\Documents\vus-flask2\static\Sudoku_hard\2025-07" />
+      <recent name="C:\Users\bormi\Documents\vus-flask2\static\Sudoku_hard\2025-09" />
       <recent name="C:\Users\bormi\Documents\vus-flask2\Stare_skripte" />
       <recent name="C:\Users\bormi\Documents\vus-flask2\static\Sudoku_very_easy" />
       <recent name="C:\Users\bormi\Documents\vus-flask2\static\Sudoku_medium" />
-      <recent name="C:\Users\bormi\Documents\vus-flask2\static\Sudoku_hard" />
-      <recent name="C:\Users\bormi\Documents\vus-flask2\static\Sudoku_easy" />
     </key>
   </component>
   <component name="RunManager" selected="Python.test_baze">
