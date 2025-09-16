@@ -5,13 +5,13 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="7b096a74-7ed9-4344-af5e-d7be2fa85ca4" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/apply_csv_to_vus.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gen_mesta_batch.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gen_mesta_po_drzavi.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gen_mesta_review.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gen_mesta_simple.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/preglej_duplikate_mesta.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/uvozi_csv_vus.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/VUS.db" beforeDir="false" afterPath="$PROJECT_DIR$/VUS.db" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/gen_mesta_batch.py" beforeDir="false" afterPath="$PROJECT_DIR$/gen_mesta_batch.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/nedorasel_samec_goveda_mlad_bik.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/slika.png" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

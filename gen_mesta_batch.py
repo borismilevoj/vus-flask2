@@ -1,238 +1,215 @@
 # -*- coding: utf-8 -*-
 """
-Batch zajem mest iz Wikidate -> pregled CSV -> (po želji) vnos v VUS.db
+Zajem mest iz Wikidate po državi, z možnostjo filtra po populaciji in začetnici.
+Zapiše CSV v obliki: GESLO, GESLO_NORM, OPIS
 
-Primeri zagona (PowerShell):
-  # 1) Pregled (brez vnosa v bazo), Francija (Q142), prag 15k, po vseh črkah:
-  python gen_mesta_batch.py --qid Q142 --country-name "Francija" --min 15000
+Primeri:
+  # Francija (communes), min 15000, 25 rezultatov, začne z 'a'
+  python gen_mesta_batch.py --qid Q142 --country-name "Francija" --country-in "Franciji" \
+    --class-qid Q484170 --min 15000 --limit 25 --offset 0 --timeout 180 \
+    --lang "fr,en,sl,it" --starts-with a --outfile mesta_FR_A_0_25.csv --show-sparql
 
-  # 2) Samo po začetnicah A,B,C, z max 50/črko:
-  python gen_mesta_batch.py --qid Q142 --country-name "Francija" --min 15000 --letters ABC --per-letter 50
-
-  # 3) Pregled + takojšen vnos v bazo:
-  python gen_mesta_batch.py --qid Q142 --country-name "Francija" --min 15000 --apply
-
-  # 4) Španija (Q29), le črka A, večji timeout:
-  python gen_mesta_batch.py --qid Q29 --country-name "Španija" --min 15000 --letters A --timeout 180
-
-CSV izhod:
-  - preview_batch_<QID>_<timestamp>.csv   -> kandidati za vnos (brez dvojnikov)
-  - duplicates_batch_<QID>_<timestamp>.csv -> zapisi, ki v VUS že obstajajo (GESLO+OPIS)
+Opombe:
+- Če dobiš 0 rezultatov, najprej poskusi brez --starts-with.
+- Če imaš CSV odprt v Excelu, boš dobil PermissionError – zapri Excel ali uporabi drugo ime datoteke (--outfile).
 """
 
 import argparse
 import csv
-import os
 import re
-import sqlite3
-import sys
 import time
 import unicodedata
-from datetime import datetime
-
 import requests
+from typing import List, Optional
 
 WDQS_URL = "https://query.wikidata.org/sparql"
 
+SESSION = requests.Session()
+SESSION.headers.update({
+    "User-Agent": "VUS/1.0 (contact: example@example.com)",
+    "Accept": "application/sparql-results+json"
+})
 
-# -------- Normalizacija GESLA --------
+
 def normalize_geslo(label: str) -> str:
-    # odstrani diakritiko
+    """Normalizira ime za GESLO_NORM: odstrani diakritiko, zamenja '-' s presledkom,
+    odstrani apostrofe, pobriše več presledkov in pretvori v UPPER."""
+    # NFD in odstrani diakritiko
     s = unicodedata.normalize("NFD", label)
-    s = "".join(c for c in s if unicodedata.category(c) != "Mn")
-    # odstrani pomišljaje/apostrofe
-    s = s.replace("-", "").replace("–", "").replace("—", "").replace("-", "")
-    s = s.replace("'", "").replace("’", "")
-    # obdrži samo črke/številke in presledke
-    s = re.sub(r"[^A-Za-z0-9 ]+", "", s)
-    # odstrani presledke
-    s = s.replace(" ", "")
-    return s.upper().strip()
+    s = "".join(ch for ch in s if unicodedata.category(ch) != "Mn")
+    # '-' -> ' ', apostrofi stran
+    s = s.replace("-", " ").replace("’", "").replace("'", "")
+    # več presledkov -> 1
+    s = re.sub(r"\s+", " ", s).strip()
+    return s.upper()
 
 
-# -------- SPARQL poizvedba --------
-def make_sparql(country_qid: str, min_pop: int, starts_with: str | None) -> str:
-    # starts_with filter na cityLabel (sl,en,fr,it)
+def build_query(
+        qid_country: str,
+        class_qids: List[str],
+        min_pop: int,
+        limit: int,
+        offset: int,
+        starts_with: Optional[str],
+        lang_chain: str
+) -> str:
+    """
+    Zgradi SPARQL. Ključna točka: SERVICE wikibase:label mora biti PRED BIND/FILTER,
+    ker FILTER deluje na ?cityLabel, ki ga doda SERVICE.
+    """
+
+    classes_part = ""
+    if class_qids:
+        classes_part = "VALUES ?cls { " + " ".join(f"wd:{c}" for c in class_qids) + " }"
+    else:
+        # fallback: human settlement
+        classes_part = "VALUES ?cls { wd:Q486972 }"
+
     starts_filter = ""
     if starts_with:
-        starts = starts_with.lower()
-        starts_filter = f'FILTER(STRSTARTS(LCASE(STR(?cityLabel)), "{starts}"))'
-
-    return f"""
-SELECT ?city ?cityLabel WHERE {{
-  ?city wdt:P31/wdt:P279* wd:Q486972 .   # human settlement (tudi mesta, občine, ipd.)
-  ?city wdt:P17 wd:{country_qid} .
-  ?city wdt:P1082 ?pop .
-  FILTER(?pop > {min_pop})
-  {starts_filter}
-  SERVICE wikibase:label {{ bd:serviceParam wikibase:language "sl,en,fr,it". }}
-}}
-ORDER BY LCASE(?cityLabel)
+        # primerjava na lowercased label (francoščina ima diakritiko, a 'achères' se še vedno začne z 'a')
+        sw = starts_with.lower()
+        starts_filter = f"""
+  BIND(LCASE(STR(?cityLabel)) AS ?cityLabelLC)
+  FILTER(STRSTARTS(?cityLabelLC, "{sw}"))
 """
 
+    q = f"""
+SELECT ?city ?cityLabel ?pop WHERE {{
+  ?city wdt:P31/wdt:P279* ?cls .
+  {classes_part}
+  ?city wdt:P17 wd:{qid_country} .
+  ?city wdt:P1082 ?pop .
+  FILTER(?pop > {min_pop})
 
-# -------- WDQS klic z retry/backoff --------
-def wdqs_request(query: str, timeout: int = 120, max_retries: int = 5) -> list[dict]:
-    headers = {
-        "Accept": "application/sparql-results+json",
-        "User-Agent": "VUS/1.0 (contact: your-email@example.com)"
-    }
-    data = {"query": query}
-    backoff = 5
+  SERVICE wikibase:label {{
+    bd:serviceParam wikibase:language "{lang_chain}" .
+  }}
+  {starts_filter}
+}}
+ORDER BY LCASE(STR(?cityLabel))
+LIMIT {limit}
+OFFSET {offset}
+"""
+    return q.strip()
+
+
+def wdqs_post(query: str, timeout: int = 180, max_retries: int = 5, backoff_s: float = 1.5) -> dict:
+    """Pošlje poizvedbo na WDQS z retry/backoff zaradi 504/timeout-ov."""
     for attempt in range(1, max_retries + 1):
         try:
-            r = requests.post(WDQS_URL, headers=headers, data=data, timeout=timeout)
-            if r.status_code == 429:
-                # preveč zahtev – spoštljivo počakaj
-                wait = backoff * attempt
-                print(f"WDQS 429 (Too Many Requests). Spim {wait}s ...")
-                time.sleep(wait)
-                continue
+            r = SESSION.post(WDQS_URL, data={"query": query}, timeout=timeout)
+            # 429/5xx -> retry
+            if r.status_code >= 500 or r.status_code == 429:
+                raise requests.HTTPError(f"{r.status_code} Server Error")
             r.raise_for_status()
-            js = r.json()
-            return js.get("results", {}).get("bindings", [])
-        except requests.RequestException as e:
-            wait = backoff * attempt
-            print(f"WDQS napaka ({e}). Poskus {attempt}/{max_retries}. Spim {wait}s ...")
-            time.sleep(wait)
-    # če odpove:
-    print("❌ WDQS: preveč napak/timeoutov, vračam prazen seznam.")
-    return []
+            return r.json()
+        except (requests.Timeout, requests.ConnectionError, requests.HTTPError) as e:
+            if attempt == max_retries:
+                raise
+            time.sleep(backoff_s * attempt)
+    raise RuntimeError("Nepričakovana napaka pri WDQS poizvedbi.")
 
 
-# -------- Branje obstoječih (za dvojnike) --------
-def load_existing(db_path: str) -> set[tuple[str, str]]:
-    if not os.path.exists(db_path):
-        return set()
-    conn = sqlite3.connect(db_path)
-    cur = conn.cursor()
-    # kombinacija GESLO (case-insensitive) + OPIS
-    cur.execute("SELECT UPPER(GESLO), OPIS FROM slovar")
-    rows = {(g, o) for (g, o) in cur.fetchall()}
-    conn.close()
-    return rows
-
-
-# -------- Vnos v bazo --------
-def insert_rows(db_path: str, rows: list[dict]) -> tuple[int, int]:
-    if not rows:
-        return (0, 0)
-    conn = sqlite3.connect(db_path)
-    cur = conn.cursor()
-    cur.execute("CREATE INDEX IF NOT EXISTS idx_slovar_geslo_upper ON slovar(UPPER(GESLO))")
-    added = 0
-    skipped = 0
-    for r in rows:
-        g = r["GESLO"].strip()
-        o = r["OPIS"].strip()
-        cur.execute("SELECT 1 FROM slovar WHERE UPPER(GESLO)=UPPER(?) AND OPIS=?", (g, o))
-        if cur.fetchone():
-            skipped += 1
+def rows_from_result(data: dict) -> List[dict]:
+    out = []
+    for b in data.get("results", {}).get("bindings", []):
+        city_label = b.get("cityLabel", {}).get("value", "").strip()
+        pop = b.get("pop", {}).get("value")
+        if not city_label:
             continue
-        cur.execute("INSERT INTO slovar (GESLO, OPIS) VALUES (?, ?)", (g, o))
-        added += 1
-    conn.commit()
-    conn.close()
-    return (added, skipped)
+        # GESLO: zamenjaj '-' s presledkom zaradi VUS konsistence
+        geslo = city_label.replace("-", " ")
+        geslo = re.sub(r"\s+", " ", geslo).strip()
+        geslo_norm = normalize_geslo(city_label)
+        out.append({
+            "GESLO": geslo,
+            "GESLO_NORM": geslo_norm,
+            "POP": pop
+        })
+    return out
+
+
+def write_csv(rows: List[dict], outfile: str, country_in: str):
+    # OPIS = "mesto v {country_in}"
+    with open(outfile, "w", newline="", encoding="utf-8") as f:
+        w = csv.writer(f)
+        w.writerow(["GESLO", "GESLO_NORM", "OPIS"])
+        for r in rows:
+            opis = f"mesto v {country_in}"
+            w.writerow([r["GESLO"], r["GESLO_NORM"], opis])
 
 
 def main():
-    ap = argparse.ArgumentParser(description="Batch zajem mest iz Wikidate -> CSV -> (opcijsko) VUS.db")
-    ap.add_argument("--qid", required=True, help="QID države (npr. Q142 = Francija, Q29 = Španija, Q38 = Italija)")
-    ap.add_argument("--country-name", required=True, help='Ime države za opis, npr. "Francija" -> "mesto v Francija"')
-    ap.add_argument("--min", type=int, default=15000, help="Minimalna populacija (privzeto: 15000)")
-    ap.add_argument("--letters", default="ABCDEFGHIJKLMNOPQRSTUVWXYZ", help="Začetnice (privzeto A..Z)")
-    ap.add_argument("--per-letter", type=int, default=50,
-                    help="Maks. število na črko (lokalno filtriranje po rezultatu)")
-    ap.add_argument("--timeout", type=int, default=120, help="Timeout za WDQS (sekunde)")
-    ap.add_argument("--db", default="VUS.db", help="Pot do baze VUS (privzeto VUS.db v trenutni mapi)")
-    ap.add_argument("--apply", action="store_true", help="Po generiranju CSV takoj vpiši nove vnose v bazo")
+    ap = argparse.ArgumentParser(description="Zajem mest iz Wikidate v CSV (za VUS)")
+    ap.add_argument("--qid", required=True, help="QID države (npr. Q142 za Francijo)")
+    ap.add_argument("--country-name", required=True, help="Ime države v imenovalniku (npr. 'Francija')")
+    ap.add_argument("--country-in", default=None,
+                    help="Ime države v mestniku/rodilniku (npr. 'Franciji'); če manjka, se vzame country-name + 'i'")
+    ap.add_argument("--class-qid", action="append",
+                    help="QID razredov (npr. Q484170 commune, Q486972 human settlement, Q515 city, Q3957 town). Lahko večkrat.")
+    ap.add_argument("--min", type=int, default=10000, help="Minimalna populacija (privzeto 10000)")
+    ap.add_argument("--limit", type=int, default=25, help="LIMIT")
+    ap.add_argument("--offset", type=int, default=0, help="OFFSET")
+    ap.add_argument("--timeout", type=int, default=180, help="WDQS timeout (sekunde)")
+    ap.add_argument("--starts-with", default=None, help="Filtriraj po začetnici (npr. 'a')")
+    ap.add_argument("--lang", default="fr,en,sl,it", help="Veriga jezikov za label (privzeto 'fr,en,sl,it')")
+    ap.add_argument("--outfile", default=None, help="Ime izhodne CSV (privzeto: mesta_<qid>_<offset>_<limit>.csv)")
+    ap.add_argument("--show-sparql", action="store_true", help="Izpiši SPARQL poizvedbo (debug)")
+
     args = ap.parse_args()
 
-    country_qid = args.qid.strip()
-    country_name = args.country_name.strip()
-    opis_template = f"mesto v {country_name}"
+    country_in = args.country_in if args.country_in else (args.country_name + "i")
 
-    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-    out_preview = f"preview_batch_{country_qid}_{ts}.csv"
-    out_dupes = f"duplicates_batch_{country_qid}_{ts}.csv"
+    outfile = args.outfile or f"mesta_{args.qid}_{args.offset}_{args.limit}.csv"
 
-    existing = load_existing(args.db)
-    candidates = []
-    duplicates = []
+    query = build_query(
+        qid_country=args.qid,
+        class_qids=args.class_qid or ["Q484170"],  # privzeto communes
+        min_pop=args.min,
+        limit=args.limit,
+        offset=args.offset,
+        starts_with=args.starts_with,
+        lang_chain=args.lang
+    )
 
-    print(f"Država: {country_name} ({country_qid}) | min populacija: {args.min}")
-    print(f"Začetnice: {args.letters} | timeout: {args.timeout}s | per-letter: {args.per_letter}")
-    print("Začenjam prenos ...")
+    if args.show_sparql:
+        print("\n--- SPARQL ---\n", query, "\n--------------\n")
 
-    for ch in args.letters:
-        ch = ch.strip()
-        if not ch:
+    try:
+        data = wdqs_post(query, timeout=args.timeout)
+    except Exception as e:
+        print(f"Napaka WDQS: {e}")
+        # vseeno napišemo prazen CSV, da ni polovičnega stanja
+        write_csv([], outfile, country_in)
+        print(f"✅ Shranjeno (prazno): {outfile}  (vrstic: 0)")
+        return
+
+    rows = rows_from_result(data)
+
+    if not rows:
+        print("Ni rezultatov (morda prevelik filter ali prag populacije).")
+        write_csv([], outfile, country_in)
+        print(f"✅ Shranjeno (prazno): {outfile}  (vrstic: 0)")
+        return
+
+    # odstrani dvojnike po GESLO_NORM, ohrani prvi vnos
+    seen = set()
+    dedup = []
+    for r in rows:
+        key = r["GESLO_NORM"]
+        if key in seen:
             continue
-        print(f"\n-- Črka: {ch} --")
-        query = make_sparql(country_qid, args.min, ch.lower())
-        bindings = wdqs_request(query, timeout=args.timeout, max_retries=6)
+        seen.add(key)
+        dedup.append(r)
 
-        # Pretvori v (NAZIV, GESLO, OPIS) in lokalno odreži na per-letter
-        rows = []
-        for b in bindings:
-            label = b.get("cityLabel", {}).get("value", "").strip()
-            if not label:
-                continue
-            geslo_norm = normalize_geslo(label)
-            # filtriraj smeti (npr. delitve sektorjev ipd., če se prebijejo skozi)
-            if not geslo_norm or len(geslo_norm) < 2:
-                continue
-            rows.append({
-                "NAZIV": label,
-                "GESLO": geslo_norm,
-                "OPIS": opis_template
-            })
-
-        # lokalni limit po črki
-        if args.per_letter and len(rows) > args.per_letter:
-            rows = rows[:args.per_letter]
-
-        print(f"Najdeno (po filtrih): {len(rows)}")
-
-        # razdeli na nove / dvojnike
-        for r in rows:
-            key = (r["GESLO"].upper(), r["OPIS"])
-            if key in existing:
-                duplicates.append(r)
-            else:
-                candidates.append(r)
-
-        print(f"   + novi kandidati: {sum(1 for r in rows if (r['GESLO'].upper(), r['OPIS']) not in existing)}")
-        print(f"   = dvojniki:        {sum(1 for r in rows if (r['GESLO'].upper(), r['OPIS']) in existing)}")
-
-        # Ne obremenjuj WDQS
-        time.sleep(1.0)
-
-    # Zapiši CSV-je
-    def write_csv(path, rows):
-        with open(path, "w", newline="", encoding="utf-8") as f:
-            w = csv.DictWriter(f, fieldnames=["NAZIV", "GESLO", "OPIS"])
-            w.writeheader()
-            w.writerows(rows)
-
-    write_csv(out_preview, candidates)
-    write_csv(out_dupes, duplicates)
-
-    print(f"\n✅ Shranjeno: {out_preview}  (vrstic: {len(candidates)})")
-    print(f"✅ Shranjeno: {out_dupes}    (vrstic: {len(duplicates)})")
-
-    if args.apply:
-        print("\n-- Vnos v bazo --")
-        added, skipped = insert_rows(args.db, candidates)
-        print(f"✔ Dodano: {added}, preskočeno (dvojnik): {skipped}")
-        print("Končano.")
-    else:
-        print("\nNi bilo izbrano --apply, zato v bazo ni bilo nič vpisano.")
-        print("Odpri preview CSV v Excelu, preglej, in nato (če želiš) zaženI z --apply.")
-        print(
-            f"Primer: python gen_mesta_batch.py --qid {country_qid} --country-name \"{country_name}\" --min {args.min} --apply")
-        print("Opomba: dvojnike imaš posebej v duplicates CSV.")
+    write_csv(dedup, outfile, country_in)
+    print(f"✅ Shranjeno: {outfile}  (vrstic: {len(dedup)})")
+    # konzolni pregled
+    for i, r in enumerate(dedup[:10], 1):
+        print(f"{i:2}. {r['GESLO']:<28} | {r['GESLO_NORM']:<24} | mesto v {country_in}")
+    if len(dedup) > 10:
+        print(f"... (+{len(dedup) - 10} vrstic)")
 
 
 if __name__ == "__main__":
