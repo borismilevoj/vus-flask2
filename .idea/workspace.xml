@@ -6,11 +6,7 @@
   <component name="ChangeListManager">
     <list default="true" id="7b096a74-7ed9-4344-af5e-d7be2fa85ca4" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/Sudoku_hard/2025-09-19.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/Sudoku_hard/2025-09-19.xml" beforeDir="false" afterPath="$PROJECT_DIR$/static/Sudoku_hard/2025-09/2025-09-19.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/Sudoku_hard/2025-09/Sudoku_hard_2025-09-04.html" beforeDir="false" afterPath="$PROJECT_DIR$/static/Sudoku_hard/2025-09/Sudoku_hard_2025-09-04.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/Sudoku_hard/2025-09/Sudoku_hard_2025-09-04.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/Sudoku_hard/2025-09/Sudoku_hard_2025-09-04.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/Sudoku_hard/Sudoku_hard_2025-07-01.xml" beforeDir="false" afterPath="$PROJECT_DIR$/static/Sudoku_hard/2025-07/Sudoku_hard_2025-07-01.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Sudoku_hard/2025-09/Sudoku_hard_2025-10-04.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/Sudoku_hard/2025-09/Sudoku_hard_2025-10-04.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
