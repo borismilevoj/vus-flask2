@@ -1,21 +1,18 @@
 from flask import (
     Flask, jsonify, session, redirect, url_for, request, render_template,
-    flash, send_from_directory, render_template_string, send_file
+    flash, send_from_directory, send_file
 )
 from functools import wraps
 import sqlite3
 import os
 import glob
-import unicodedata
-import re
-import shutil
 import zipfile
 import io
 from datetime import datetime
 
-from krizanka import pridobi_podatke_iz_xml
+from scripts.krizanka import pridobi_podatke_iz_xml
 from Stare_skripte.uvoz_datotek import premakni_krizanke, premakni_sudoku
-from arhiviranje_util import arhiviraj_danes
+from scripts.arhiviranje_util import arhiviraj_danes
 
 # ==== Inicializacija ==========================================================
 app = Flask(__name__, static_folder='static', static_url_path='/static')
@@ -68,7 +65,7 @@ def get_db():
     conn.row_factory = sqlite3.Row
     return conn
 
-import re
+
 import unicodedata
 
 def normalize_search(text: str) -> str:
@@ -493,7 +490,6 @@ def arhiv_krizank_mesec(mesec):
 def osnovni_sudoku():
     return redirect(url_for('prikazi_danasnji_sudoku', tezavnost='easy'))
 
-import re
 
 VALID_LEVELS = {"very_easy", "easy", "medium", "hard", "very_hard"}
 

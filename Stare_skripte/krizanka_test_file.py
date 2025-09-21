@@ -1,4 +1,4 @@
-from krizanka import pridobi_podatke_iz_xml
+from scripts.krizanka import pridobi_podatke_iz_xml
 
 pot_do_xml = "static/CrosswordCompilerApp/2025-05-30.xml"
 

@@ -1,4 +1,4 @@
-from arhiviranje_util import premakni_krizanke_v_mesece, premakni_sudoku_v_mesece
+from scripts.arhiviranje_util import premakni_krizanke_v_mesece, premakni_sudoku_v_mesece
 
 mesec = "2025-08"
 
