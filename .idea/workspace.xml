@@ -5,44 +5,38 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="7b096a74-7ed9-4344-af5e-d7be2fa85ca4" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/data/exports" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/scripts/dedupe_geslo.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/scripts/export_vus_to_cc.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/scripts/scripts/odstrani_generic.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ImeBaze.db" beforeDir="false" afterPath="$PROJECT_DIR$/VUS.backup.db" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Stare_skripte/arhiviraj_maj.py" beforeDir="false" afterPath="$PROJECT_DIR$/Stare_skripte/arhiviraj_maj.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Stare_skripte/krizanka_test_file.py" beforeDir="false" afterPath="$PROJECT_DIR$/Stare_skripte/krizanka_test_file.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/VUS.db" beforeDir="false" afterPath="$PROJECT_DIR$/VUS.db" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app_old.py" beforeDir="false" afterPath="$PROJECT_DIR$/Stare_skripte/app_old.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apply_csv_to_vus.py" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/apply_csv_to_vus.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/arhiviraj_mesec.py" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/arhiviraj_mesec.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/arhiviraj_vse_sudoku.py" beforeDir="false" afterPath="$PROJECT_DIR$/Stare_skripte/arhiviraj_vse_sudoku.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/arhiviranje_util.py" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/arhiviranje_util.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/gen_mesta_batch.py" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/gen_mesta_batch.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/gen_mesta_review.py" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/gen_mesta_review.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/gen_mesta_simple.py" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/gen_mesta_simple.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/img.png" beforeDir="false" afterPath="$PROJECT_DIR$/static/Images/img.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/Stare_skripte/index.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/init_db.py" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/init_db.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/krizanka.py" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/krizanka.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/manjkajoce_slike.py" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/manjkajoce_slike.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/mesta_FR_0_25.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/mesta_FR_100_25.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/mesta_FR_125_25.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/mesta_FR_150_25.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/mesta_FR_175_25.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/mesta_FR_200_25.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/mesta_FR_225_25.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/mesta_FR_250_25.csv" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/mesta_FR_25_25.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/mesta_FR_B_0_25.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/mesta_Q142_0_25.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/popravi_ali_ustvari_sudoku_html.py" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/popravi_ali_ustvari_sudoku_html.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/popravi_vse_sudoku_html.py" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/popravi_vse_sudoku_html.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/preglej_duplikate_mesta.py" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/preglej_duplikate_mesta.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/preveri_slike.py" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/preveri_slike.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/preview_simple_Q142_0_15.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/preview_simple_Q142_0_50.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/preview_simple_Q142_15_15.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/sortiraj_opise.py" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/sortiraj_opise.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/uvozi_csv_vus.py" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/uvozi_csv_vus.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/uvozi_sudoku_iz_xml.py" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/uvozi_sudoku_iz_xml.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/vus_utf8_backup(2).sql" beforeDir="false" afterPath="$PROJECT_DIR$/data/vus_utf8_backup(2).sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/wsgi.py" beforeDir="false" afterPath="$PROJECT_DIR$/wsgi.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/mesta_FR_275_25.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/mesta_FR_300_25.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/mesta_FR_325_25.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/mesta_FR_350_25.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/mesta_FR_375_25.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/mesta_FR_400_25.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/mesta_FR_425_25.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/mesta_FR_450_25.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/mesta_FR_475_25.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/mesta_FR_500_25.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/mesta_FR_50_25.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/mesta_FR_525_25.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/mesta_FR_550_25.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/mesta_FR_575_25.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/mesta_FR_600_25.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/mesta_FR_625_25.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/mesta_FR_650_25.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/mesta_FR_675_25.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/mesta_FR_75_25.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/mesta_FR_A_0_25.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/mesta_FR_A_25_25.csv" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
