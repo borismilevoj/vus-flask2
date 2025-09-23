@@ -13,6 +13,37 @@ from datetime import datetime
 from scripts.krizanka import pridobi_podatke_iz_xml
 from Stare_skripte.uvoz_datotek import premakni_krizanke, premakni_sudoku
 from scripts.arhiviranje_util import arhiviraj_danes
+# app.py
+import os
+import shutil
+import sqlite3
+from flask import Flask
+
+# --- DB pot + enkratna migracija na disk ---
+DB_PATH = os.environ.get("DB_PATH", "/var/data/VUS.db")
+LEGACY_PATH = os.path.join(os.path.dirname(__file__), "VUS.db")
+os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
+
+if not os.path.exists(DB_PATH) and os.path.exists(LEGACY_PATH):
+    try:
+        shutil.copy2(LEGACY_PATH, DB_PATH)
+        print(f"[VUS] Legacy DB skopirana na {DB_PATH}")
+    except Exception as e:
+        print(f"[VUS] OPOZORILO: kopiranje baze ni uspelo: {e}")
+
+def get_conn():
+    return sqlite3.connect(DB_PATH, check_same_thread=False)
+
+BACKUP_DIR = os.environ.get(
+    "BACKUP_DIR",
+    os.path.join(os.path.dirname(DB_PATH), "backups")
+)
+os.makedirs(BACKUP_DIR, exist_ok=True)
+# --- konec bloka ---
+
+app = Flask(__name__)
+
+# ... naprej tvoja koda in rute ...
 
 # ==== Inicializacija ==========================================================
 app = Flask(__name__, static_folder='static', static_url_path='/static')

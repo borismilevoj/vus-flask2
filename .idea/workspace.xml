@@ -6,37 +6,9 @@
   <component name="ChangeListManager">
     <list default="true" id="7b096a74-7ed9-4344-af5e-d7be2fa85ca4" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/VUS.db" beforeDir="false" afterPath="$PROJECT_DIR$/VUS.db" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/mesta_FR_0_25.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/mesta_FR_100_25.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/mesta_FR_125_25.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/mesta_FR_150_25.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/mesta_FR_175_25.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/mesta_FR_200_25.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/mesta_FR_225_25.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/mesta_FR_250_25.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/mesta_FR_25_25.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/mesta_FR_275_25.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/mesta_FR_300_25.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/mesta_FR_325_25.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/mesta_FR_350_25.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/mesta_FR_375_25.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/mesta_FR_400_25.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/mesta_FR_425_25.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/mesta_FR_450_25.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/mesta_FR_475_25.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/mesta_FR_500_25.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/mesta_FR_50_25.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/mesta_FR_525_25.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/mesta_FR_550_25.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/mesta_FR_575_25.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/mesta_FR_600_25.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/mesta_FR_625_25.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/mesta_FR_650_25.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/mesta_FR_675_25.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/mesta_FR_75_25.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/mesta_FR_A_0_25.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/mesta_FR_A_25_25.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.venv/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.venv/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/scripts/uvoz_ES_oneclick.ps1" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/uvoz_ES_oneclick.ps1" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
