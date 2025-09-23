@@ -25,3 +25,5 @@ data/backups/
 # (Opcijsko) CSV-ji iz uvozov
 imports/**/*.csv
 
+/.idea/
+
