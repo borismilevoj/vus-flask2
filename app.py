@@ -579,40 +579,88 @@ def arhiv_krizank_mesec(mesec):
 
 
 # ===== Sudoku ================================================================
+from pathlib import Path
+import unicodedata
+
+# --- helperji ---
+def _deaccent(s: str) -> str:
+    """Odstrani šumnike za lažje ujemanje aliasov."""
+    if not s:
+        return ""
+    return "".join(c for c in unicodedata.normalize("NFKD", s) if not unicodedata.combining(c))
+
+def _level_candidates(user_level: str) -> list[str]:
+    """
+    Vrni možne 'kodne' levele za imena v URL (slovensko/angleško).
+    Npr. 'zelo-lahki' -> ['very_easy','easy'] ; 'težki' -> ['hard','tezki'].
+    Dodamo več kandidatov zaradi različnih poimenovanj map/datotek.
+    """
+    lvl = _deaccent((user_level or "").strip().lower()).replace("-", " ").replace("_", " ")
+    if lvl in {"zelo lahki", "zelo lahko", "very easy", "veryeasy"}:
+        return ["very_easy", "easy", "zelo_lahki"]
+    if lvl in {"lahki", "lahko", "easy"}:
+        return ["easy", "lahki"]
+    if lvl in {"srednji", "srednje", "medium"}:
+        return ["medium", "srednji"]
+    if lvl in {"tezki", "tezko", "težki", "hard"}:
+        return ["hard", "tezki"]
+    if lvl in {"zelo tezki", "zelo težki", "very hard", "veryhard"}:
+        return ["very_hard", "hard", "zelo_tezki"]
+    # če je uporabnik poslal že kodni level ('easy' ipd.), poskusi kar njega
+    return [user_level.replace("-", "_").lower()]
+
+def _find_sudoku_relpath(app, code: str, date_str: str) -> str | None:
+    """
+    Vrne RELATIVNO pot znotraj /static do .html datoteke, če skupaj z .js obstaja.
+    Preveri tri lokacije:
+      1) Sudoku_<code>/<YYYY-MM>/Sudoku_<code>_<YYYY-MM-DD>.html
+      2) Sudoku_<code>/Sudoku_<code>_<YYYY-MM-DD>.html
+      3) Sudoku_<code>_<YYYY-MM-DD>.html   (koren /static)
+    """
+    static_dir = Path(app.static_folder)
+    yymm = date_str[:7]
+
+    candidates = [
+        f"Sudoku_{code}/{yymm}/Sudoku_{code}_{date_str}.html",
+        f"Sudoku_{code}/Sudoku_{code}_{date_str}.html",
+        f"Sudoku_{code}_{date_str}.html",
+    ]
+    for rel in candidates:
+        html_abs = static_dir / rel
+        js_abs   = Path(str(html_abs).removesuffix(".html") + ".js")
+        if html_abs.exists() and js_abs.exists():
+            return rel
+    return None
+
+# -- ROUTES --
 
 @app.get('/sudoku')
 def osnovni_sudoku():
-    return redirect(url_for('prikazi_danasnji_sudoku', tezavnost='easy'))
+    # privzeto na slovenski "lahki"
+    return redirect(url_for('prikazi_danasnji_sudoku', tezavnost='lahki'))
 
-VALID_LEVELS = {"very_easy", "easy", "medium", "hard", "very_hard"}
 
 @app.route('/sudoku/<tezavnost>/<datum>')
 def prikazi_sudoku(tezavnost, datum):
-    tezavnost = tezavnost.lower()
-    if tezavnost not in VALID_LEVELS:
-        return render_template('napaka.html', sporocilo="Neznana težavnost."), 400
-
-    # Vzemi samo začetni YYYY-MM-DD (odstrani morebitne repke)
+    # validacija datuma (YYYY-MM-DD na začetku)
     m = re.match(r'^(\d{4}-\d{2}-\d{2})', datum)
     if not m:
         return render_template('napaka.html', sporocilo="Napačen datum."), 400
     datum = m.group(1)
 
-    leto_mesec = datum[:7]
-    ime = f"Sudoku_{tezavnost}_{datum}.html"
+    # za podani (slovenski ali angleški) level preveri več kodnih kandidatov
+    for code in _level_candidates(tezavnost):
+        rel = _find_sudoku_relpath(app, code, datum)
+        if rel:
+            sudoku_url = url_for('static', filename=rel)
+            return render_template('sudoku_embed.html',
+                                   sudoku_url=sudoku_url,
+                                   tezavnost=tezavnost,
+                                   datum=datum)
 
-    pot_arhiv   = os.path.join('static', f"Sudoku_{tezavnost}", leto_mesec, ime)
-    pot_aktualno= os.path.join('static', f"Sudoku_{tezavnost}", ime)
-
-    if os.path.exists(pot_arhiv):
-        rel_pot = f"Sudoku_{tezavnost}/{leto_mesec}/{ime}"
-    elif os.path.exists(pot_aktualno):
-        rel_pot = f"Sudoku_{tezavnost}/{ime}"
-    else:
-        return render_template('napaka.html', sporocilo="Sudoku za ta datum ali težavnost ni na voljo.")
-
-    sudoku_url = url_for('static', filename=rel_pot)
-    return render_template('sudoku_embed.html', sudoku_url=sudoku_url, tezavnost=tezavnost, datum=datum)
+    # nič ni našel
+    return render_template('napaka.html',
+                           sporocilo="Sudoku za ta datum ali težavnost ni na voljo."), 404
 
 
 @app.get('/sudoku/<tezavnost>')
@@ -628,35 +676,46 @@ def sudoku_meni():
 
 @app.get('/sudoku/arhiv/<tezavnost>')
 def arhiv_sudoku(tezavnost):
-    mapa_sudoku = os.path.join('static', f"Sudoku_{tezavnost}")
+    # vzemi prvi kodni kandidat (najbolj “uradno” poimenovanje mape)
+    codes = _level_candidates(tezavnost)
+    code = codes[0]
 
-    vse_mape = [f for f in os.listdir(mapa_sudoku) if os.path.isdir(os.path.join(mapa_sudoku, f))]
-    meseci = sorted([m for m in vse_mape if len(m) == 7 and m[:4].isdigit() and m[5:7].isdigit()], reverse=True)
-
+    mapa_sudoku_abs = Path(app.static_folder) / f"Sudoku_{code}"
+    meseci = []
     aktualni = []
-    for f in os.listdir(mapa_sudoku):
-        polna_pot = os.path.join(mapa_sudoku, f)
-        if f.endswith('.html') and os.path.isfile(polna_pot):
-            datum = f.replace(f'Sudoku_{tezavnost}_', '').replace('.html', '')
-            try:
-                datetime.strptime(datum, "%Y-%m-%d")
-                aktualni.append(datum)
-            except ValueError:
-                pass
-    aktualni.sort(reverse=True)
 
+    if mapa_sudoku_abs.exists():
+        # podmape YYYY-MM
+        vse_mape = [p.name for p in mapa_sudoku_abs.iterdir() if p.is_dir()]
+        meseci = sorted([m for m in vse_mape if len(m) == 7 and m[:4].isdigit() and m[5:7].isdigit()],
+                        reverse=True)
+
+        # HTML-ji v “aktualni” mapi nivoja (brez mesečne podmape)
+        for p in mapa_sudoku_abs.iterdir():
+            if p.is_file() and p.name.endswith('.html'):
+                try:
+                    datum = p.name.replace(f'Sudoku_{code}_', '').replace('.html', '')
+                    datetime.strptime(datum, "%Y-%m-%d")
+                    aktualni.append(datum)
+                except ValueError:
+                    pass
+
+    aktualni.sort(reverse=True)
     return render_template('sudoku_arhiv.html', tezavnost=tezavnost, meseci=meseci, aktualni=aktualni)
 
 
 @app.get('/sudoku/arhiv/<tezavnost>/<mesec>')
 def arhiv_sudoku_mesec(tezavnost, mesec):
-    mapa = os.path.join('static', f'Sudoku_{tezavnost}', mesec)
+    codes = _level_candidates(tezavnost)
+    code = codes[0]
+    mapa = Path(app.static_folder) / f'Sudoku_{code}' / mesec
+
     datumi = []
-    if os.path.exists(mapa):
-        for f in os.listdir(mapa):
-            if f.endswith('.html'):
-                datum = f.replace(f'Sudoku_{tezavnost}_', '').replace('.html', '')
+    if mapa.exists():
+        for p in mapa.iterdir():
+            if p.is_file() and p.name.endswith('.html'):
                 try:
+                    datum = p.name.replace(f'Sudoku_{code}_', '').replace('.html', '')
                     datetime.strptime(datum, "%Y-%m-%d")
                     datumi.append(datum)
                 except ValueError:
