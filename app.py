@@ -19,6 +19,8 @@ import zipfile
 import shutil
 import sqlite3
 import unicodedata
+import requests
+import tempfile
 
 from flask import (
     Flask, jsonify, session, redirect, url_for, request, render_template,
@@ -49,6 +51,7 @@ except Exception as e:
 BASE_DIR = Path(__file__).resolve().parent
 DB_PATH = Path(os.environ.get("DB_PATH", "/var/data/VUS.db")).resolve()
 LEGACY_PATH = (BASE_DIR / "VUS.db").resolve()
+VUS_DB_URL = os.environ.get("VUS_DB_URL", "")
 
 DB_PATH.parent.mkdir(parents=True, exist_ok=True)
 
@@ -98,6 +101,54 @@ def ensure_indexes() -> None:
         conn.execute("CREATE INDEX IF NOT EXISTS idx_slovar_geslo ON slovar(GESLO)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_slovar_opis  ON slovar(OPIS)")
         print("[VUS] Indeksi OK.")
+
+
+def _download_and_swap_db(src_url: str, dst_path: Path) -> tuple[bool, str]:
+    """
+    Prenese SQLite DB z danega URL-ja v začasno datoteko,
+    jo hitro preveri in nato atomsko zamenja obstoječo bazo.
+    """
+    if not src_url:
+        return False, "VUS_DB_URL ni nastavljen."
+
+    try:
+        dst_path.parent.mkdir(parents=True, exist_ok=True)
+
+        # 1) prenos v temp
+        with requests.get(src_url, stream=True, timeout=90) as r:
+            r.raise_for_status()
+            with tempfile.NamedTemporaryFile(delete=False) as tmp:
+                for chunk in r.iter_content(chunk_size=1024 * 1024):
+                    if chunk:
+                        tmp.write(chunk)
+                tmp_path = Path(tmp.name)
+
+        # 2) sanity check – je res SQLite?
+        try:
+            con = sqlite3.connect(str(tmp_path))
+            cur = con.cursor()
+            cur.execute("SELECT name FROM sqlite_master LIMIT 1;")
+            cur.fetchone()
+            con.close()
+        except Exception as e:
+            try:
+                tmp_path.unlink(missing_ok=True)
+            finally:
+                return False, f"Datoteka ne izgleda kot veljavna SQLite baza: {e}"
+
+        # 3) atomska zamenjava
+        shutil.move(str(tmp_path), str(dst_path))
+
+        # 4) poskrbi za indekse (če v novi bazi še niso)
+        try:
+            ensure_indexes()
+        except Exception as e:
+            print(f"[VUS] OPOZORILO: ensure_indexes po syncu: {e}")
+
+        return True, "Baza uspešno posodobljena."
+    except Exception as e:
+        return False, f"Napaka pri prenosu/zamenjavi: {e}"
+
 
 # (opcijsko) mapa za backupe
 BACKUP_DIR = os.environ.get("BACKUP_DIR", str(DB_PATH.parent / "backups"))
@@ -297,6 +348,14 @@ def admin():
         return f"<h1>Napaka v admin: {e}</h1>"
 
 
+@app.post('/admin/sync_db')
+@login_required
+def admin_sync_db():
+    ok, msg = _download_and_swap_db(VUS_DB_URL, DB_PATH)
+    flash(("✔ " if ok else "✖ ") + msg, "success" if ok else "danger")
+    return redirect(url_for('admin'))
+
+
 @app.post('/admin/arhiviraj')
 @login_required
 def sprozi_arhiviranje():
@@ -475,7 +534,7 @@ def isci_opis():
         with get_conn() as conn:
             rezultat = conn.execute(
                 "SELECT GESLO, OPIS FROM slovar WHERE OPIS LIKE ? LIMIT 100",
-                (f"%{opis}%",)
+                (f"%{opis}%",)  # <-- brez escape znakov, tuple!
             ).fetchall()
 
         # opcijsko: sortiraj osebe najprej po imenu
