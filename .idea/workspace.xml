@@ -5,8 +5,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="7b096a74-7ed9-4344-af5e-d7be2fa85ca4" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/static/Sudoku_easy/2025-11" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/Sudoku_very_easy/2025-10/CrosswordCompilerApp/crosswordCompiler.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/Sudoku_very_easy/2025-10/CrosswordCompilerApp/crosswordCompiler.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -69,11 +70,11 @@
       <recent name="C:\Users\bormi\Documents\vus-flask2\static\Krizanke" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\bormi\Documents\vus-flask2\static\Sudoku_very_easy\CrosswordCompilerApp\2025-11" />
+      <recent name="C:\Users\bormi\Documents\vus-flask2\static\Sudoku_very_easy" />
       <recent name="C:\Users\bormi\Documents\vus-flask2\static\CrosswordCompilerApp\2025-09" />
       <recent name="C:\Users\bormi\Documents\vus-flask2\static" />
       <recent name="C:\Users\bormi\Documents\vus-flask2\static\Sudoku_easy\2025-09" />
-      <recent name="C:\Users\bormi\Documents\vus-flask2\Stare_skripte" />
-      <recent name="C:\Users\bormi\Documents\vus-flask2\data" />
     </key>
   </component>
   <component name="RunManager" selected="Python.test_baze">
