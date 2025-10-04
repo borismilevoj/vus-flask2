@@ -3,10 +3,8 @@ services:
     name: vus-flask2
     env: python
     plan: free
+    rootDir: .
     buildCommand: "pip install -r requirements.txt"
-    startCommand: "bash render-start.sh"
-    envVars:
-      - key: VUS_DB_URL
-        value: "https://dl.dropboxusercontent.com/scl/fi/m89w7wllcjhlrz8gbjvn7/VUS.db?rlkey=4gqo3mwjaqa1yin8ksww0uk6l"
+    startCommand: "python prestart.py && gunicorn -b 0.0.0.0:$PORT app:app"
 
 
