@@ -4,5 +4,9 @@ services:
     env: python
     plan: free
     buildCommand: "pip install -r requirements.txt"
-    startCommand: "python app_old.py"
+    startCommand: "bash render-start.sh"
+    envVars:
+      - key: VUS_DB_URL
+        value: "https://dl.dropboxusercontent.com/scl/fi/m89w7wllcjhlrz8gbjvn7/VUS.db?rlkey=4gqo3mwjaqa1yin8ksww0uk6l"
+
 
