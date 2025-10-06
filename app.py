@@ -65,10 +65,13 @@ if not DB_PATH.exists() and LEGACY_PATH.exists():
 
 
 def get_conn() -> sqlite3.Connection:
-    """Vrni SQLite povezavo na DB_PATH, z Row row_factory."""
+    """Vrni SQLite povezavo na DB_PATH (WAL + NORMAL), z Row row_factory."""
     conn = sqlite3.connect(str(DB_PATH), check_same_thread=False)
     conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA journal_mode=WAL;")
+    conn.execute("PRAGMA synchronous=NORMAL;")
     return conn
+
 
 
 def assert_baza_ok() -> None:
@@ -550,11 +553,31 @@ def prispevaj_geslo():
     return render_template('prispevaj.html')
 
 
-@app.get('/stevec_gesel')
-def stevec_gesel():
+@app.get('/stevec_gesel')        # JSON
+def stevec_gesel_json():
     with get_conn() as conn:
         st = conn.execute("SELECT COUNT(*) FROM slovar").fetchone()[0]
     return jsonify({"stevilo_gesel": st})
+
+@app.get('/stevec_gesel.txt')    # plain text
+def stevec_gesel_txt():
+    with get_conn() as conn:
+        st = conn.execute("SELECT COUNT(*) FROM slovar").fetchone()[0]
+    return str(st), 200, {"Content-Type": "text/plain; charset=utf-8"}
+
+from flask import jsonify
+
+from flask import jsonify
+
+@app.get("/healthz", endpoint="healthz_status")
+def healthz_status():
+    try:
+        with get_conn() as c:
+            rows = c.execute("SELECT COUNT(*) FROM slovar").fetchone()[0]
+        return jsonify(status="ok", rows=rows, db=str(DB_PATH)), 200
+    except Exception as e:
+        return jsonify(status="error", msg=str(e)), 500
+
 
 
 # ===== Križanka ===============================================================
