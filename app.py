@@ -164,6 +164,32 @@ app.secret_key = "Tifumannam1_vus-flask2.onrender.com"
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['PROPAGATE_EXCEPTIONS'] = True
 
+# --- ARHIVIRANJE KRIŽANK V MESEČNE MAPE -----------------
+import re, shutil
+from pathlib import Path
+from flask import jsonify, request, session
+
+CC_BASE = Path(app.root_path) / "static" / "CrosswordCompilerApp"
+_DATE_RE = re.compile(r"^(20\d{2}-\d{2})-(\d{2})\.(js|xml)$")  # npr. 2025-06-01.js
+
+def premakni_v_mesecne_mape(base: Path = CC_BASE):
+    moved, skipped = [], []
+    for p in sorted(base.glob("*.*")):
+        m = _DATE_RE.match(p.name)
+        if not m:
+            continue
+        ym = m.group(1)  # YYYY-MM
+        target_dir = base / ym
+        target_dir.mkdir(parents=True, exist_ok=True)
+        target = target_dir / p.name
+        if target.exists():
+            skipped.append(p.name)
+            continue
+        shutil.move(str(p), str(target))
+        moved.append(p.name)
+    return {"moved": moved, "skipped": skipped}
+
+
 # Poskrbi, da je uploads mapa res mapa
 if not os.path.isdir(app.config['UPLOAD_FOLDER']):
     if os.path.exists(app.config['UPLOAD_FOLDER']):  # obstaja kot datoteka
@@ -369,6 +395,87 @@ def sprozi_arhiviranje():
     flash(f"Premaknjenih {len(premaknjeni)} datotek.", "success")
     return redirect(url_for('admin'))
 
+
+# --- ARHIVIRANJE KRIŽANK V MESEČNE MAPE (samo pretekli datumi) ---
+import re, shutil
+from datetime import date
+from pathlib import Path
+from flask import jsonify
+
+CC_BASE = Path(app.root_path) / "static" / "CrosswordCompilerApp"
+# 2025-06-01.js ali .xml
+_DATE_RE = re.compile(r"^(20\d{2})-(\d{2})-(\d{2})\.(js|xml)$")
+
+def premakni_v_mesecne_mape(base: Path = CC_BASE):
+    today = date.today()
+    moved, skipped_existing, skipped_future = [], [], []
+    # premikamo le datoteke v korenu base (ne po podmapah)
+    for p in sorted(base.glob("*.*")):
+        m = _DATE_RE.match(p.name)
+        if not m:
+            continue
+
+        yyyy, mm, dd = m.group(1), m.group(2), m.group(3)
+        try:
+            file_date = date(int(yyyy), int(mm), int(dd))
+        except ValueError:
+            # če je ime “čudno”, ga preskočimo
+            skipped_future.append(p.name)
+            continue
+
+        # samo pretečeni datumi – danes in prihodnost se NE premaknejo
+        if not (file_date < today):
+            skipped_future.append(p.name)
+            continue
+
+        ym = f"{yyyy}-{mm}"
+        target_dir = base / ym
+        target_dir.mkdir(parents=True, exist_ok=True)
+        target = target_dir / p.name
+
+        if target.exists():
+            skipped_existing.append(p.name)
+            continue
+
+        shutil.move(str(p), str(target))
+        moved.append(p.name)
+
+    return {
+        "moved": moved,
+        "skipped_existing": skipped_existing,
+        "skipped_future": skipped_future,
+    }
+
+# === API (v4) – vrača nove števce ===
+@app.post("/api/admin/arhiviraj", endpoint="api_admin_arhiviraj_v4")
+def api_admin_arhiviraj_v4():
+    try:
+        res = premakni_v_mesecne_mape()
+        return jsonify({
+            "ok": True,
+            "moved_count": len(res["moved"]),
+            "skipped_existing_count": len(res["skipped_existing"]),
+            "skipped_future_count": len(res["skipped_future"]),
+            "moved": res["moved"],
+            "skipped_existing": res["skipped_existing"],
+            "skipped_future": res["skipped_future"],
+        })
+    except Exception as e:
+        app.logger.exception("Napaka pri arhiviranju")
+        resp = jsonify({"ok": False, "error": str(e)})
+        resp.status_code = 500
+        return resp
+
+@app.get("/api/admin/arhiviraj/ping", endpoint="api_admin_arhiviraj_ping_v4")
+def api_admin_arhiviraj_ping_v4():
+    top_level = [p.name for p in CC_BASE.glob("*.*")]
+    return jsonify({
+        "ok": True,
+        "base": str(CC_BASE),
+        "base_exists": CC_BASE.exists(),
+        "top_level_files": len(top_level),
+        "sample": top_level[:5],
+    })
 
 # ===== API-ji / CRUD ==========================================================
 
