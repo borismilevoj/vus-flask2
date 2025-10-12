@@ -9,10 +9,7 @@
 
 {% block content %}
 <style>
-  .hero-image {
-    background-color: rgba(0,0,0,0.4);
-    background-blend-mode: multiply;
-  }
+  .hero-image { background-color: rgba(0,0,0,0.4); background-blend-mode: multiply; }
   .btn-anim { transition: transform 0.3s ease, box-shadow 0.3s ease; }
   .btn-anim:hover { transform: scale(1.05); box-shadow: 0 0 10px rgba(0,0,0,0.3); }
 </style>
@@ -38,26 +35,10 @@
     </div>
 
     <div class="stevec-home mt-4 fs-4 fw-bold text-warning" id="stevecHome">
-      Nalaganje števila gesel…
+      Gesel v bazi: {{ stevilo_gesel if stevilo_gesel is not none else '—' }}
     </div>
   </div>
 </div>
 {% endblock %}
 
-{% block scripts %}
-<script>
-document.addEventListener('DOMContentLoaded', async () => {
-  const el = document.getElementById('stevecHome');
-  if (!el) return;
-  try {
-    const r = await fetch('/stevec_gesel.txt', { cache: 'no-store' });
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    const txt = (await r.text()).trim();
-    el.textContent = 'Gesel v bazi: ' + (txt || '–');
-  } catch (e) {
-    console.error('Napaka pri števcu:', e);
-    el.textContent = 'Napaka pri nalaganju števila gesel.';
-  }
-});
-</script>
-{% endblock %}
+{# Ni skript bloka potreben; vse je narisano na strežniku. #}

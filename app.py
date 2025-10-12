@@ -421,7 +421,17 @@ def home():
             obvestilo = f.read().strip()
     except FileNotFoundError:
         pass
-    return render_template('home.html', obvestilo=obvestilo)
+
+    # ↓↓↓ dodano: preberi števec na strežniku
+    stevilo_gesel = None
+    try:
+        with get_conn() as conn:
+            stevilo_gesel = conn.execute("SELECT COUNT(*) FROM slovar").fetchone()[0]
+    except Exception:
+        stevilo_gesel = None
+
+    return render_template('home.html', obvestilo=obvestilo, stevilo_gesel=stevilo_gesel)
+
 
 # ===== 404 handler ============================================================
 @app.errorhandler(404)
