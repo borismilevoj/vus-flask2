@@ -630,13 +630,18 @@ def prispevaj_geslo():
 def stevec_gesel_json():
     with get_conn() as conn:
         st = conn.execute("SELECT COUNT(*) FROM slovar").fetchone()[0]
-    return jsonify({"stevilo_gesel": st})
+    resp = jsonify({"stevilo_gesel": st})
+    resp.headers['Cache-Control'] = 'no-store'
+    return resp
 
-@app.get('/stevec_gesel.txt')    # plain text
+@app.get('/stevec_gesel.txt')    # PLAIN TEXT
 def stevec_gesel_txt():
     with get_conn() as conn:
         st = conn.execute("SELECT COUNT(*) FROM slovar").fetchone()[0]
-    return str(st), 200, {"Content-Type": "text/plain; charset=utf-8"}
+    return str(st), 200, {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Cache-Control": "no-store",
+    }
 
 
 # ===== Križanka ===============================================================

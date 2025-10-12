@@ -1,40 +1,44 @@
 {% extends "base.html" %}
 {% block title %}VUS – Veliki ugankarski slovar{% endblock %}
+
 {% if obvestilo %}
 <div style="background: #ffd966; color: #800000; padding: 10px; margin-bottom: 15px; border-radius: 8px; font-weight: bold;">
-    ⚠️ {{ obvestilo }}
+  ⚠️ {{ obvestilo }}
 </div>
 {% endif %}
 
-
 {% block content %}
 <style>
-.hero-image {
-  background-color: rgba(0,0,0,0.4); /* temen preliv */
-  background-blend-mode: multiply;
-}
-.btn-anim {
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-.btn-anim:hover {
-  transform: scale(1.05);
-  box-shadow: 0 0 10px rgba(0,0,0,0.3);
-}
+  .hero-image {
+    background-color: rgba(0,0,0,0.4);
+    background-blend-mode: multiply;
+  }
+  .btn-anim { transition: transform 0.3s ease, box-shadow 0.3s ease; }
+  .btn-anim:hover { transform: scale(1.05); box-shadow: 0 0 10px rgba(0,0,0,0.3); }
 </style>
 
 <div class="container-fluid p-0">
-  <div class="hero-image" style="background-image: url('{{ url_for('static', filename='slika.png') }}'); background-size: 100% 100%; background-position: center; background-repeat: no-repeat; height: 100%; padding: 100px 20px; text-align: center;">
+  <div class="hero-image"
+       style="background-image: url('{{ url_for('static', filename='slika.png') }}');
+              background-size: 100% 100%;
+              background-position: center;
+              background-repeat: no-repeat;
+              height: 100%;
+              padding: 100px 20px;
+              text-align: center;">
     <h1 class="display-5 fw-bold text-white">VUS – Veliki ugankarski slovar</h1>
     <p class="lead text-white">Slovar za križanke in uganke. Poišči gesla po vzorcu ali opisu.</p>
+
     <div class="d-flex flex-wrap justify-content-center mt-4 gap-3">
       <a class="btn btn-primary fw-bold btn-anim" href="{{ url_for('isci_vzorec') }}">IŠČI PO VZORCU</a>
-      <!-- <a class="btn btn-primary fw-bold btn-anim" href="{{ url_for('isci_opis') }}">IŠČI PO OPISU</a>-->
+      <!-- <a class="btn btn-primary fw-bold btn-anim" href="{{ url_for('isci_opis') }}">IŠČI PO OPISU</a> -->
       <a class="btn btn-success fw-bold btn-anim" href="{{ url_for('prikazi_krizanko', datum=None) }}">KRIŽANKA</a>
       <a class="btn btn-success fw-bold btn-anim" href="{{ url_for('sudoku_meni') }}">SUDOKU</a>
       <a class="btn btn-info fw-bold btn-anim" href="{{ url_for('prispevaj_geslo') }}">PRISPEVAJ GESLO</a>
-   </div>
+    </div>
+
     <div class="stevec-home mt-4 fs-4 fw-bold text-warning" id="stevecHome">
-      Nalaganje števila gesel...
+      Nalaganje števila gesel…
     </div>
   </div>
 </div>
@@ -42,15 +46,18 @@
 
 {% block scripts %}
 <script>
-document.addEventListener("DOMContentLoaded", function() {
-  fetch('/stevec_gesel')
-    .then(response => response.json())
-    .then(data => {
-      document.getElementById('stevecHome').innerText = "Gesel v bazi: " + data.stevilo_gesel;
-    })
-    .catch(err => {
-      document.getElementById('stevecHome').innerText = "Napaka pri nalaganju števila gesel.";
-    });
+document.addEventListener('DOMContentLoaded', async () => {
+  const el = document.getElementById('stevecHome');
+  if (!el) return;
+  try {
+    const r = await fetch('/stevec_gesel.txt', { cache: 'no-store' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const txt = (await r.text()).trim();
+    el.textContent = 'Gesel v bazi: ' + (txt || '–');
+  } catch (e) {
+    console.error('Napaka pri števcu:', e);
+    el.textContent = 'Napaka pri nalaganju števila gesel.';
+  }
 });
 </script>
 {% endblock %}
