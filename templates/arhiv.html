@@ -2,22 +2,34 @@
 {% block title %}Arhiv križank | VUS{% endblock %}
 
 {% block content %}
-<h1>Arhiv križank</h1>
+<div class="container mt-3">
+  <h1 class="mb-3">Arhiv križank</h1>
 
-{% if meseci %}
-    <h3 class="mt-4">Mesečni arhivi:</h3>
-    <div class="mb-3 d-flex flex-wrap justify-content-center">
-        {% for mesec in meseci %}
-            <a href="{{ url_for('arhiv_krizank_mesec', mesec=mesec) }}"
-               class="btn btn-outline-warning m-2">{{ mesec }}</a>
-        {% endfor %}
+  {# ––– Hitre kazalke na mesece ––– #}
+  {% if months_sorted %}
+    <div class="mb-3 d-flex flex-wrap gap-2">
+      {% for ym in months_sorted %}
+        <a class="btn btn-outline-warning btn-sm"
+           href="{{ url_for('arhiv_krizanke') }}#{{ ym }}">{{ ym }}</a>
+      {% endfor %}
     </div>
-{% endif %}
+  {% endif %}
 
-<{% for datum in aktualne %}
-    <a class="btn btn-warning m-2" href="{{ url_for('prikazi_krizanko', datum=datum) }}">{{ datum }}</a>
-{% endfor %}
+  {# ––– Seznam po mesecih in dnevih ––– #}
+  {% if months_sorted and meseci %}
+    {% for ym in months_sorted %}
+      <h5 id="{{ ym }}" class="mt-4">{{ ym }}</h5>
+      <div class="d-flex flex-wrap gap-2">
+        {% for day in meseci[ym] %}
+          <a class="btn btn-warning btn-sm"
+             href="{{ url_for('prikazi_krizanko', datum=day) }}">{{ day }}</a>
+        {% endfor %}
+      </div>
+    {% endfor %}
+  {% else %}
+    <p class="text-muted">Ni preteklih zapisov.</p>
+  {% endif %}
 
+  <a href="{{ url_for('home') }}" class="btn btn-secondary mt-4">Domov</a>
 </div>
-<a href="{{ url_for('home') }}" class="btn btn-secondary mt-4">Domov</a>
 {% endblock %}

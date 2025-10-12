@@ -1,16 +1,16 @@
 # app.py — FIXED (UTF-8, stabilna DB, rute ohranjene)
 # - DB na /var/data/VUS.db (z enkratno migracijo iz lokalne VUS.db)
 # - get_conn() z Row row_factory
-# - assert_baza_ok() + ensure_indexes() (brez trojnih narekovajev)
+# - assert_baza_ok() + ensure_indexes()
 # - /healthz za hiter check
-# - očiščeno dvojno initiranje Flask app-a
-
+# - helperji/dekoratorji nad rutami
+# - arhiviranje in prikaz: samo PRETEKLI datumi
 from __future__ import annotations
 
 # ===== Imports ================================================================
 from pathlib import Path
 from functools import wraps
-from datetime import datetime
+from datetime import datetime, date
 import os
 import io
 import re
@@ -73,7 +73,6 @@ def get_conn() -> sqlite3.Connection:
     return conn
 
 
-
 def assert_baza_ok() -> None:
     """Preveri, da baza obstaja in ima tabelo 'slovar'."""
     if not DB_PATH.exists() or DB_PATH.stat().st_size == 0:
@@ -90,7 +89,7 @@ def assert_baza_ok() -> None:
 
 
 def ensure_indexes() -> None:
-    """Ustvari potrebne indekse (brez trojnih narekovajev)."""
+    """Ustvari potrebne indekse."""
     with get_conn() as conn:
         cur = conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='slovar'")
         if not cur.fetchone():
@@ -99,7 +98,6 @@ def ensure_indexes() -> None:
                 f"[VUS] V bazi {DB_PATH} ni tabele 'slovar'. Najdene: {tabele or '—'}. "
                 f"Napačna/prazna .db → nastavi DB_PATH."
             )
-        # Uporabljamo velika imena stolpcev (GESLO, OPIS), ker jih tako uporabljaš v poizvedbah
         conn.execute("CREATE INDEX IF NOT EXISTS idx_slovar_norm_expr ON slovar(replace(replace(replace(upper(GESLO),' ',''),'-',''),'_',''))")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_slovar_geslo ON slovar(GESLO)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_slovar_opis  ON slovar(OPIS)")
@@ -108,8 +106,7 @@ def ensure_indexes() -> None:
 
 def _download_and_swap_db(src_url: str, dst_path: Path) -> tuple[bool, str]:
     """
-    Prenese SQLite DB z danega URL-ja v začasno datoteko,
-    jo hitro preveri in nato atomsko zamenja obstoječo bazo.
+    Prenese SQLite DB v temp, preveri in atomsko zamenja.
     """
     if not src_url:
         return False, "VUS_DB_URL ni nastavljen."
@@ -117,7 +114,6 @@ def _download_and_swap_db(src_url: str, dst_path: Path) -> tuple[bool, str]:
     try:
         dst_path.parent.mkdir(parents=True, exist_ok=True)
 
-        # 1) prenos v temp
         with requests.get(src_url, stream=True, timeout=90) as r:
             r.raise_for_status()
             with tempfile.NamedTemporaryFile(delete=False) as tmp:
@@ -126,23 +122,16 @@ def _download_and_swap_db(src_url: str, dst_path: Path) -> tuple[bool, str]:
                         tmp.write(chunk)
                 tmp_path = Path(tmp.name)
 
-        # 2) sanity check – je res SQLite?
+        # sanity check
         try:
             con = sqlite3.connect(str(tmp_path))
-            cur = con.cursor()
-            cur.execute("SELECT name FROM sqlite_master LIMIT 1;")
-            cur.fetchone()
+            con.execute("SELECT name FROM sqlite_master LIMIT 1;").fetchone()
             con.close()
         except Exception as e:
-            try:
-                tmp_path.unlink(missing_ok=True)
-            finally:
-                return False, f"Datoteka ne izgleda kot veljavna SQLite baza: {e}"
+            tmp_path.unlink(missing_ok=True)
+            return False, f"Datoteka ne izgleda kot veljavna SQLite baza: {e}"
 
-        # 3) atomska zamenjava
         shutil.move(str(tmp_path), str(dst_path))
-
-        # 4) poskrbi za indekse (če v novi bazi še niso)
         try:
             ensure_indexes()
         except Exception as e:
@@ -157,6 +146,8 @@ def _download_and_swap_db(src_url: str, dst_path: Path) -> tuple[bool, str]:
 BACKUP_DIR = os.environ.get("BACKUP_DIR", str(DB_PATH.parent / "backups"))
 os.makedirs(BACKUP_DIR, exist_ok=True)
 
+# Admin geslo
+GESLO = "Tifumannam1_vus-flask2.onrender.com"
 
 # ===== Flask app ==============================================================
 app = Flask(__name__, static_folder='static', static_url_path='/static')
@@ -164,90 +155,23 @@ app.secret_key = "Tifumannam1_vus-flask2.onrender.com"
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['PROPAGATE_EXCEPTIONS'] = True
 
-# --- ARHIVIRANJE KRIŽANK V MESEČNE MAPE -----------------
-import re, shutil
-from pathlib import Path
-from flask import jsonify, request, session
-
-CC_BASE = Path(app.root_path) / "static" / "CrosswordCompilerApp"
-_DATE_RE = re.compile(r"^(20\d{2}-\d{2})-(\d{2})\.(js|xml)$")  # npr. 2025-06-01.js
-
-def premakni_v_mesecne_mape(base: Path = CC_BASE):
-    moved, skipped = [], []
-    for p in sorted(base.glob("*.*")):
-        m = _DATE_RE.match(p.name)
-        if not m:
-            continue
-        ym = m.group(1)  # YYYY-MM
-        target_dir = base / ym
-        target_dir.mkdir(parents=True, exist_ok=True)
-        target = target_dir / p.name
-        if target.exists():
-            skipped.append(p.name)
-            continue
-        shutil.move(str(p), str(target))
-        moved.append(p.name)
-    return {"moved": moved, "skipped": skipped}
-
-
-# Poskrbi, da je uploads mapa res mapa
-if not os.path.isdir(app.config['UPLOAD_FOLDER']):
-    if os.path.exists(app.config['UPLOAD_FOLDER']):  # obstaja kot datoteka
-        os.remove(app.config['UPLOAD_FOLDER'])
-    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-
-# Admin geslo
-GESLO = "Tifumannam1_vus-flask2.onrender.com"
-
-
-# ===== Pomožne funkcije =======================================================
-
+# ---- Helperji in dekoratorji (morajo biti nad rutami) -----------------------
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if 'prijavljen' not in session:
+        if not session.get('prijavljen'):
             return redirect(url_for('login', next=request.path))
         return f(*args, **kwargs)
     return decorated_function
 
-
-def generiraj_ime_slike(opis, resitev):
-    def norm(txt):
-        txt = unicodedata.normalize('NFD', txt)
-        txt = re.sub(r'[\u0300-\u036f]', '', txt)
-        txt = txt.lower()
-        txt = re.sub(r'[^a-z0-9 ]', '', txt)
-        txt = '_'.join(txt.strip().split())
-        return txt
-    return f"{norm(opis)}_{norm(resitev)}"
-
-
-def odstrani_cc_vrstico_iz_html(mapa):
-    for datoteka in glob.glob(os.path.join(mapa, "*.html")):
-        with open(datoteka, 'r', encoding='utf-8', errors='ignore') as f:
-            vrstice = f.readlines()
-        nove = [vr for vr in vrstice if "crossword-compiler.com" not in vr]
-        if len(nove) < len(vrstice):
-            with open(datoteka, 'w', encoding='utf-8') as f:
-                f.writelines(nove)
-            print(f"[VUS] Očiščeno: {datoteka}")
-
-
-def get_db():
-    """Združljiv alias: vrne get_conn()."""
-    return get_conn()
-
-
 def normalize_search(text: str) -> str:
-    """lowercase, odstrani šumnike, pobriši ločila, stisni presledke"""
     if not text:
         return ""
     s = unicodedata.normalize('NFD', text)
-    s = ''.join(c for c in s if not unicodedata.combining(c))   # brez diakritike
-    s = re.sub(r'[^a-zA-Z0-9\s]', ' ', s)                       # ločila -> presledek
+    s = ''.join(c for c in s if not unicodedata.combining(c))
+    s = re.sub(r'[^a-zA-Z0-9\s]', ' ', s)
     s = re.sub(r'\s+', ' ', s).strip().lower()
     return s
-
 
 def parse_tokens(q: str):
     """Vrne (include_tokens, exclude_tokens). Fraze v "..." so en token. -token izključi."""
@@ -256,18 +180,14 @@ def parse_tokens(q: str):
     parts = re.findall(r'"([^"]+)"|(\S+)', q)
     inc, exc = [], []
     for quoted, plain in parts:
-        tok = quoted or plain
-        tok = normalize_search(tok)
+        tok = normalize_search(quoted or plain)
         if not tok:
             continue
-        if plain and plain.startswith('-') and tok:
+        if plain and plain.startswith('-'):
             exc.append(normalize_search(plain[1:]))
         else:
             inc.append(tok)
     return inc, exc
-
-
-# --- sortiranje po imenu (osebe najprej) ---
 
 def normalize_ascii(text: str) -> str:
     if not text:
@@ -275,7 +195,6 @@ def normalize_ascii(text: str) -> str:
     s = unicodedata.normalize('NFD', text)
     s = ''.join(c for c in s if not unicodedata.combining(c))
     return ' '.join(s.lower().split())
-
 
 def ime_za_sort(opis: str) -> str:
     if not opis or ' - ' not in opis:
@@ -288,14 +207,167 @@ def ime_za_sort(opis: str) -> str:
     ime = blok.split()[0] if blok else ""
     return normalize_ascii(ime)
 
-
 def sort_key_opis(opis: str):
     je_oseba = 0 if ' - ' in (opis or '') else 1
     return (je_oseba, ime_za_sort(opis), normalize_ascii(opis))
+# -----------------------------------------------------------------------------
+
+# ======= ARHIV: helperji in rute (v2) ========================================
+CC_BASE = Path(app.root_path) / "static" / "CrosswordCompilerApp"
+SUDOKU_BASE = Path(app.root_path) / "static" / "SudokuCompilerApp"
+DATE_RE_ANY = re.compile(r"^(20\d{2})-(\d{2})-(\d{2})\.(js|xml)$")
+
+def zberi_pretekle(base: Path):
+    """
+    Prebere datoteke iz korena in YYYY-MM podmap, filtrira < danes,
+    vrne (months_sorted, meseci) z meseci = {'YYYY-MM': ['YYYY-MM-DD', ...]}.
+    """
+    today = date.today()
+    meseci: dict[str, list[str]] = {}
+
+    def add_file(p: Path):
+        m = DATE_RE_ANY.match(p.name)
+        if not m:
+            return
+        y, mth, d = map(int, m.groups()[:3])
+        dt = date(y, mth, d)
+        if dt >= today:
+            return
+        ym = f"{y:04d}-{mth:02d}"
+        meseci.setdefault(ym, []).append(f"{y:04d}-{mth:02d}-{d:02d}")
+
+    for p in sorted(base.glob("*.*")):
+        if p.is_file():
+            add_file(p)
+
+    for folder in sorted(base.glob("20??-??")):
+        if not folder.is_dir():
+            continue
+        for p in sorted(folder.glob("*.*")):
+            if p.is_file():
+                add_file(p)
+
+    meseci = {ym: sorted(days, reverse=True) for ym, days in meseci.items() if days}
+    months_sorted = sorted(meseci.keys(), reverse=True)
+    return months_sorted, meseci
+
+# --- ARHIV (KRIŽANKE) – samo pretekli datumi -------------------------------
+@app.get("/arhiv/krizanke")
+def arhiv_krizanke():
+    months_sorted, meseci = zberi_pretekle(CC_BASE)
+    return render_template(
+        "arhiv.html",
+        months_sorted=months_sorted,
+        meseci=meseci,
+        tip="krizanke",
+    )
+
+@app.get("/sudoku/arhiv/<tezavnost>", endpoint="arhiv_sudoku")
+def arhiv_sudoku_v2(tezavnost):
+    months_sorted, meseci = zberi_pretekle_sudoku(tezavnost)
+    return render_template(
+        "arhiv.html",
+        months_sorted=months_sorted,
+        meseci=meseci,
+        tip="sudoku",
+        tezavnost=tezavnost
+    )
+
+@app.get("/api/admin/arhiv_diag")
+def arhiv_diag():
+    what = request.args.get("what", "krizanke")
+    tez = request.args.get("tezavnost", "")
+    base = (SUDOKU_BASE / tez) if (what == "sudoku" and (SUDOKU_BASE / tez).exists()) else (SUDOKU_BASE if what == "sudoku" else CC_BASE)
+
+    today = date.today()
+    total = past = future = 0
+    koren = [p.name for p in base.glob("*.*") if p.is_file()]
+    mes_mape = [f.name for f in base.glob("20??-??") if f.is_dir()]
+
+    for p in list(base.glob("*.*")) + [pp for f in base.glob("20??-??") if f.is_dir() for pp in f.glob("*.*")]:
+        if not p.is_file():
+            continue
+        m = DATE_RE_ANY.match(p.name)
+        if not m:
+            continue
+        total += 1
+        y, mm, dd = map(int, m.groups()[:3])
+        if date(y, mm, dd) < today:
+            past += 1
+        else:
+            future += 1
+
+    return jsonify({
+        "ok": True,
+        "base": str(base),
+        "exists": base.exists(),
+        "koren_files": koren[:10],
+        "month_dirs": mes_mape[:10],
+        "counts": {"total_named": total, "past": past, "future_or_today": future}
+    })
+
+# --- ARHIVIRANJE (premakni samo PRETEKLE v mesečne mape) ---------------------
+def premakni_v_mesecne_mape(base: Path = CC_BASE):
+    today = date.today()
+    moved, skipped_existing, skipped_future = [], [], []
+    for p in sorted(base.glob("*.*")):
+        if not p.is_file():
+            continue
+        m = DATE_RE_ANY.match(p.name)
+        if not m:
+            continue
+        y, mm, dd = map(int, m.groups()[:3])
+        dt = date(y, mm, dd)
+        if dt >= today:
+            skipped_future.append(p.name)
+            continue
+        ym = f"{y:04d}-{mm:02d}"
+        target_dir = base / ym
+        target_dir.mkdir(parents=True, exist_ok=True)
+        target = target_dir / p.name
+        if target.exists():
+            skipped_existing.append(p.name)
+            continue
+        shutil.move(str(p), str(target))
+        moved.append(p.name)
+    return {"moved": moved, "skipped_existing": skipped_existing, "skipped_future": skipped_future}
+
+@app.post("/api/admin/arhiviraj", endpoint="api_admin_arhiviraj_v4")
+def api_admin_arhiviraj_v4():
+    try:
+        res = premakni_v_mesecne_mape()
+        return jsonify({
+            "ok": True,
+            "moved_count": len(res["moved"]),
+            "skipped_existing_count": len(res["skipped_existing"]),
+            "skipped_future_count": len(res["skipped_future"]),
+            "moved": res["moved"],
+            "skipped_existing": res["skipped_existing"],
+            "skipped_future": res["skipped_future"],
+        })
+    except Exception as e:
+        app.logger.exception("Napaka pri arhiviranju")
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+@app.get("/api/admin/arhiviraj/ping", endpoint="api_admin_arhiviraj_ping_v4")
+def api_admin_arhiviraj_ping_v4():
+    top_level = [p.name for p in CC_BASE.glob("*.*")]
+    return jsonify({
+        "ok": True,
+        "base": str(CC_BASE),
+        "base_exists": CC_BASE.exists(),
+        "top_level_files": len(top_level),
+        "sample": top_level[:5],
+    })
+
+# --- Poskrbi, da uploads mapa res obstaja -----------------------------------
+if not os.path.isdir(app.config['UPLOAD_FOLDER']):
+    if os.path.exists(app.config['UPLOAD_FOLDER']):  # obstaja kot datoteka
+        os.remove(app.config['UPLOAD_FOLDER'])
+    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 
 # ===== Diagnostika / Health ===================================================
-
 @app.get("/ping")
 def ping():
     return "OK iz Flaska!"
@@ -321,7 +393,6 @@ def test():
 
 
 # ===== Avtentikacija ==========================================================
-
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     napaka = None
@@ -334,7 +405,6 @@ def login():
             napaka = "Napačno geslo."
     return render_template('login.html', napaka=napaka)
 
-
 @app.get('/logout')
 def logout():
     session.pop('prijavljen', None)
@@ -342,7 +412,6 @@ def logout():
 
 
 # ===== Domača stran (root + /home) ===========================================
-
 @app.route('/')
 @app.route('/home')
 def home():
@@ -354,16 +423,13 @@ def home():
         pass
     return render_template('home.html', obvestilo=obvestilo)
 
-
 # ===== 404 handler ============================================================
-
 @app.errorhandler(404)
 def page_not_found(e):
     return redirect(url_for("home"))
 
 
 # ===== Admin =================================================================
-
 @app.get('/admin')
 @login_required
 def admin():
@@ -376,14 +442,12 @@ def admin():
     except Exception as e:
         return f"<h1>Napaka v admin: {e}</h1>"
 
-
 @app.post('/admin/sync_db')
 @login_required
 def admin_sync_db():
     ok, msg = _download_and_swap_db(VUS_DB_URL, DB_PATH)
     flash(("✔ " if ok else "✖ ") + msg, "success" if ok else "danger")
     return redirect(url_for('admin'))
-
 
 @app.post('/admin/arhiviraj')
 @login_required
@@ -396,89 +460,7 @@ def sprozi_arhiviranje():
     return redirect(url_for('admin'))
 
 
-# --- ARHIVIRANJE KRIŽANK V MESEČNE MAPE (samo pretekli datumi) ---
-import re, shutil
-from datetime import date
-from pathlib import Path
-from flask import jsonify
-
-CC_BASE = Path(app.root_path) / "static" / "CrosswordCompilerApp"
-# 2025-06-01.js ali .xml
-_DATE_RE = re.compile(r"^(20\d{2})-(\d{2})-(\d{2})\.(js|xml)$")
-
-def premakni_v_mesecne_mape(base: Path = CC_BASE):
-    today = date.today()
-    moved, skipped_existing, skipped_future = [], [], []
-    # premikamo le datoteke v korenu base (ne po podmapah)
-    for p in sorted(base.glob("*.*")):
-        m = _DATE_RE.match(p.name)
-        if not m:
-            continue
-
-        yyyy, mm, dd = m.group(1), m.group(2), m.group(3)
-        try:
-            file_date = date(int(yyyy), int(mm), int(dd))
-        except ValueError:
-            # če je ime “čudno”, ga preskočimo
-            skipped_future.append(p.name)
-            continue
-
-        # samo pretečeni datumi – danes in prihodnost se NE premaknejo
-        if not (file_date < today):
-            skipped_future.append(p.name)
-            continue
-
-        ym = f"{yyyy}-{mm}"
-        target_dir = base / ym
-        target_dir.mkdir(parents=True, exist_ok=True)
-        target = target_dir / p.name
-
-        if target.exists():
-            skipped_existing.append(p.name)
-            continue
-
-        shutil.move(str(p), str(target))
-        moved.append(p.name)
-
-    return {
-        "moved": moved,
-        "skipped_existing": skipped_existing,
-        "skipped_future": skipped_future,
-    }
-
-# === API (v4) – vrača nove števce ===
-@app.post("/api/admin/arhiviraj", endpoint="api_admin_arhiviraj_v4")
-def api_admin_arhiviraj_v4():
-    try:
-        res = premakni_v_mesecne_mape()
-        return jsonify({
-            "ok": True,
-            "moved_count": len(res["moved"]),
-            "skipped_existing_count": len(res["skipped_existing"]),
-            "skipped_future_count": len(res["skipped_future"]),
-            "moved": res["moved"],
-            "skipped_existing": res["skipped_existing"],
-            "skipped_future": res["skipped_future"],
-        })
-    except Exception as e:
-        app.logger.exception("Napaka pri arhiviranju")
-        resp = jsonify({"ok": False, "error": str(e)})
-        resp.status_code = 500
-        return resp
-
-@app.get("/api/admin/arhiviraj/ping", endpoint="api_admin_arhiviraj_ping_v4")
-def api_admin_arhiviraj_ping_v4():
-    top_level = [p.name for p in CC_BASE.glob("*.*")]
-    return jsonify({
-        "ok": True,
-        "base": str(CC_BASE),
-        "base_exists": CC_BASE.exists(),
-        "top_level_files": len(top_level),
-        "sample": top_level[:5],
-    })
-
 # ===== API-ji / CRUD ==========================================================
-
 @app.post('/preveri')
 def preveri():
     payload = request.get_json(silent=True) or {}
@@ -511,7 +493,6 @@ def preveri():
         'gesla': [{'id': r['id'], 'geslo': r['geslo'], 'opis': r['opis']} for r in rezultati]
     })
 
-
 @app.post('/dodaj_geslo')
 def dodaj_geslo():
     data = request.json or {}
@@ -533,7 +514,6 @@ def dodaj_geslo():
         new_id = conn.execute("SELECT last_insert_rowid()").fetchone()[0]
     return jsonify({"id": new_id, "geslo": geslo, "opis": opis, "sporocilo": "Geslo uspešno dodano!"})
 
-
 @app.post('/uredi_geslo')
 def uredi_geslo():
     data = request.json or {}
@@ -544,7 +524,6 @@ def uredi_geslo():
     with get_conn() as conn:
         conn.execute("UPDATE slovar SET OPIS = ? WHERE ID = ?", (opis, id))
     return jsonify({'sporocilo': 'Opis uspešno spremenjen'})
-
 
 @app.post('/brisi_geslo')
 def brisi_geslo():
@@ -558,11 +537,9 @@ def brisi_geslo():
 
 
 # ===== Iskanje ================================================================
-
 @app.get('/test_iscenje')
 def test_iscenje():
     return render_template('isci_vzorec_test.html')
-
 
 @app.route('/isci_vzorec', methods=['GET', 'POST'])
 def isci_vzorec():
@@ -574,7 +551,7 @@ def isci_vzorec():
         vzorec = (data.get('vzorec') or '').upper().replace(' ', '')
         dodatno = data.get('dodatno', '')
 
-        # dolžina: pride iz front-enda (stevilo črk); fallback na len(vzorec)
+        # dolžina
         try:
             dolzina_vzorca = int(data.get('dolzina') or data.get('stevilo') or 0)
         except Exception:
@@ -582,14 +559,12 @@ def isci_vzorec():
         if dolzina_vzorca <= 0:
             dolzina_vzorca = len(vzorec)
 
-        # poravnava vzorca na izbrano dolžino
         if len(vzorec) < dolzina_vzorca:
             vzorec = vzorec + '_' * (dolzina_vzorca - len(vzorec))
         elif len(vzorec) > dolzina_vzorca:
             vzorec = vzorec[:dolzina_vzorca]
 
         with get_conn() as conn:
-            # osnovni SQL — dolžina brez presledkov/vezajev/podčrtajev + “maskirano” ujemanje po črkah
             query = (
                 "SELECT ID, GESLO, OPIS FROM slovar\n"
                 "WHERE LENGTH(REPLACE(REPLACE(REPLACE(GESLO, ' ', ''), '-', ''), '_', '')) = ?\n"
@@ -606,7 +581,6 @@ def isci_vzorec():
 
             results = conn.execute(query, params).fetchall()
 
-        # --- robusten filter po 'dodatno': AND logika, fraze v "...", izključitve z '-', brez šumnikov ---
         inc, exc = parse_tokens(dodatno)
 
         def match_row(row):
@@ -616,24 +590,20 @@ def isci_vzorec():
             return all(t in norm for t in inc) and all(t not in norm for t in exc)
 
         results = [row for row in results if match_row(row)]
-
-        # sortiraj (osebe najprej, znotraj po imenu)
         results = sorted(results, key=lambda row: sort_key_opis(row["OPIS"]))
 
         payload = [{
             "id": row["ID"],
             "GESLO": row["GESLO"].strip(),
             "OPIS": row["OPIS"],
-            "ime": ime_za_sort(row["OPIS"])  # po želji za front-end
+            "ime": ime_za_sort(row["OPIS"])
         } for row in results]
 
         resp = jsonify(payload)
         resp.headers['Cache-Control'] = 'no-store'
         return resp
 
-    # GET: vrni stran
     return render_template('isci_vzorec.html')
-
 
 @app.route('/isci_opis', methods=['GET', 'POST'])
 def isci_opis():
@@ -644,21 +614,17 @@ def isci_opis():
         with get_conn() as conn:
             rezultat = conn.execute(
                 "SELECT GESLO, OPIS FROM slovar WHERE OPIS LIKE ? LIMIT 100",
-                (f"%{opis}%",)  # <-- brez escape znakov, tuple!
+                (f"%{opis}%",)
             ).fetchall()
 
-        # opcijsko: sortiraj osebe najprej po imenu
         rezultat = sorted(rezultat, key=lambda r: sort_key_opis(r['OPIS']))
-
         return jsonify([{'GESLO': r['GESLO'], 'OPIS': r['OPIS']} for r in rezultat])
 
     return render_template('isci_opis.html')
 
-
 @app.get('/prispevaj_geslo')
 def prispevaj_geslo():
     return render_template('prispevaj.html')
-
 
 @app.get('/stevec_gesel')        # JSON
 def stevec_gesel_json():
@@ -672,28 +638,12 @@ def stevec_gesel_txt():
         st = conn.execute("SELECT COUNT(*) FROM slovar").fetchone()[0]
     return str(st), 200, {"Content-Type": "text/plain; charset=utf-8"}
 
-from flask import jsonify
-
-from flask import jsonify
-
-@app.get("/healthz", endpoint="healthz_status")
-def healthz_status():
-    try:
-        with get_conn() as c:
-            rows = c.execute("SELECT COUNT(*) FROM slovar").fetchone()[0]
-        return jsonify(status="ok", rows=rows, db=str(DB_PATH)), 200
-    except Exception as e:
-        return jsonify(status="error", msg=str(e)), 500
-
-
 
 # ===== Križanka ===============================================================
-
 @app.get('/krizanka/static/<path:filename>')
 def krizanka_static_file(filename):
     pot = os.path.join('static', 'Krizanke', 'CrosswordCompilerApp')
     return send_from_directory(pot, filename)
-
 
 @app.route('/krizanka', defaults={'datum': None})
 @app.route('/krizanka/<datum>')
@@ -723,67 +673,23 @@ def prikazi_krizanko(datum):
         import traceback; traceback.print_exc()
         return render_template('napaka.html', sporocilo=f"Napaka pri branju križanke: {e}")
 
-    # posreduj datum v template
     return render_template('krizanka.html', podatki=podatki, datum=datum)
 
+# --- ARHIV (KRIŽANKE) – samo pretekli datumi ---
+# kompatibilnost (stara pot -> nova)
+@app.get("/krizanka/arhiv")
+def arhiv_krizank_legacy_redirect():
+    return redirect(url_for("arhiv_krizanke"))
 
-@app.get('/krizanka/arhiv')
-def arhiv_krizank():
-    mapa = os.path.join('static', 'CrosswordCompilerApp')
-    vse_mape = [f for f in os.listdir(mapa) if os.path.isdir(os.path.join(mapa, f))]
-    meseci = sorted([m for m in vse_mape if len(m) == 7 and m[:4].isdigit() and m[5:7].isdigit()], reverse=True)
-
-    danes = datetime.today().strftime('%Y-%m-%d')
-    aktualne = []
-    for f in os.listdir(mapa):
-        polna_pot = os.path.join(mapa, f)
-        if f.endswith('.xml') and os.path.isfile(polna_pot):
-            datum = f.replace('.xml', '')
-            try:
-                datetime.strptime(datum, "%Y-%m-%d")
-                if datum < danes:
-                    aktualne.append(datum)
-            except ValueError:
-                pass
-
-    aktualne.sort(reverse=True)
-    return render_template('arhiv.html', aktualne=aktualne, meseci=meseci)
-
-
-@app.get('/krizanka/arhiv/<mesec>')
-def arhiv_krizank_mesec(mesec):
-    mapa = os.path.join('static', 'CrosswordCompilerApp', mesec)
-    datoteke = []
-    if os.path.exists(mapa):
-        for f in os.listdir(mapa):
-            if f.endswith('.xml'):
-                datum = f.replace('.xml', '')
-                try:
-                    datetime.strptime(datum, "%Y-%m-%d")
-                    datoteke.append(datum)
-                except ValueError:
-                    pass
-    datoteke.sort(reverse=True)
-    return render_template('arhiv_mesec.html', mesec=mesec, datumi=datoteke)
 
 
 # ===== Sudoku ================================================================
-from pathlib import Path
-import unicodedata
-
-# --- helperji ---
 def _deaccent(s: str) -> str:
-    """Odstrani šumnike za lažje ujemanje aliasov."""
     if not s:
         return ""
     return "".join(c for c in unicodedata.normalize("NFKD", s) if not unicodedata.combining(c))
 
 def _level_candidates(user_level: str) -> list[str]:
-    """
-    Vrni možne 'kodne' levele za imena v URL (slovensko/angleško).
-    Npr. 'zelo-lahki' -> ['very_easy','easy'] ; 'težki' -> ['hard','tezki'].
-    Dodamo več kandidatov zaradi različnih poimenovanj map/datotek.
-    """
     lvl = _deaccent((user_level or "").strip().lower()).replace("-", " ").replace("_", " ")
     if lvl in {"zelo lahki", "zelo lahko", "very easy", "veryeasy"}:
         return ["very_easy", "easy", "zelo_lahki"]
@@ -795,20 +701,59 @@ def _level_candidates(user_level: str) -> list[str]:
         return ["hard", "tezki"]
     if lvl in {"zelo tezki", "zelo težki", "very hard", "veryhard"}:
         return ["very_hard", "hard", "zelo_tezki"]
-    # če je uporabnik poslal že kodni level ('easy' ipd.), poskusi kar njega
     return [user_level.replace("-", "_").lower()]
 
+# --- ARHIV (SUDOKU) – preberi samo pretekle datume iz static/Sudoku_<code> ---
+DATE_RE_SUDOKU = re.compile(r"^Sudoku_(?P<code>[a-z_]+)_(?P<y>\d{4})-(?P<m>\d{2})-(?P<d>\d{2})\.html$")
+
+def zberi_pretekle_sudoku(tezavnost: str) -> tuple[list[str], dict[str, list[str]]]:
+    """Vrne (months_sorted, meseci) za podani level. Gleda:
+       static/Sudoku_<code>/*.html in static/Sudoku_<code>/<YYYY-MM>/*.html
+       ter vrne le datume < danes.
+    """
+    code = _level_candidates(tezavnost)[0]            # npr. 'very_easy'
+    base = Path(app.static_folder) / f"Sudoku_{code}" # npr. static/Sudoku_very_easy
+    today = date.today()
+    meseci: dict[str, list[str]] = {}
+
+    if not base.exists():
+        return [], {}
+
+    def try_add(p: Path):
+        m = DATE_RE_SUDOKU.match(p.name)
+        if not m:
+            return
+        y, mth, d = int(m.group('y')), int(m.group('m')), int(m.group('d'))
+        dt = date(y, mth, d)
+        if dt >= today:
+            return                                  # izloči danes/prihodnost
+        ym = f"{y:04d}-{mth:02d}"
+        meseci.setdefault(ym, []).append(f"{y:04d}-{mth:02d}-{d:02d}")
+
+    # 1) koren: static/Sudoku_<code>/*.html
+    for p in sorted(base.glob("Sudoku_{}_*.html".format(code))):
+        if p.is_file():
+            try_add(p)
+
+    # 2) mesečne podmape: static/Sudoku_<code>/<YYYY-MM>/*.html
+    for folder in sorted(base.glob("20??-??")):
+        if folder.is_dir():
+            for p in sorted(folder.glob("Sudoku_{}_*.html".format(code))):
+                if p.is_file():
+                    try_add(p)
+
+    # sortiraj in očisti prazne
+    for ym in list(meseci.keys()):
+        meseci[ym] = sorted(meseci[ym], reverse=True)
+        if not meseci[ym]:
+            meseci.pop(ym, None)
+    months_sorted = sorted(meseci.keys(), reverse=True)
+    return months_sorted, meseci
+
+
 def _find_sudoku_relpath(app, code: str, date_str: str) -> str | None:
-    """
-    Vrne RELATIVNO pot znotraj /static do .html datoteke, če skupaj z .js obstaja.
-    Preveri tri lokacije:
-      1) Sudoku_<code>/<YYYY-MM>/Sudoku_<code>_<YYYY-MM-DD>.html
-      2) Sudoku_<code>/Sudoku_<code>_<YYYY-MM-DD>.html
-      3) Sudoku_<code>_<YYYY-MM-DD>.html   (koren /static)
-    """
     static_dir = Path(app.static_folder)
     yymm = date_str[:7]
-
     candidates = [
         f"Sudoku_{code}/{yymm}/Sudoku_{code}_{date_str}.html",
         f"Sudoku_{code}/Sudoku_{code}_{date_str}.html",
@@ -821,23 +766,17 @@ def _find_sudoku_relpath(app, code: str, date_str: str) -> str | None:
             return rel
     return None
 
-# -- ROUTES --
-
 @app.get('/sudoku')
 def osnovni_sudoku():
-    # privzeto na slovenski "lahki"
     return redirect(url_for('prikazi_danasnji_sudoku', tezavnost='lahki'))
-
 
 @app.route('/sudoku/<tezavnost>/<datum>')
 def prikazi_sudoku(tezavnost, datum):
-    # validacija datuma (YYYY-MM-DD na začetku)
     m = re.match(r'^(\d{4}-\d{2}-\d{2})', datum)
     if not m:
         return render_template('napaka.html', sporocilo="Napačen datum."), 400
     datum = m.group(1)
 
-    # za podani (slovenski ali angleški) level preveri več kodnih kandidatov
     for code in _level_candidates(tezavnost):
         rel = _find_sudoku_relpath(app, code, datum)
         if rel:
@@ -846,52 +785,17 @@ def prikazi_sudoku(tezavnost, datum):
                                    sudoku_url=sudoku_url,
                                    tezavnost=tezavnost,
                                    datum=datum)
-
-    # nič ni našel
     return render_template('napaka.html',
                            sporocilo="Sudoku za ta datum ali težavnost ni na voljo."), 404
-
 
 @app.get('/sudoku/<tezavnost>')
 def prikazi_danasnji_sudoku(tezavnost):
     danes = datetime.today().strftime('%Y-%m-%d')
     return redirect(url_for('prikazi_sudoku', tezavnost=tezavnost, datum=danes))
 
-
 @app.get('/sudoku/meni')
 def sudoku_meni():
     return render_template('sudoku_meni.html')
-
-
-@app.get('/sudoku/arhiv/<tezavnost>')
-def arhiv_sudoku(tezavnost):
-    # vzemi prvi kodni kandidat (najbolj “uradno” poimenovanje mape)
-    codes = _level_candidates(tezavnost)
-    code = codes[0]
-
-    mapa_sudoku_abs = Path(app.static_folder) / f"Sudoku_{code}"
-    meseci = []
-    aktualni = []
-
-    if mapa_sudoku_abs.exists():
-        # podmape YYYY-MM
-        vse_mape = [p.name for p in mapa_sudoku_abs.iterdir() if p.is_dir()]
-        meseci = sorted([m for m in vse_mape if len(m) == 7 and m[:4].isdigit() and m[5:7].isdigit()],
-                        reverse=True)
-
-        # HTML-ji v “aktualni” mapi nivoja (brez mesečne podmape)
-        for p in mapa_sudoku_abs.iterdir():
-            if p.is_file() and p.name.endswith('.html'):
-                try:
-                    datum = p.name.replace(f'Sudoku_{code}_', '').replace('.html', '')
-                    datetime.strptime(datum, "%Y-%m-%d")
-                    aktualni.append(datum)
-                except ValueError:
-                    pass
-
-    aktualni.sort(reverse=True)
-    return render_template('sudoku_arhiv.html', tezavnost=tezavnost, meseci=meseci, aktualni=aktualni)
-
 
 @app.get('/sudoku/arhiv/<tezavnost>/<mesec>')
 def arhiv_sudoku_mesec(tezavnost, mesec):
@@ -912,13 +816,31 @@ def arhiv_sudoku_mesec(tezavnost, mesec):
     datumi.sort(reverse=True)
     return render_template('sudoku_arhiv_mesec.html', tezavnost=tezavnost, mesec=mesec, datumi=datumi)
 
-
 @app.get('/sudoku/arhiv')
 def arhiv_sudoku_pregled():
     return render_template('sudoku_arhiv_glavni.html')
 
 
 # ===== Uvoz / utility =========================================================
+def generiraj_ime_slike(opis, resitev):
+    def norm(txt):
+        txt = unicodedata.normalize('NFD', txt)
+        txt = re.sub(r'[\u0300-\u036f]', '', txt)
+        txt = txt.lower()
+        txt = re.sub(r'[^a-z0-9 ]', '', txt)
+        txt = '_'.join(txt.strip().split())
+        return txt
+    return f"{norm(opis)}_{norm(resitev)}"
+
+def odstrani_cc_vrstico_iz_html(mapa):
+    for datoteka in glob.glob(os.path.join(mapa, "*.html")):
+        with open(datoteka, 'r', encoding='utf-8', errors='ignore') as f:
+            vrstice = f.readlines()
+        nove = [vr for vr in vrstice if "crossword-compiler.com" not in vr]
+        if len(nove) < len(vrstice):
+            with open(datoteka, 'w', encoding='utf-8') as f:
+                f.writelines(nove)
+            print(f"[VUS] Očiščeno: {datoteka}")
 
 @app.route('/uvoz', methods=['GET', 'POST'])
 @login_required
@@ -944,7 +866,6 @@ def uvoz_datotek():
 
     return render_template('uvoz.html')
 
-
 @app.post('/zamenjaj')
 @login_required
 def zamenjaj():
@@ -963,7 +884,6 @@ def zamenjaj():
             )
 
     return jsonify({"spremembe": stevilo_zadetkov})
-
 
 @app.get('/prenesi_slike_zip')
 @login_required
@@ -986,7 +906,6 @@ def prenesi_slike_zip():
         download_name='slike_static_Images.zip'
     )
 
-
 @app.route('/preveri_sliko', methods=['GET', 'POST'])
 @login_required
 def preveri_sliko():
@@ -1006,7 +925,7 @@ def preveri_sliko():
                 obstaja = True
                 break
         if not ime_slike:
-            ime_slike = f"{osnovno_ime}.jpg"  # default prikazano ime
+            ime_slike = f"{osnovno_ime}.jpg"
             obstaja = False
     return render_template('preveri_sliko.html', opis=opis, resitev=resitev, ime_slike=ime_slike, obstaja=obstaja)
 

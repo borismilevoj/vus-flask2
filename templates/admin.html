@@ -196,18 +196,40 @@ preveriForm.addEventListener('submit', function(e) {
   .then(data => {
     const rezultat = document.getElementById('preveri-rezultat');
     rezultat.innerHTML = '';
-    if (data.obstaja) {
-      rezultat.innerHTML = data.gesla.map(g => `
-        <div class="text-dark">
-          ✅ <strong>${g.geslo}</strong> – ${g.opis}
-          <button class="btn btn-sm btn-outline-secondary ms-2" onclick="urediGeslo(${g.id}, '${g.opis.replace(/'/g, "\\'")}')">Uredi</button>
-          <button class="btn btn-sm btn-danger ms-1" onclick="izbrisiGeslo(${g.id})">Briši</button>
-        </div>`).join('');
-      rezultat.style.color = 'black';
-    } else {
+
+    if (!data.obstaja) {
       rezultat.textContent = "❌ Gesla ni v bazi.";
       rezultat.style.color = 'red';
+      return;
     }
+    rezultat.style.color = 'black';
+
+    data.gesla.forEach(g => {
+      const row = document.createElement('div');
+      row.className = 'text-dark mb-1';
+
+      const check = document.createTextNode('✅ ');
+      const strong = document.createElement('strong');
+      strong.textContent = g.geslo;
+
+      const dash = document.createTextNode(' – ');
+      const opisNode = document.createTextNode(g.opis);
+
+      const btnUredi = document.createElement('button');
+      btnUredi.type = 'button';
+      btnUredi.className = 'btn btn-sm btn-outline-secondary ms-2';
+      btnUredi.textContent = 'Uredi';
+      btnUredi.addEventListener('click', () => urediGeslo(g.id, g.opis));
+
+      const btnBrisi = document.createElement('button');
+      btnBrisi.type = 'button';
+      btnBrisi.className = 'btn btn-sm btn-danger ms-1';
+      btnBrisi.textContent = 'Briši';
+      btnBrisi.addEventListener('click', () => izbrisiGeslo(g.id));
+
+      row.append(check, strong, dash, opisNode, btnUredi, btnBrisi);
+      rezultat.appendChild(row);
+    });
   });
 });
 
