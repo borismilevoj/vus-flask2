@@ -380,6 +380,30 @@ def health():
 def healthz():
     return jsonify(status="ok", db=str(DB_PATH))
 
+@app.get("/api/admin/dbinfo")
+def api_admin_dbinfo():
+    info = {"ok": True}
+    try:
+        p = DB_PATH
+        info["db_path"] = str(p)
+        info["db_exists"] = p.exists()
+        info["db_size_bytes"] = p.stat().st_size if p.exists() else 0
+
+        # preštej vrstice v 'slovar', če tabela obstaja
+        with get_conn() as c:
+            has_tbl = c.execute(
+                "SELECT 1 FROM sqlite_master WHERE type='table' AND name='slovar'"
+            ).fetchone() is not None
+            info["has_table_slovar"] = has_tbl
+            if has_tbl:
+                info["rows_slovar"] = c.execute(
+                    "SELECT COUNT(*) FROM slovar"
+                ).fetchone()[0]
+    except Exception as e:
+        info = {"ok": False, "error": str(e)}
+    return jsonify(info), 200 if info.get("ok") else 500
+
+
 @app.get("/_routes")
 def show_routes():
     lines = []
@@ -955,7 +979,15 @@ def preveri_sliko():
 
 # ===== Zagon =================================================================
 if __name__ == "__main__":
+    # Lokalni razvoj / debug
     print(f"[VUS] DB_PATH = {DB_PATH}")
-    assert_baza_ok()
-    ensure_indexes()
+    try:
+        assert_baza_ok()
+        ensure_indexes()
+        print("[VUS] DB OK in indeksi pripravljeni.")
+    except Exception as e:
+        print(f"[VUS] DB init FAILED: {e}")
+
+    # Za lokalni zagon uporabi 127.0.0.1 (ali 0.0.0.0 če želiš dostop z druge naprave v LAN)
     app.run(host="127.0.0.1", port=5000, debug=True)
+
