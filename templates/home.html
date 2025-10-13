@@ -1,18 +1,19 @@
 {% extends "base.html" %}
 {% block title %}VUS – Veliki ugankarski slovar{% endblock %}
 
-{% if obvestilo %}
-<div style="background:#ffd966;color:#800000;padding:10px;margin-bottom:15px;border-radius:8px;font-weight:bold;">
-  ⚠️ {{ obvestilo }}
-</div>
-{% endif %}
-
 {% block content %}
 <style>
   .hero-image { background-color: rgba(0,0,0,0.4); background-blend-mode: multiply; }
   .btn-anim { transition: transform 0.3s ease, box-shadow 0.3s ease; }
   .btn-anim:hover { transform: scale(1.05); box-shadow: 0 0 10px rgba(0,0,0,0.3); }
 </style>
+
+{# obvestilo mora biti znotraj block content #}
+{% if obvestilo %}
+<div style="background:#ffd966;color:#800000;padding:10px;margin-bottom:15px;border-radius:8px;font-weight:bold;">
+  ⚠️ {{ obvestilo }}
+</div>
+{% endif %}
 
 <div class="container-fluid p-0">
   <div class="hero-image"
@@ -47,18 +48,11 @@
   const el = document.getElementById('stevecHome');
   if (!el) return;
 
-  // Beremo iz TXT, ki na Renderju deluje.
+  // Beremo iz TXT (ta na Renderju deluje).
   fetch('/stevec_gesel.txt', { cache: 'no-store' })
     .then(r => r.ok ? r.text() : Promise.reject('HTTP ' + r.status))
-    .then(txt => {
-      el.textContent = (txt || '').trim() || '—';
-    })
-    .catch(err => {
-      console.error('stevec_gesel.txt napaka:', err);
-      el.textContent = 'napaka';
-    });
+    .then(txt => { el.textContent = (txt || '').trim() || '—'; })
+    .catch(err => { console.error('stevec_gesel.txt napaka:', err); el.textContent = 'napaka'; });
 })();
 </script>
-{% endblock %}
-
 {% endblock %}
