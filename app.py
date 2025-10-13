@@ -636,22 +636,30 @@ def isci_opis():
 def prispevaj_geslo():
     return render_template('prispevaj.html')
 
-@app.get('/stevec_gesel')        # JSON
-def stevec_gesel_json():
-    with get_conn() as conn:
-        st = conn.execute("SELECT COUNT(*) FROM slovar").fetchone()[0]
-    resp = jsonify({"stevilo_gesel": st})
-    resp.headers['Cache-Control'] = 'no-store'
-    return resp
+from flask import Response, jsonify
 
-@app.get('/stevec_gesel.txt')    # PLAIN TEXT
+@app.get('/stevec_gesel.txt', endpoint='stevec_gesel_txt')
 def stevec_gesel_txt():
-    with get_conn() as conn:
-        st = conn.execute("SELECT COUNT(*) FROM slovar").fetchone()[0]
-    return str(st), 200, {
-        "Content-Type": "text/plain; charset=utf-8",
-        "Cache-Control": "no-store",
-    }
+    try:
+        with get_conn() as conn:
+            st = conn.execute("SELECT COUNT(*) FROM slovar").fetchone()[0]
+        # robusten plain-text odgovor
+        return Response(f"{st}\n", status=200, mimetype='text/plain; charset=utf-8')
+    except Exception as e:
+        app.logger.exception("Napaka v /stevec_gesel.txt")
+        # še vedno plain-text, a 500, da vidiš razlog v logih
+        return Response("error\n", status=500, mimetype='text/plain; charset=utf-8')
+
+
+@app.get('/stevec_gesel', endpoint='stevec_gesel_json')
+def stevec_gesel_json():
+    try:
+        with get_conn() as conn:
+            st = conn.execute("SELECT COUNT(*) FROM slovar").fetchone()[0]
+        return jsonify({"stevilo_gesel": st}), 200
+    except Exception as e:
+        app.logger.exception("Napaka v /stevec_gesel")
+        return jsonify({"ok": False, "error": str(e)}), 500
 
 
 # ===== Križanka ===============================================================
