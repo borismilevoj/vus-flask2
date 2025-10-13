@@ -43,36 +43,22 @@
 
 {% block scripts %}
 <script>
-(function () {
-  function setVal(n) {
-    const el = document.getElementById('stevecHome');
-    if (!el) return;
-    el.textContent = Number(n).toLocaleString('sl-SI');
-  }
-  function fail(msg) {
-    const el = document.getElementById('stevecHome');
-    if (el) el.textContent = 'napaka';
-    console.error('[stevec_gesel]', msg);
-  }
+(() => {
+  const el = document.getElementById('stevecHome');
+  if (!el) return;
 
-  // 1) najprej TXT (Render-gaurantirano)
-  fetch('/stevec_gesel.txt?t=' + Date.now(), { cache: 'no-store' })
-    .then(r => r.ok ? r.text() : Promise.reject(`TXT HTTP ${r.status}`))
-    .then(t => {
-      const n = parseInt(String(t).trim(), 10);
-      if (Number.isFinite(n)) { setVal(n); return; }
-      throw new Error('TXT ni številka');
+  // Beremo iz TXT, ki na Renderju deluje.
+  fetch('/stevec_gesel.txt', { cache: 'no-store' })
+    .then(r => r.ok ? r.text() : Promise.reject('HTTP ' + r.status))
+    .then(txt => {
+      el.textContent = (txt || '').trim() || '—';
     })
-    .catch(() => {
-      // 2) fallback na JSON
-      fetch('/stevec_gesel', { headers: { 'Accept': 'application/json' }, cache: 'no-store' })
-        .then(r => r.ok ? r.json() : Promise.reject(`JSON HTTP ${r.status}`))
-        .then(d => {
-          if (typeof d.stevilo_gesel === 'number') { setVal(d.stevilo_gesel); return; }
-          throw new Error('JSON manjka stevilo_gesel');
-        })
-        .catch(fail);
+    .catch(err => {
+      console.error('stevec_gesel.txt napaka:', err);
+      el.textContent = 'napaka';
     });
 })();
 </script>
+{% endblock %}
+
 {% endblock %}
