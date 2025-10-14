@@ -26,6 +26,32 @@ from flask import (
     Flask, jsonify, session, redirect, url_for, request, render_template,
     flash, send_from_directory, send_file
 )
+# na vrh datoteke:
+import unicodedata
+
+def _strip_diacritics(s: str) -> str:
+    if not s:
+        return ""
+    # NFKD + odstrani "Mn" (combining marks)
+    s = unicodedata.normalize("NFKD", s)
+    return "".join(ch for ch in s if unicodedata.category(ch) != "Mn")
+
+def _norm_token(s: str) -> str:
+    # tvoja normalizacija + odstranitev diakritike
+    s = (s or "").upper().replace(" ", "").replace("-", "").replace("_", "")
+    s = _strip_diacritics(s)
+    return s
+
+# ekvivalenti za prvo črko (omejimo kandidatni nabor)
+_FIRST_EQ = {
+    "C": ("C", "Č", "Ć"),
+    "S": ("S", "Š"),
+    "Z": ("Z", "Ž"),
+    # po želji dodaj še: "D": ("D", "Đ"), "A": ("A","Á","À","Â","Ä","Ā") ipd.
+}
+
+
+
 
 # Poskusi uvoziti tvoje module — ne zruši app-a, če manjka (le opozori)
 try:
@@ -49,9 +75,9 @@ except Exception as e:
 
 # ===== DB pot + migracija + helperji =========================================
 BASE_DIR = Path(__file__).resolve().parent
-DB_PATH = Path(os.environ.get("DB_PATH", "/var/data/VUS.db")).resolve()
+DB_PATH = Path(os.environ.get("DB_PATH", "/var/data/VUS.db").strip()).resolve()
 LEGACY_PATH = (BASE_DIR / "VUS.db").resolve()
-VUS_DB_URL = os.environ.get("VUS_DB_URL", "")
+VUS_DB_URL = os.environ.get("VUS_DB_URL", "").strip()
 
 DB_PATH.parent.mkdir(parents=True, exist_ok=True)
 
@@ -495,6 +521,12 @@ def sprozi_arhiviranje():
 
 
 # ===== API-ji / CRUD ==========================================================
+from flask import Flask, jsonify, request
+app = Flask(__name__)
+
+app.url_map.strict_slashes = False
+app.config["JSON_AS_ASCII"] = False
+
 @app.post('/preveri')
 def preveri():
     payload = request.get_json(silent=True) or {}
@@ -505,27 +537,49 @@ def preveri():
     if not geslo:
         return jsonify({'obstaja': False, 'gesla': []})
 
-    # normalizacija IDENTIČNA kot v indeksu/poizvedbi
-    iskalno = geslo.upper().replace(' ', '').replace('-', '').replace('_', '')
+    # 1) tvoja normalizacija + odstranitev diakritike (za točno primerjavo)
+    iskalno_norm = _norm_token(geslo)
 
     with get_conn() as conn:
-        cur = conn.execute(
-            """
+        # 2) primarni poskus: točen match po naši normalizaciji
+        #    (omejimo kandidate po prvi črki, da ne preberemo vsega)
+        first = geslo[:1].upper()
+        equiv = _FIRST_EQ.get(first, (first,))
+
+        # vzemi kandidate po prvi (ne-normalizirani) črki — veliko hitreje
+        q_marks = ",".join("?" for _ in equiv)
+        cand = conn.execute(
+            f"""
             SELECT ID AS id, GESLO AS geslo, OPIS AS opis
             FROM slovar
-            WHERE replace(replace(replace(upper(GESLO),' ',''),'-',''),'_','') = ?
+            WHERE substr(upper(GESLO),1,1) IN ({q_marks})
             """,
-            (iskalno,)
-        )
-        rezultati = cur.fetchall()
+            tuple(equiv)
+        ).fetchall()
 
-    # sortiranje: osebe najprej, po imenu; ostalo po opisu
+        # filtriraj v Pythono z identično normalizacijo kot za uporabnika
+        rezultati = [r for r in cand if _norm_token(r['geslo']) == iskalno_norm]
+
+        # 3) če ni rezultatov, uporabi tvoj stari "exact upper/replace" fallback
+        if not rezultati:
+            iskalno_simple = geslo.upper().replace(' ', '').replace('-', '').replace('_', '')
+            rezultati = conn.execute(
+                """
+                SELECT ID AS id, GESLO AS geslo, OPIS AS opis
+                FROM slovar
+                WHERE replace(replace(replace(upper(GESLO),' ',''),'-',''),'_','') = ?
+                """,
+                (iskalno_simple,)
+            ).fetchall()
+
+    # sortiranje ostane tvoje
     rezultati = sorted(rezultati, key=lambda r: sort_key_opis(r['opis']))
 
     return jsonify({
         'obstaja': len(rezultati) > 0,
         'gesla': [{'id': r['id'], 'geslo': r['geslo'], 'opis': r['opis']} for r in rezultati]
     })
+
 
 @app.post('/dodaj_geslo')
 def dodaj_geslo():
@@ -574,6 +628,25 @@ def brisi_geslo():
 @app.get('/test_iscenje')
 def test_iscenje():
     return render_template('isci_vzorec_test.html')
+
+from flask import render_template, request
+
+from flask import redirect, url_for
+
+@app.get('/')
+def root():
+    return redirect(url_for('admin'))
+
+@app.get('/home')
+def home():
+    return redirect(url_for('admin'))
+
+
+@app.route('/admin')
+def admin():
+    q = request.args.get('geslo', '')  # prefill iz URL-ja, npr. ?geslo=BELL
+    return render_template('admin.html', q=q)
+
 
 @app.route('/isci_vzorec', methods=['GET', 'POST'])
 def isci_vzorec():
@@ -662,17 +735,22 @@ def prispevaj_geslo():
 
 from flask import Response, jsonify
 
-@app.get('/stevec_gesel.txt', endpoint='stevec_gesel_txt')
+@app.get('/stevec_gesel.txt')
 def stevec_gesel_txt():
     try:
         with get_conn() as conn:
+            has_tbl = conn.execute(
+                "SELECT 1 FROM sqlite_master WHERE type='table' AND name='slovar'"
+            ).fetchone() is not None
+            if not has_tbl:
+                app.logger.error("stevec_gesel.txt: tabela 'slovar' ne obstaja (DB=%s)", DB_PATH)
+                return ("0\n", 200, {"Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store"})
             st = conn.execute("SELECT COUNT(*) FROM slovar").fetchone()[0]
-        # robusten plain-text odgovor
-        return Response(f"{st}\n", status=200, mimetype='text/plain; charset=utf-8')
+            return (str(st), 200, {"Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store"})
     except Exception as e:
         app.logger.exception("Napaka v /stevec_gesel.txt")
-        # še vedno plain-text, a 500, da vidiš razlog v logih
-        return Response("error\n", status=500, mimetype='text/plain; charset=utf-8')
+        # Vrni 0, da UI ne pokaže napake
+        return ("0\n", 200, {"Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store"})
 
 
 @app.get('/stevec_gesel', endpoint='stevec_gesel_json')
