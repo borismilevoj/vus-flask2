@@ -565,12 +565,71 @@ def brisi_geslo():
 
 # ===== Iskanje ================================================================
 
-@app.route('/isci_vzorec', methods=['GET', 'POST'], endpoint='isci_vzorec')
+@app.route('/isci_vzorec', methods=['GET', 'POST'])
 def isci_vzorec():
     if request.method == 'POST':
-        data = request.get_json(silent=True) or {}
-        # TODO: sem pride tvoja prava logika iskanja
-        return jsonify([])
+        # Sprejmi JSON ali form-data
+        data = request.get_json(silent=True) or request.form or {}
+
+        vzorec  = (data.get('vzorec') or '').upper().replace(' ', '')
+        dodatno = data.get('dodatno', '')
+
+        # dolžina / število črk
+        try:
+            dolzina_vzorca = int(data.get('dolzina') or data.get('stevilo') or 0)
+        except Exception:
+            dolzina_vzorca = 0
+        if dolzina_vzorca <= 0:
+            dolzina_vzorca = len(vzorec)
+
+        # poravnaj vzorec na to dolžino (zapolni s _ ali odreži)
+        if len(vzorec) < dolzina_vzorca:
+            vzorec = vzorec + '_' * (dolzina_vzorca - len(vzorec))
+        elif len(vzorec) > dolzina_vzorca:
+            vzorec = vzorec[:dolzina_vzorca]
+
+        # poizvedba v bazi: normaliziraj geslo (brez presledkov, -, _)
+        with get_conn() as conn:
+            query = (
+                "SELECT ID, GESLO, OPIS FROM slovar\n"
+                "WHERE LENGTH(REPLACE(REPLACE(REPLACE(GESLO, ' ', ''), '-', ''), '_', '')) = ?\n"
+                "  AND OPIS IS NOT NULL"
+            )
+            params = [dolzina_vzorca]
+
+            for i, crka in enumerate(vzorec):
+                if crka != '_':
+                    query += (
+                        f" AND SUBSTR(REPLACE(REPLACE(REPLACE(GESLO, ' ', ''), '-', ''), '_', ''), {i+1}, 1) = ?"
+                    )
+                    params.append(crka)
+
+            results = conn.execute(query, params).fetchall()
+
+        # dodatni filtri (+vključitveni/-izključitveni tokeni, podpira narekovane fraze)
+        inc, exc = parse_tokens(dodatno)
+
+        def match_row(row):
+            if not inc and not exc:
+                return True
+            norm = normalize_search(row["OPIS"])
+            return all(t in norm for t in inc) and all(t not in norm for t in exc)
+
+        results = [row for row in results if match_row(row)]
+        results = sorted(results, key=lambda row: sort_key_opis(row["OPIS"]))
+
+        payload = [{
+            "id": row["ID"],
+            "GESLO": row["GESLO"].strip(),
+            "OPIS": row["OPIS"],
+            "ime": ime_za_sort(row["OPIS"]),
+        } for row in results]
+
+        resp = jsonify(payload)
+        resp.headers['Cache-Control'] = 'no-store'
+        return resp
+
+    # GET → vrni stran z obrazcem/JS
     return render_template('isci_vzorec.html')
 
 @app.get('/test_iscenje')
