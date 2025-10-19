@@ -1,13 +1,16 @@
 services:
   - type: web
-    name: vus-flask
+    name: vus-flask2
     env: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app
+    plan: starter
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn -b 0.0.0.0:$PORT app:app"
+    disk:
+      name: vusdata
+      mountPath: /var/data
+      sizeGB: 2
     envVars:
       - key: DB_PATH
         value: /var/data/VUS.db
-    disk:
-      name: vus-data
-      mountPath: /var/data
-      sizeGB: 1
+      - key: VUS_DB_URL
+        value: https://tvoj-direkten-link-do-VUS.db
