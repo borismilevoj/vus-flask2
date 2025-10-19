@@ -6,8 +6,122 @@ import unicodedata
 import re
 from scripts.krizanka import pridobi_podatke_iz_xml
 from Stare_skripte.uvoz_datotek import premakni_krizanke, premakni_sudoku
+from flask import request, jsonify
+from db_util import get_conn, debug_db_info
+# na vrh (če še nimaš)
+import os
+from flask import request, jsonify
+from db_util import get_conn, debug_db_info
 
-app = Flask(__name__, static_folder='static', static_url_path='../static')
+BASE_DIR = os.path.dirname(__file__)
+STATIC_FOLDER = os.path.abspath(os.path.join(BASE_DIR, '..', 'static'))
+
+app = Flask(
+    __name__,
+    static_folder=STATIC_FOLDER,   # fizična pot do ../static
+    static_url_path='/static'      # URL MORA začeti z '/', npr. /static/...
+)
+# >>> PATCH: API ruti brez login/CSRF za admin UI (count + preveri)
+import os, sys
+from flask import request, jsonify
+
+# poskrbimo, da lahko uvozimo db_util iz korena projekta
+BASE_DIR = os.path.dirname(__file__)
+ROOT_DIR = os.path.abspath(os.path.join(BASE_DIR, ".."))
+if ROOT_DIR not in sys.path:
+    sys.path.append(ROOT_DIR)
+
+from db_util import get_conn  # uporablja hard-link VUS.db → var/data/VUS.db
+
+# Če uporabljaš Flask-WTF CSRFProtect in lepo dekoriraš rute:
+try:
+    # spremeni 'app' v ime modula, kjer imaš instanco CSRFProtect (če je drugje)
+    from app import csrf  # če nimaš, bo šlo v except
+    csrf_exempt = csrf.exempt
+except Exception:
+    # fallback: “no-op” dekorator, če CSRF ni v uporabi
+    def csrf_exempt(f):
+        return f
+
+@csrf_exempt
+@app.get("/api/admin/count")
+def api_admin_count():
+    """Vrne število vnosov v slovar_sortiran (za števec na admin strani)."""
+    with get_conn() as c:
+        n = c.execute("SELECT COUNT(*) FROM slovar_sortiran").fetchone()[0]
+    return jsonify({"count": n})
+
+@csrf_exempt
+@app.route("/api/admin/preveri", methods=["GET", "POST"])
+def api_admin_preveri():
+    """
+    Preveri, ali geslo obstaja.
+    - GET  /api/admin/preveri?vnos=KEATON
+    - POST /api/admin/preveri  JSON: {"vnos":"KEATON"} ali form: vnos=KEATON
+    """
+    v = request.args.get("vnos")
+    if request.is_json and not v:
+        v = (request.get_json() or {}).get("vnos")
+    if not v:
+        v = request.form.get("vnos", "")
+    v = (v or "").strip()
+
+    exists = False
+    if v:
+        with get_conn() as c:
+            row = c.execute("""
+                SELECT 1
+                FROM slovar_sortiran
+                WHERE TRIM(geslo)=TRIM(?) COLLATE NOCASE
+                LIMIT 1
+            """, (v,)).fetchone()
+            exists = row is not None
+
+    return jsonify({"geslo": v, "obstaja": bool(exists)})
+# <<< PATCH konec
+
+
+def najdi_geslo(vnos: str) -> bool:
+    sql = """
+    SELECT 1
+    FROM slovar_sortiran
+    WHERE TRIM(geslo)=TRIM(?) COLLATE NOCASE
+    LIMIT 1
+    """
+    with get_conn() as c:
+        return c.execute(sql, (vnos,)).fetchone() is not None
+
+@app.get("/admin/dbinfo")
+def admin_dbinfo():
+    return debug_db_info(), 200, {"Content-Type": "text/plain; charset=utf-8"}
+
+@app.get("/admin/count")
+def admin_count():
+    with get_conn() as c:
+        n = c.execute("SELECT COUNT(*) FROM slovar_sortiran").fetchone()[0]
+    return jsonify({"count": n})
+
+@app.post("/admin/preveri")
+def admin_preveri():
+    # podpira form ali JSON
+    v = request.form.get("vnos")
+    if request.is_json and not v:
+        v = (request.get_json() or {}).get("vnos")
+    v = (v or "").strip()
+    ok = najdi_geslo(v)
+    return jsonify({"geslo": v, "obstaja": ok})
+
+# (po želji) Sync DB, ki po uvozu znova zgradi slovar_sortiran
+@app.post("/admin/sync_db")
+def admin_sync_db():
+    from uvoz_cc_csv_vus import refresh_slovar_sortiran  # če je helper tam
+    try:
+        refresh_slovar_sortiran(r".\VUS.db")  # hard-link → prava baza
+        return "OK: slovar_sortiran osvežen.", 200
+    except Exception as e:
+        return f"Napaka: {e}", 500
+
+
 app.secret_key = "Tifumannam1_vus-flask2.onrender.com"
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['PROPAGATE_EXCEPTIONS'] = True

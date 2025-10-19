@@ -8,5 +8,5 @@
     <a href="{{ url_for('prikazi_krizanko', datum=datum) }}" class="btn btn-warning m-2">{{ datum }}</a>
   {% endfor %}
 </div>
-<a href="{{ url_for('arhiv_krizanke') }}" class="btn btn-outline-dark mt-4">Nazaj na arhiv</a>
+<a href="{{ url_for('arhiv_krizanke_legacy_redirect') }}" class="btn btn-outline-dark mt-4">Nazaj na arhiv</a>
 {% endblock %}

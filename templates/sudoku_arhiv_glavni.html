@@ -1,13 +1,9 @@
-{% extends "base.html" %}
-{% block title %}Arhiv Sudoku | VUS{% endblock %}
-
-{% block content %}
-<h1 class="mb-4">Izberi težavnost sudokuja</h1>
-<div class="d-flex flex-wrap justify-content-center">
-    <a href="{{ url_for('arhiv_sudoku', tezavnost='very_easy') }}" class="btn btn-warning fw-bold shadow m-3 p-3 rounded-pill">🟡 Zelo lahki</a>
-    <a href="{{ url_for('arhiv_sudoku', tezavnost='easy') }}" class="btn btn-success fw-bold shadow m-3 p-3 rounded-pill">🟢 Lahki</a>
-    <a href="{{ url_for('arhiv_sudoku', tezavnost='medium') }}" class="btn btn-primary fw-bold shadow m-3 p-3 rounded-pill">🔵 Srednji</a>
-    <a href="{{ url_for('arhiv_sudoku', tezavnost='hard') }}" class="btn btn-danger fw-bold shadow m-3 p-3 rounded-pill">🔴 Težki</a>
-</div>
-<a href="{{ url_for('home') }}" class="btn btn-outline-dark mt-5 px-4 py-2 shadow-sm rounded">Domov</a>
-{% endblock %}
+﻿<!doctype html><meta charset="utf-8">
+<h1>Arhiv Sudoku</h1>
+<ul>
+  <li><a href="{{ url_for('arhiv_sudoku', tezavnost='zelo_lahki') }}">Zelo lahki</a></li>
+  <li><a href="{{ url_for('arhiv_sudoku', tezavnost='lahki') }}">Lahki</a></li>
+  <li><a href="{{ url_for('arhiv_sudoku', tezavnost='srednji') }}">Srednji</a></li>
+  <li><a href="{{ url_for('arhiv_sudoku', tezavnost='tezki') }}">Težki</a></li>
+  <li><a href="{{ url_for('arhiv_sudoku', tezavnost='zelo_tezki') }}">Zelo težki</a></li>
+</ul>
