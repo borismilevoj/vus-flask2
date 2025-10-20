@@ -24,12 +24,10 @@ build/
 .env
 .env.*
 
-# App-specifično (DB-ji, backupi, runtime)
+# App-specifično (DB, backupi, runtime)
 *.db
 *.db-*
 *.bak
 var/data/
 VUS.db*
 static/Images/*.exe
-
-# Render/others (po potrebi)
