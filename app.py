@@ -107,22 +107,26 @@ def parse_tokens(q: str):
     return inc, exc
 
 # ===== DB pot + migracija + helperji =========================================
+
+# ===== DB pot + migracija + helperji =========================================
+from urllib.parse import urlparse, parse_qs  # <— potrebno za _normalize_sync_url
+
 BASE_DIR = Path(__file__).resolve().parent
-DB_PATH = Path(os.environ.get("DB_PATH", "/var/data/VUS.db").strip()).resolve()
+DB_PATH = Path(os.environ.get("DB_PATH", "/var/data/VUS.db").strip() or "/var/data/VUS.db").resolve()
 LEGACY_PATH = (BASE_DIR / "VUS.db").resolve()
-VUS_DB_URL = os.environ.get("VUS_DB_URL", "").strip()
+VUS_DB_URL = (os.environ.get("VUS_DB_URL") or "").strip()
 DB_PATH.parent.mkdir(parents=True, exist_ok=True)
 
-# Enkratna migracija: če ciljna baza ne obstaja, a legacy obstaja → kopiraj
-if not DB_PATH.exists() and LEGACY_PATH.exists():
+# Enkratna migracija iz legacy samo, če cilj ne obstaja in legacy izgleda realen (>1 MB)
+if (not DB_PATH.exists()) and LEGACY_PATH.exists() and LEGACY_PATH.stat().st_size > 1_000_000:
     try:
         shutil.copy2(LEGACY_PATH, DB_PATH)
         print(f"[VUS] Legacy DB skopirana na {DB_PATH}")
     except Exception as e:
-        print(f"[VUS] OPOZORILO: kopiranje baze ni uspelo: {e}")
+        print(f"[VUS] OPOZORILO: kopiranje legacy baze ni uspelo: {e}")
 
 def get_conn() -> sqlite3.Connection:
-    conn = sqlite3.connect(str(DB_PATH), check_same_thread=False, timeout=5.0)
+    conn = sqlite3.connect(str(DB_PATH), check_same_thread=False, timeout=10.0)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys=ON;")
     conn.execute("PRAGMA journal_mode=WAL;")
@@ -133,26 +137,27 @@ def assert_baza_ok() -> None:
     if not DB_PATH.exists() or DB_PATH.stat().st_size == 0:
         raise RuntimeError(f"[VUS] Baza ne obstaja ali je prazna: {DB_PATH}")
     with get_conn() as c:
-        cur = c.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='slovar'")
-        if not cur.fetchone():
+        ok = c.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='slovar'").fetchone()
+        if not ok:
             tabele = [r[0] for r in c.execute("SELECT name FROM sqlite_master WHERE type='table'")]
-            raise RuntimeError(
-                f"[VUS] V bazi {DB_PATH} ni tabele 'slovar'. Najdene: {tabele or '—'}."
-            )
+            raise RuntimeError(f"[VUS] V bazi {DB_PATH} ni tabele 'slovar'. Najdene: {tabele or '—'}")
     print(f"[VUS] OK baza: {DB_PATH}")
 
 def ensure_indexes() -> None:
     with get_conn() as conn:
-        cur = conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='slovar'")
-        if not cur.fetchone():
-            tabele = [r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")]
-            raise RuntimeError(
-                f"[VUS] V bazi {DB_PATH} ni tabele 'slovar'. Najdene: {tabele or '—'}."
-            )
-        # hitra normalizacija za iskanje po vzorcu (ignorira presledke, vezaje, podčrtaje)
-        conn.execute("CREATE INDEX IF NOT EXISTS idx_slovar_norm_expr ON slovar(replace(replace(replace(upper(GESLO),' ',''),'-',''),'_',''))")
+        # 1) enostavni indeksi
         conn.execute("CREATE INDEX IF NOT EXISTS idx_slovar_geslo ON slovar(GESLO)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_slovar_opis  ON slovar(OPIS)")
+        # 2) normaliziran izraz (za natančno ujemanje, neobčutljiv na presledke/vezaje/podčrtaje/case)
+        conn.execute("""
+            CREATE INDEX IF NOT EXISTS idx_slovar_norm_expr
+            ON slovar (replace(replace(replace(upper(GESLO),' ',''),'-',''),'_',''))
+        """)
+        # 3) dolžina normaliziranega gesla (pospeši /isci_vzorec)
+        conn.execute("""
+            CREATE INDEX IF NOT EXISTS idx_slovar_norm_len
+            ON slovar (length(replace(replace(replace(GESLO,' ',''),'-',''),'_','')))
+        """)
         print("[VUS] Indeksi OK.")
 
 # --- SYNC DB helperji ---------------------------------------------------------
@@ -223,13 +228,13 @@ def _download_and_swap_db(src_url_or_path: str, dst_path: str | Path) -> tuple[b
         # 3) http(s)
         elif isinstance(src_url_or_path, str) and src_url_or_path.lower().startswith(("http://", "https://")):
             url = _normalize_sync_url(src_url_or_path)
-            with requests.get(url, stream=True, timeout=60) as r:
+            with requests.get(url, stream=True, timeout=(10, 600), headers={"User-Agent": "VUS-Sync/1.1"}) as r:
                 try:
                     r.raise_for_status()
                 except Exception as e:
                     return False, f"HTTP napaka ({e}); URL: {url}"
 
-                it = r.iter_content(chunk_size=4096)
+                it = r.iter_content(chunk_size=256 * 1024)
                 first = next(it, b"")
                 if _is_probably_html(r, first):
                     return False, "URL vrača HTML. Potreben je direkten .db prenos."

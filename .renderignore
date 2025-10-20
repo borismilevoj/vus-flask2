@@ -1,0 +1,5 @@
+# same as .gitignore but for Render build context
+*.db
+*.bak
+VUS.db*
+/var/data/

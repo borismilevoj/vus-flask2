@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ﻿# OS/IDE
 .DS_Store
 .idea/
@@ -31,3 +32,15 @@ build/
 var/data/
 VUS.db*
 static/Images/*.exe
+=======
+﻿# databases & backups
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+*.bak
+VUS.db*
+/var/data/
+render.yaml
+render.yml
+>>>>>>> b71585e5 (Deploy: add /diag/sync-check, dbdiag, sync helpers, indexes)
