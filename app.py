@@ -269,12 +269,30 @@ def _download_and_swap_db(src_url_or_path: str, dst_path: str | Path) -> tuple[b
 # Admin geslo (preprosto)
 GESLO = "Tifumannam1_vus-flask2.onrender.com"
 
-app = Flask(__name__, static_folder='static', static_url_path='/static')
 
-@app.get("/home")
+app = Flask(__name__, static_folder="static", static_url_path="/static")
+# trailing slash naj ne povzroča 404 (/home in /home/)
+app.url_map.strict_slashes = False
+
+# /  → Home (glavna stran)
+@app.get("/", endpoint="home")
 def home():
     return render_template("home.html")
 
+# /home → preusmeri na /
+@app.get("/home", endpoint="home_redirect")
+def home_redirect():
+    return redirect(url_for("home"), code=302)
+
+# (opcijsko) HTML naj bo svež, statika naj se kešira
+from flask import request
+@app.after_request
+def _no_cache_html(resp):
+    ctype = (resp.headers.get("Content-Type") or "").lower()
+    if "text/html" in ctype:
+        resp.headers["Cache-Control"] = "no-store"
+        resp.headers.pop("ETag", None)
+    return resp
 
 @app.after_request
 def _no_cache_html(resp):
@@ -380,10 +398,6 @@ def diag_sync_check():
         info["why"] = f"{type(e).__name__}: {e}"
         return jsonify(info), 502
 
-# ===== Domača stran ===========================================================
-@app.get("/")
-def home():
-    return redirect(url_for("prikazi_krizanko"))
 
 # ===== Auth (simple) ==========================================================
 @app.route('/login', methods=['GET', 'POST'])
