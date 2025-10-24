@@ -1,17 +1,13 @@
 /* Obstoječa koda, ki že obstaja v tvojem VUS.css */
-div[aria-hidden="true"], div span[style*="crossword-compiler.com"] {
-    display: none !important;
+div[aria-hidden='true'],
+div span[style*='crossword-compiler.com'] {
+  display: none !important;
 }
 
 input.correct {
-    background-color: #d4edda !important;  /* nežno zelena */
+  background-color: #d4edda !important; /* nežno zelena */
 }
 
 input.incorrect {
-    background-color: #f8d7da !important;  /* nežno rdeča */
+  background-color: #f8d7da !important; /* nežno rdeča */
 }
-
-
-
-
-

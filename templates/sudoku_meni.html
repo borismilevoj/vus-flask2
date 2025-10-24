@@ -2,21 +2,47 @@
 {% block title %}Izberi težavnost sudokuja{% endblock %}
 
 {% block content %}
-<div class="container text-center mt-5">
-  <h2>Izberi težavnost današnjega sudokuja</h2>
-  <div class="d-flex flex-wrap justify-content-center gap-3 mt-4">
-    <a class="btn btn-warning fw-bold" href="{{ url_for('prikazi_danasnji_sudoku', tezavnost='very_easy') }}">Zelo lahki</a>
-    <a class="btn btn-warning fw-bold" href="{{ url_for('prikazi_danasnji_sudoku', tezavnost='easy') }}">Lahki</a>
-    <a class="btn btn-warning fw-bold" href="{{ url_for('prikazi_danasnji_sudoku', tezavnost='medium') }}">Srednji</a>
-    <a class="btn btn-warning fw-bold" href="{{ url_for('prikazi_danasnji_sudoku', tezavnost='hard') }}">Težki</a>
-  </div>
+  <div class="container text-center mt-5">
+    <h2>Izberi težavnost današnjega sudokuja</h2>
+    <div class="d-flex flex-wrap justify-content-center gap-3 mt-4">
+      <a
+        class="btn btn-warning fw-bold"
+        href="{{ url_for('prikazi_danasnji_sudoku', tezavnost='very_easy') }}"
+        >Zelo lahki</a
+      >
+      <a
+        class="btn btn-warning fw-bold"
+        href="{{ url_for('prikazi_danasnji_sudoku', tezavnost='easy') }}"
+        >Lahki</a
+      >
+      <a
+        class="btn btn-warning fw-bold"
+        href="{{ url_for('prikazi_danasnji_sudoku', tezavnost='medium') }}"
+        >Srednji</a
+      >
+      <a
+        class="btn btn-warning fw-bold"
+        href="{{ url_for('prikazi_danasnji_sudoku', tezavnost='hard') }}"
+        >Težki</a
+      >
+    </div>
 
-  <h4 class="mt-5">Arhiv po težavnostih</h4>
-  <div class="d-flex flex-wrap justify-content-center gap-3 mt-3">
-    <a class="btn btn-outline-secondary" href="{{ url_for('arhiv_sudoku', tezavnost='very_easy') }}">Arhiv (zelo lahki)</a>
-    <a class="btn btn-outline-secondary" href="{{ url_for('arhiv_sudoku', tezavnost='easy') }}">Arhiv (lahki)</a>
-    <a class="btn btn-outline-secondary" href="{{ url_for('arhiv_sudoku', tezavnost='medium') }}">Arhiv (srednji)</a>
-    <a class="btn btn-outline-secondary" href="{{ url_for('arhiv_sudoku', tezavnost='hard') }}">Arhiv (težki)</a>
+    <h4 class="mt-5">Arhiv po težavnostih</h4>
+    <div class="d-flex flex-wrap justify-content-center gap-3 mt-3">
+      <a
+        class="btn btn-outline-secondary"
+        href="{{ url_for('arhiv_sudoku', tezavnost='very_easy') }}"
+        >Arhiv (zelo lahki)</a
+      >
+      <a class="btn btn-outline-secondary" href="{{ url_for('arhiv_sudoku', tezavnost='easy') }}"
+        >Arhiv (lahki)</a
+      >
+      <a class="btn btn-outline-secondary" href="{{ url_for('arhiv_sudoku', tezavnost='medium') }}"
+        >Arhiv (srednji)</a
+      >
+      <a class="btn btn-outline-secondary" href="{{ url_for('arhiv_sudoku', tezavnost='hard') }}"
+        >Arhiv (težki)</a
+      >
+    </div>
   </div>
-</div>
 {% endblock %}

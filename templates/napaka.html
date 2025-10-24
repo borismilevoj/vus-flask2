@@ -3,11 +3,11 @@
 {% block title %}Napaka{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
+  <div class="container mt-5">
     <div class="alert alert-danger text-center">
-        <h4>Napaka</h4>
-        <p>{{ sporocilo }}</p>
-        <a href="{{ url_for('home') }}" class="btn btn-primary">Nazaj na domačo stran</a>
+      <h4>Napaka</h4>
+      <p>{{ sporocilo }}</p>
+      <a href="{{ url_for('home') }}" class="btn btn-primary">Nazaj na domačo stran</a>
     </div>
-</div>
+  </div>
 {% endblock %}

@@ -3,8 +3,8 @@ services:
     name: vus-flask2
     env: python
     plan: starter
-    buildCommand: "pip install -r requirements.txt"
-    startCommand: "gunicorn -b 0.0.0.0:$PORT app:app"
+    buildCommand: 'pip install -r requirements.txt'
+    startCommand: 'gunicorn -b 0.0.0.0:$PORT app:app'
     disk:
       name: vusdata
       mountPath: /var/data
@@ -13,4 +13,4 @@ services:
       - key: DB_PATH
         value: /var/data/VUS.db
       - key: VUS_DB_URL
-        value: "https://dl.dropboxusercontent.com/scl/fi/m89w7wllcjhlrz8gbjvn7/VUS.db?rlkey=4gqo3mwjaqa1yin8ksww0uk6l&dl=1"
+        value: 'https://dl.dropboxusercontent.com/scl/fi/m89w7wllcjhlrz8gbjvn7/VUS.db?rlkey=4gqo3mwjaqa1yin8ksww0uk6l&dl=1'

@@ -3,144 +3,142 @@
 {% block title %}Iskanje po opisu | VUS{% endblock %}
 
 {% block styles %}
-<style>
-  h1 {
-    font-size: 2.5rem;
-    text-align: center;
-    color: #004b6b;
-    margin-top: 30px;
-  }
+  <style>
+    h1 {
+      font-size: 2.5rem;
+      text-align: center;
+      color: #004b6b;
+      margin-top: 30px;
+    }
 
-  form.iskanje-opis {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-top: 20px;
-    gap: 10px;
-  }
+    form.iskanje-opis {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-top: 20px;
+      gap: 10px;
+    }
 
-  form.iskanje-opis input[type="text"] {
-    width: 250px;
-    height: 40px;
-    font-size: 1rem;
-    padding: 6px;
-    border-radius: 6px;
-    border: 1px solid #007acc;
-  }
+    form.iskanje-opis input[type='text'] {
+      width: 250px;
+      height: 40px;
+      font-size: 1rem;
+      padding: 6px;
+      border-radius: 6px;
+      border: 1px solid #007acc;
+    }
 
-  form.iskanje-opis button {
-    background-color: #007acc;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    padding: 8px 20px;
-    cursor: pointer;
-    font-size: 1rem;
-  }
+    form.iskanje-opis button {
+      background-color: #007acc;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 20px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
 
-  form.iskanje-opis button:hover {
-    background-color: #005f99;
-  }
+    form.iskanje-opis button:hover {
+      background-color: #005f99;
+    }
 
-  #rezultatiOpis {
-    margin-top: 30px;
-    width: 90%;
-    margin-left: auto;
-    margin-right: auto;
-  }
+    #rezultatiOpis {
+      margin-top: 30px;
+      width: 90%;
+      margin-left: auto;
+      margin-right: auto;
+    }
 
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-  }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
 
-  th, td {
-    padding: 12px;
-    border-bottom: 1px solid #ddd;
-    text-align: left;
-  }
+    th,
+    td {
+      padding: 12px;
+      border-bottom: 1px solid #ddd;
+      text-align: left;
+    }
 
-  th {
-    background-color: #f4f4f4;
-  }
+    th {
+      background-color: #f4f4f4;
+    }
 
-  .stevecRezultatov {
-    font-weight: bold;
-    margin-top: 20px;
-    text-align: center;
-    color: #004b6b;
-  }
-
-</style>
+    .stevecRezultatov {
+      font-weight: bold;
+      margin-top: 20px;
+      text-align: center;
+      color: #004b6b;
+    }
+  </style>
 {% endblock %}
 
 {% block content %}
-<h1>Iskanje po opisu</h1>
+  <h1>Iskanje po opisu</h1>
 
-<form class="iskanje-opis" onsubmit="isciOpis(event)">
-  <input type="text" id="opis" name="opis" placeholder="Išči po opisu...">
-  <button type="submit">Išči</button>
-</form>
+  <form class="iskanje-opis" onsubmit="isciOpis(event)">
+    <input type="text" id="opis" name="opis" placeholder="Išči po opisu..." />
+    <button type="submit">Išči</button>
+  </form>
 
-<div id="stevecRezultatov" class="stevecRezultatov"></div>
-<div id="rezultatiOpis"></div>
-
+  <div id="stevecRezultatov" class="stevecRezultatov"></div>
+  <div id="rezultatiOpis"></div>
 {% endblock %}
 
 {% block scripts %}
-<script>
-function isciOpis(event) {
-  event.preventDefault();
-  let opis = document.getElementById("opis").value;
+  <script>
+    function isciOpis(event) {
+      event.preventDefault();
+      let opis = document.getElementById('opis').value;
 
-  fetch('/isci_opis', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({iskalni_niz: opis})
-  })
-  .then(response => {
-    if (!response.ok) {
-      throw new Error('Napaka pri iskanju.');
+      fetch('/isci_opis', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ iskalni_niz: opis }),
+      })
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error('Napaka pri iskanju.');
+          }
+          return response.json();
+        })
+        .then((data) => {
+          prikaziRezultate(data);
+        })
+        .catch((err) => {
+          alert(err);
+        });
     }
-    return response.json();
-  })
-  .then(data => {
-    prikaziRezultate(data);
-  })
-  .catch(err => {
-    alert(err);
-  });
-}
 
-function prikaziRezultate(data) {
-  let container = document.getElementById("rezultatiOpis");
-  container.innerHTML = "";
+    function prikaziRezultate(data) {
+      let container = document.getElementById('rezultatiOpis');
+      container.innerHTML = '';
 
-  let steviloZadetkov = data.rezultati.length;
-  document.getElementById("stevecRezultatov").innerHTML = `Najdeno: ${steviloZadetkov} zadetkov.`;
+      let steviloZadetkov = data.rezultati.length;
+      document.getElementById('stevecRezultatov').innerHTML =
+        `Najdeno: ${steviloZadetkov} zadetkov.`;
 
-  if (steviloZadetkov === 0) {
-    container.innerHTML = "<p>Ni zadetkov.</p>";
-    return;
-  }
+      if (steviloZadetkov === 0) {
+        container.innerHTML = '<p>Ni zadetkov.</p>';
+        return;
+      }
 
-  let tabela = "<table><tr><th>GESLO</th><th>OPIS</th></tr>";
-  data.rezultati.forEach(item => {
-    tabela += `<tr><td>${item.geslo}</td><td>${item.opis}</td></tr>`;
-  });
-  tabela += "</table>";
+      let tabela = '<table><tr><th>GESLO</th><th>OPIS</th></tr>';
+      data.rezultati.forEach((item) => {
+        tabela += `<tr><td>${item.geslo}</td><td>${item.opis}</td></tr>`;
+      });
+      tabela += '</table>';
 
-  container.innerHTML = tabela;
-}
+      container.innerHTML = tabela;
+    }
+  </script>
 
-</script>
-
-<div class="navigation-links text-center mt-4">
+  <div class="navigation-links text-center mt-4">
     <a href="{{ url_for('home') }}" class="btn btn-secondary">Domov</a>
     <a href="{{ url_for('isci_vzorec') }}" class="btn btn-secondary">Išči po vzorcu</a>
     <a href="{{ url_for('prispevaj_geslo') }}" class="btn btn-secondary">Prispevaj geslo</a>
-</div>
-
+  </div>
 {% endblock %}

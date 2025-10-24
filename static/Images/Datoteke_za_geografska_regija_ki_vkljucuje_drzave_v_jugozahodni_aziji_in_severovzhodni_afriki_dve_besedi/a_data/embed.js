@@ -1,108 +1,1231 @@
-(function(g){var window=this;'use strict';var F0X=function(Y){Y.mutedAutoplay=!1;Y.endSeconds=NaN;Y.limitedPlaybackDurationInSeconds=NaN;g.Ax(Y)},JQJ=function(){return{D:"svg",
-T:{height:"100%",version:"1.1",viewBox:"0 0 110 26",width:"100%"},U:[{D:"path",au:!0,C:"ytp-svg-fill",T:{d:"M 16.68,.99 C 13.55,1.03 7.02,1.16 4.99,1.68 c -1.49,.4 -2.59,1.6 -2.99,3 -0.69,2.7 -0.68,8.31 -0.68,8.31 0,0 -0.01,5.61 .68,8.31 .39,1.5 1.59,2.6 2.99,3 2.69,.7 13.40,.68 13.40,.68 0,0 10.70,.01 13.40,-0.68 1.5,-0.4 2.59,-1.6 2.99,-3 .69,-2.7 .68,-8.31 .68,-8.31 0,0 .11,-5.61 -0.68,-8.31 -0.4,-1.5 -1.59,-2.6 -2.99,-3 C 29.11,.98 18.40,.99 18.40,.99 c 0,0 -0.67,-0.01 -1.71,0 z m 72.21,.90 0,21.28 2.78,0 .31,-1.37 .09,0 c .3,.5 .71,.88 1.21,1.18 .5,.3 1.08,.40 1.68,.40 1.1,0 1.99,-0.49 2.49,-1.59 .5,-1.1 .81,-2.70 .81,-4.90 l 0,-2.40 c 0,-1.6 -0.11,-2.90 -0.31,-3.90 -0.2,-0.89 -0.5,-1.59 -1,-2.09 -0.5,-0.4 -1.10,-0.59 -1.90,-0.59 -0.59,0 -1.18,.19 -1.68,.49 -0.49,.3 -1.01,.80 -1.21,1.40 l 0,-7.90 -3.28,0 z m -49.99,.78 3.90,13.90 .18,6.71 3.31,0 0,-6.71 3.87,-13.90 -3.37,0 -1.40,6.31 c -0.4,1.89 -0.71,3.19 -0.81,3.99 l -0.09,0 c -0.2,-1.1 -0.51,-2.4 -0.81,-3.99 l -1.37,-6.31 -3.40,0 z m 29.59,0 0,2.71 3.40,0 0,17.90 3.28,0 0,-17.90 3.40,0 c 0,0 .00,-2.71 -0.09,-2.71 l -9.99,0 z m -53.49,5.12 8.90,5.18 -8.90,5.09 0,-10.28 z m 89.40,.09 c -1.7,0 -2.89,.59 -3.59,1.59 -0.69,.99 -0.99,2.60 -0.99,4.90 l 0,2.59 c 0,2.2 .30,3.90 .99,4.90 .7,1.1 1.8,1.59 3.5,1.59 1.4,0 2.38,-0.3 3.18,-1 .7,-0.7 1.09,-1.69 1.09,-3.09 l 0,-0.5 -2.90,-0.21 c 0,1 -0.08,1.6 -0.28,2 -0.1,.4 -0.5,.62 -1,.62 -0.3,0 -0.61,-0.11 -0.81,-0.31 -0.2,-0.3 -0.30,-0.59 -0.40,-1.09 -0.1,-0.5 -0.09,-1.21 -0.09,-2.21 l 0,-0.78 5.71,-0.09 0,-2.62 c 0,-1.6 -0.10,-2.78 -0.40,-3.68 -0.2,-0.89 -0.71,-1.59 -1.31,-1.99 -0.7,-0.4 -1.48,-0.59 -2.68,-0.59 z m -50.49,.09 c -1.09,0 -2.01,.18 -2.71,.68 -0.7,.4 -1.2,1.12 -1.49,2.12 -0.3,1 -0.5,2.27 -0.5,3.87 l 0,2.21 c 0,1.5 .10,2.78 .40,3.78 .2,.9 .70,1.62 1.40,2.12 .69,.5 1.71,.68 2.81,.78 1.19,0 2.08,-0.28 2.78,-0.68 .69,-0.4 1.09,-1.09 1.49,-2.09 .39,-1 .49,-2.30 .49,-3.90 l 0,-2.21 c 0,-1.6 -0.2,-2.87 -0.49,-3.87 -0.3,-0.89 -0.8,-1.62 -1.49,-2.12 -0.7,-0.5 -1.58,-0.68 -2.68,-0.68 z m 12.18,.09 0,11.90 c -0.1,.3 -0.29,.48 -0.59,.68 -0.2,.2 -0.51,.31 -0.81,.31 -0.3,0 -0.58,-0.10 -0.68,-0.40 -0.1,-0.3 -0.18,-0.70 -0.18,-1.40 l 0,-10.99 -3.40,0 0,11.21 c 0,1.4 .18,2.39 .68,3.09 .49,.7 1.21,1 2.21,1 1.4,0 2.48,-0.69 3.18,-2.09 l .09,0 .31,1.78 2.59,0 0,-14.99 c 0,0 -3.40,.00 -3.40,-0.09 z m 17.31,0 0,11.90 c -0.1,.3 -0.29,.48 -0.59,.68 -0.2,.2 -0.51,.31 -0.81,.31 -0.3,0 -0.58,-0.10 -0.68,-0.40 -0.1,-0.3 -0.21,-0.70 -0.21,-1.40 l 0,-10.99 -3.40,0 0,11.21 c 0,1.4 .21,2.39 .71,3.09 .5,.7 1.18,1 2.18,1 1.39,0 2.51,-0.69 3.21,-2.09 l .09,0 .28,1.78 2.62,0 0,-14.99 c 0,0 -3.40,.00 -3.40,-0.09 z m 20.90,2.09 c .4,0 .58,.11 .78,.31 .2,.3 .30,.59 .40,1.09 .1,.5 .09,1.21 .09,2.21 l 0,1.09 -2.5,0 0,-1.09 c 0,-1 -0.00,-1.71 .09,-2.21 0,-0.4 .11,-0.8 .31,-1 .2,-0.3 .51,-0.40 .81,-0.40 z m -50.49,.12 c .5,0 .8,.18 1,.68 .19,.5 .28,1.30 .28,2.40 l 0,4.68 c 0,1.1 -0.08,1.90 -0.28,2.40 -0.2,.5 -0.5,.68 -1,.68 -0.5,0 -0.79,-0.18 -0.99,-0.68 -0.2,-0.5 -0.31,-1.30 -0.31,-2.40 l 0,-4.68 c 0,-1.1 .11,-1.90 .31,-2.40 .2,-0.5 .49,-0.68 .99,-0.68 z m 39.68,.09 c .3,0 .61,.10 .81,.40 .2,.3 .27,.67 .37,1.37 .1,.6 .12,1.51 .12,2.71 l .09,1.90 c 0,1.1 .00,1.99 -0.09,2.59 -0.1,.6 -0.19,1.08 -0.49,1.28 -0.2,.3 -0.50,.40 -0.90,.40 -0.3,0 -0.51,-0.08 -0.81,-0.18 -0.2,-0.1 -0.39,-0.29 -0.59,-0.59 l 0,-8.5 c .1,-0.4 .29,-0.7 .59,-1 .3,-0.3 .60,-0.40 .90,-0.40 z"}}]}},
-qfg=function(){return{D:"svg",
-T:{fill:"none",height:"100%",viewBox:"0 0 143 51",width:"100%"},U:[{D:"path",T:{d:"M58.37 41.39H62.79V27.23C62.79 23.03 62.69 18.69 62.43 13.59H62.93L63.69 16.89L68.67 41.39H73.17L78.07 16.89L78.89 13.59H79.37C79.15 18.45 79.03 22.89 79.03 27.23V41.39H83.45V8.79H75.95L73.41 20.81C72.35 25.85 71.51 32.01 71.01 35.19H70.73C70.33 31.95 69.49 25.81 68.41 20.85L65.81 8.79H58.37V41.39Z",fill:"white"}},{D:"path",T:{d:"M91.45 41.73C93.91 41.73 95.83 40.59 97.17 38.13H97.35L97.69 41.39H101.43V17.73H96.47V36.61C95.91 37.67 94.81 38.29 93.73 38.29C92.33 38.29 91.89 37.17 91.89 35.13V17.73H86.93V35.43C86.93 39.49 88.19 41.73 91.45 41.73Z",
-fill:"white"}},{D:"path",T:{d:"M110.79 41.89C115.15 41.89 117.75 39.83 117.75 35.65C117.75 31.79 115.93 30.39 111.85 27.47C109.67 25.91 108.39 25.09 108.39 22.95C108.39 21.47 109.27 20.61 110.89 20.61C112.69 20.61 113.33 21.81 113.33 25.29L117.45 25.07C117.77 19.57 115.71 17.23 110.97 17.23C106.57 17.23 104.17 19.27 104.17 23.45C104.17 27.25 105.97 28.83 108.93 31.03C111.89 33.23 113.55 34.53 113.55 36.23C113.55 37.75 112.51 38.61 111.01 38.61C109.13 38.61 108.11 36.97 108.29 34.41L104.21 34.49C103.51 39.25 105.89 41.89 110.79 41.89Z",
-fill:"white"}},{D:"path",T:{d:"M122.5 14.59C124.22 14.59 125.04 13.99 125.04 11.59C125.04 9.33 124.16 8.65 122.5 8.65C120.84 8.65 119.94 9.27 119.94 11.59C119.94 13.99 120.82 14.59 122.5 14.59ZM120.2 41.39H125V17.73H120.2V41.39Z",fill:"white"}},{D:"path",T:{d:"M134.95 41.79C137.31 41.79 138.63 41.49 139.71 40.47C141.31 39.01 141.97 36.63 141.85 33.11L137.41 32.87C137.41 36.87 136.81 38.45 135.03 38.45C133.13 38.45 132.77 36.45 132.77 31.97V27.21C132.77 22.41 133.23 20.51 135.07 20.51C136.67 20.51 137.29 22.01 137.29 26.47L141.65 26.15C141.97 22.93 141.59 20.29 140.09 18.83C139.01 17.77 137.37 17.29 135.15 17.29C129.65 17.29 127.75 20.73 127.75 28.03V31.17C127.75 38.47 129.23 41.79 134.95 41.79Z",
-fill:"white"}},{D:"path",T:{"clip-rule":"evenodd",d:"M24.99 49C29.74 49.00 34.38 47.59 38.32 44.95C42.27 42.32 45.35 38.57 47.17 34.18C48.98 29.80 49.46 24.97 48.53 20.32C47.61 15.66 45.32 11.38 41.97 8.03C38.61 4.67 34.33 2.38 29.68 1.46C25.02 .53 20.20 1.01 15.81 2.82C11.43 4.64 7.68 7.71 5.04 11.66C2.40 15.61 1 20.25 1 25C0.99 28.15 1.61 31.27 2.82 34.18C4.03 37.09 5.79 39.74 8.02 41.97C10.25 44.19 12.89 45.96 15.81 47.17C18.72 48.37 21.84 49 24.99 49ZM24.99 12.36C27.49 12.36 29.94 13.10 32.02 14.48C34.10 15.87 35.72 17.84 36.68 20.15C37.64 22.46 37.89 25.01 37.41 27.46C36.92 29.91 35.72 32.17 33.95 33.94C32.18 35.70 29.93 36.91 27.48 37.40C25.02 37.89 22.48 37.64 20.17 36.68C17.86 35.72 15.88 34.10 14.50 32.02C13.11 29.94 12.37 27.50 12.37 25C12.37 21.65 13.70 18.44 16.07 16.07C18.43 13.70 21.64 12.37 24.99 12.36ZM24.99 10.43C22.11 10.43 19.29 11.28 16.89 12.88C14.50 14.48 12.63 16.76 11.53 19.42C10.42 22.09 10.13 25.02 10.70 27.85C11.26 30.67 12.65 33.27 14.69 35.31C16.73 37.35 19.32 38.73 22.15 39.30C24.98 39.86 27.91 39.57 30.57 38.46C33.23 37.36 35.51 35.49 37.11 33.09C38.71 30.70 39.57 27.88 39.56 25C39.56 23.08 39.19 21.19 38.46 19.42C37.72 17.65 36.65 16.04 35.30 14.69C33.94 13.34 32.34 12.27 30.57 11.53C28.80 10.80 26.90 10.43 24.99 10.43ZM32.63 24.99L20.36 32.09V17.91L32.63 24.99Z",
-fill:"white","fill-rule":"evenodd"}}]}},aq$=function(Y){g.H.call(this,{D:"div",
-C:"ytp-related-on-error-overlay"});var u=this;this.api=Y;this.W=this.j=0;this.G=new g.j3(this);this.K=[];this.suggestionData=[];this.columns=this.containerWidth=0;this.title=new g.H({D:"h2",C:"ytp-related-title",RV:"{{title}}"});this.previous=new g.H({D:"button",Oc:["ytp-button","ytp-previous"],T:{"aria-label":"Prikaz prej\u0161njih predlaganih videoposnetkov"},U:[g.N7()]});this.N=new g.u1(function(m){u.suggestions.element.scrollLeft=-m});
-this.X=this.scrollPosition=0;this.S=!0;this.next=new g.H({D:"button",Oc:["ytp-button","ytp-next"],T:{"aria-label":"Prikaz ve\u010d predlaganih videoposnetkov"},U:[g.id()]});g.b(this,this.G);Y=Y.Y();this.Z=Y.G;g.b(this,this.title);this.title.yF(this.element);this.suggestions=new g.H({D:"div",C:"ytp-suggestions"});g.b(this,this.suggestions);this.suggestions.yF(this.element);g.b(this,this.previous);this.previous.yF(this.element);this.previous.listen("click",this.Tx,this);g.b(this,this.N);for(var n={w$:0};n.w$<
-16;n={w$:n.w$},n.w$++){var U=new g.H({D:"a",C:"ytp-suggestion-link",T:{href:"{{link}}",target:Y.N,"aria-label":"{{aria_label}}"},U:[{D:"div",C:"ytp-suggestion-image",U:[{D:"div",T:{"data-is-live":"{{is_live}}"},C:"ytp-suggestion-duration",RV:"{{duration}}"}]},{D:"div",C:"ytp-suggestion-title",T:{title:"{{hover_title}}"},RV:"{{title}}"},{D:"div",C:"ytp-suggestion-author",RV:"{{views_or_author}}"}]});g.b(this,U);U.yF(this.suggestions.element);var k=U.Xk("ytp-suggestion-link");g.yV(k,"transitionDelay",
-n.w$/20+"s");this.G.B(k,"click",function(m){return function(X){var S=m.w$,C=u.suggestionData[S],f=C.sessionData;g.nV(u.api.Y())&&u.api.V("web_player_log_click_before_generating_ve_conversion_params")?(u.api.logClick(u.K[S].element),S=C.yg(),C={},g.af(u.api,C),S=g.Mk(S,C),g.oP(S,u.api,X)):g.BO(X,u.api,u.Z,f||void 0)&&u.api.EK(C.videoId,f,C.playlistId)}}(n));
-this.K.push(U)}g.b(this,this.next);this.next.yF(this.element);this.next.listen("click",this.zx,this);this.G.B(this.api,"videodatachange",this.onVideoDataChange);this.resize(this.api.tJ().getPlayerSize());this.onVideoDataChange();this.show()},$k$=function(Y,u){if(Y.api.Y().V("web_player_log_click_before_generating_ve_conversion_params"))for(var n=Math.floor(-Y.scrollPosition/(Y.X+Y.j)),U=Math.min(n+Y.columns,Y.suggestionData.length)-1;n<=U;n++)Y.api.logVisibility(Y.K[n].element,u)},YoL=function(Y){Y.next.element.style.bottom=
-Y.W+"px";
-Y.previous.element.style.bottom=Y.W+"px";var u=Y.scrollPosition,n=Y.containerWidth-Y.suggestionData.length*(Y.X+Y.j);g.PP(Y.element,"ytp-scroll-min",u>=0);g.PP(Y.element,"ytp-scroll-max",u<=n)},uIG=function(Y){for(var u=0;u<Y.suggestionData.length;u++){var n=Y.suggestionData[u],U=Y.K[u],k=n.shortViewCount?n.shortViewCount:n.author,m=n.yg(),X=Y.api.Y();
-if(g.nV(X)&&!X.V("web_player_log_click_before_generating_ve_conversion_params")){var S={};g.Rf(Y.api,"addEmbedsConversionTrackingParams",[S]);m=g.Mk(m,S)}U.element.style.display="";S=U.Xk("ytp-suggestion-title");g.N8.test(n.title)?S.dir="rtl":g.NSX.test(n.title)&&(S.dir="ltr");S=U.Xk("ytp-suggestion-author");g.N8.test(k)?S.dir="rtl":g.NSX.test(k)&&(S.dir="ltr");U.update({views_or_author:k,duration:n.isLivePlayback?"V \u017eivo":n.lengthSeconds?g.sH(n.lengthSeconds):"",link:m,hover_title:n.title,title:n.title,
-aria_label:n.ariaLabel||null,is_live:n.isLivePlayback});k=n.I_();U.Xk("ytp-suggestion-image").style.backgroundImage=k?"url("+k+")":"";X.V("web_player_log_click_before_generating_ve_conversion_params")&&(Y.api.createServerVe(U.element,U),(n=(n=n.sessionData)&&n.itct)&&Y.api.setTrackingParams(U.element,n))}for(;u<Y.K.length;u++)Y.K[u].element.style.display="none";YoL(Y)},uM=function(Y){g.FN.call(this,Y);
-var u=this;this.K=null;var n=Y.Y(),U={target:n.N},k=["ytp-small-redirect"];if(n.X)k.push("no-link");else{var m=g.RT(n);U.href=m;U["aria-label"]="V YouTubu poi\u0161\u010dite ve\u010d videoposnetkov"}var X=new g.H({D:"a",Oc:k,T:U,U:[{D:"svg",T:{fill:"#fff",height:"100%",viewBox:"0 0 24 24",width:"100%"},U:[{D:"path",T:{d:"M0 0h24v24H0V0z",fill:"none"}},{D:"path",T:{d:"M21.58 7.19c-.23-.86-.91-1.54-1.77-1.77C18.25 5 12 5 12 5s-6.25 0-7.81.42c-.86.23-1.54.91-1.77 1.77C2 8.75 2 12 2 12s0 3.25.42 4.81c.23.86.91 1.54 1.77 1.77C5.75 19 12 19 12 19s6.25 0 7.81-.42c.86-.23 1.54-.91 1.77-1.77C22 15.25 22 12 22 12s0-3.25-.42-4.81zM10 15V9l5.2 3-5.2 3z"}}]}]});
-X.yF(this.element);Y.createClientVe(X.element,this,178053);this.B(X.element,"click",function(S){n5C(u,S,X.element)});
-g.b(this,X);n.X||n.disableOrganicUi||(this.K=new aq$(Y),this.K.yF(this.element),g.b(this,this.K));this.B(Y,"videodatachange",function(){u.show()});
-this.resize(this.api.tJ().getPlayerSize())},n5C=function(Y,u,n){u.preventDefault();
-Y.api.logClick(n);u=n.getAttribute("href");n={};g.Rf(Y.api,"addEmbedsConversionTrackingParams",[n]);u=g.i4(n)?u:g.Mk(u,n);g.rS(window,u)},UPu=function(Y,u){Y.Xk("ytp-error-content").style.paddingTop="0px";
-var n=Y.Xk("ytp-error-content"),U=n.clientHeight;Y.K&&Y.K.resize(u,u.height-U);n.style.paddingTop=(u.height-(Y.K?Y.K.element.clientHeight:0))/2-U/2+"px"},XVJ=function(Y,u){var n=Y.api.Y(),U;
-u.reason&&(k5u(u.reason)?U=g.fw(u.reason):U=g.JL(g.Cw(u.reason)),Y.dD(U,"content"));var k;u.subreason&&(k5u(u.subreason)?k=g.fw(u.subreason):k=g.JL(g.Cw(u.subreason)),Y.dD(k,"subreason"));if(u.proceedButton&&u.proceedButton.buttonRenderer){U=Y.Xk("ytp-error-content-wrap-subreason");u=u.proceedButton.buttonRenderer;var m=g.rh("A");if(u.text&&u.text.simpleText&&(k=u.text.simpleText,m.textContent=k,!mP$(U,k)&&(!n.X||n.embedsErrorLinks))){var X;n=(X=g.z(u==null?void 0:u.navigationEndpoint,g.Rc))==null?
-void 0:X.url;var S;X=(S=g.z(u==null?void 0:u.navigationEndpoint,g.Rc))==null?void 0:S.target;n&&(m.setAttribute("href",n),Y.api.createClientVe(m,Y,178424),Y.B(m,"click",function(C){n5C(Y,C,m)}));
-X&&m.setAttribute("target",X);S=g.rh("DIV");S.appendChild(m);U.appendChild(S)}}},k5u=function(Y){if(Y.runs)for(var u=0;u<Y.runs.length;u++)if(Y.runs[u].navigationEndpoint)return!0;
-return!1},mP$=function(Y,u){Y=g.P_("A",Y);
-for(var n=0;n<Y.length;n++)if(Y[n].textContent===u)return!0;return!1},PIL=function(Y,u){g.H.call(this,{D:"a",
-Oc:["ytp-impression-link"],T:{target:"{{target}}",href:"{{url}}","aria-label":"Ogled v YouTubu"},U:[{D:"div",C:"ytp-impression-link-content",T:{"aria-hidden":"true"},U:[{D:"div",C:"ytp-impression-link-text",RV:"Glejte tukaj:"},{D:"div",C:"ytp-impression-link-logo",RV:"{{logoSvg}}"}]}]});this.api=Y;this.K=u;this.updateValue("target",Y.Y().N);this.B(Y,"videodatachange",this.onVideoDataChange);this.B(this.api,"presentingplayerstatechange",this.nF);this.B(this.api,"videoplayerreset",this.nS);this.B(this.element,
-"click",this.onClick);this.onVideoDataChange();this.nS()},Sog=function(Y){var u={};
-g.Rf(Y.api,"addEmbedsConversionTrackingParams",[u]);Y=Y.api.getVideoUrl();return Y=g.Mk(Y,u)},ns=function(Y){g.H.call(this,{D:"div",
-Oc:["ytp-mobile-a11y-hidden-seek-button"],U:[{D:"button",Oc:["ytp-mobile-a11y-hidden-seek-button-rewind","ytp-button"],T:{"aria-label":"Premakni se nazaj za 10 sekund","aria-hidden":"false"}},{D:"button",Oc:["ytp-mobile-a11y-hidden-seek-button-forward","ytp-button"],T:{"aria-label":"Premakni se za 10 sekund naprej","aria-hidden":"false"}}]});this.api=Y;this.K=this.Xk("ytp-mobile-a11y-hidden-seek-button-rewind");this.forwardButton=this.Xk("ytp-mobile-a11y-hidden-seek-button-forward");this.api.createClientVe(this.K,
-this,141902);this.api.createClientVe(this.forwardButton,this,141903);this.B(this.api,"presentingplayerstatechange",this.nF);this.B(this.K,"click",this.j);this.B(this.forwardButton,"click",this.X);this.nF()},UG=function(Y){g.H.call(this,{D:"div",
-C:"ytp-muted-autoplay-endscreen-overlay",U:[{D:"div",C:"ytp-muted-autoplay-end-panel",U:[{D:"button",Oc:["ytp-muted-autoplay-end-text","ytp-button"],RV:"{{text}}"}]}]});this.api=Y;this.G=this.Xk("ytp-muted-autoplay-end-panel");this.j=!1;this.api.createClientVe(this.element,this,52428);this.B(this.api,"presentingplayerstatechange",this.X);this.B(Y,"onMutedAutoplayStarts",this.onMutedAutoplayStarts);this.listen("click",this.onClick);this.hide()},kM=function(Y){var u=Y.Y();
-g.H.call(this,{D:"a",Oc:["ytp-watermark","yt-uix-sessionlink"],T:{target:u.N,href:"{{url}}","aria-label":g.UR("Glejte na $WEBSITE",{WEBSITE:g.sg(u)}),"data-sessionlink":"feature=player-watermark"},RV:"{{logoSvg}}"});this.api=Y;this.K=null;this.j=!1;this.state=Y.getPlayerStateObject();this.B(Y,"videodatachange",this.onVideoDataChange);this.B(Y,"presentingplayerstatechange",this.onStateChange);this.B(Y,"appresize",this.pT);this.onVideoDataChange();this.Ve(this.state);this.pT(Y.tJ().getPlayerSize())},
-CIu=function(Y){var u=Y.api.getVideoData(),n=Y.api.Y();
-n=n.Qe&&!g.V(Y.state,2)&&!Y.api.getVideoData(1).sD&&!(n.V("embeds_enable_emc3ds_woyt_counterfactual")&&Y.api.getPlayerStateObject().isCued());u.mutedAutoplay||Y.v$(n);Y.api.logVisibility(Y.element,n)},N2g=function(Y){g.H.call(this,{D:"div",
-C:"ytp-muted-autoplay-overlay",U:[{D:"div",C:"ytp-muted-autoplay-bottom-buttons",U:[{D:"button",Oc:["ytp-muted-autoplay-equalizer","ytp-button"],T:{"aria-label":"Kazalnik predvajanja z izklopljenim zvokom"},U:[{D:"div",Oc:["ytp-muted-autoplay-equalizer-icon"],U:[{D:"svg",T:{height:"100%",version:"1.1",viewBox:"-4 -4 24 24",width:"100%"},U:[{D:"g",T:{fill:"#fff"},U:[{D:"rect",C:"ytp-equalizer-bar-left",T:{height:"9",width:"4",x:"1",y:"7"}},{D:"rect",C:"ytp-equalizer-bar-middle",T:{height:"14",width:"4",
-x:"6",y:"2"}},{D:"rect",C:"ytp-equalizer-bar-right",T:{height:"12",width:"4",x:"11",y:"4"}}]}]}]}]}]}]});var u=this;this.api=Y;this.bottomButtons=this.Xk("ytp-muted-autoplay-bottom-buttons");this.X=new g.Vp(this.PJ,4E3,this);this.j=!1;Y.createClientVe(this.element,this,39306);this.B(Y,"presentingplayerstatechange",this.cU);this.B(Y,"onMutedAutoplayStarts",function(){fN$(u);u.cU();QQy(u);u.j=!1});
-this.B(Y,"onAutoplayBlocked",this.onAutoplayBlocked);this.listen("click",this.onClick);this.B(Y,"onMutedAutoplayEnds",this.onMutedAutoplayEnds);this.hide();Y.isMutedByEmbedsMutedAutoplay()&&(fN$(this),this.cU(),QQy(this));g.b(this,this.X)},QQy=function(Y){Y.KT&&Y.K&&(Y.K.show(),Y.X.start())},fN$=function(Y){Y.watermark||(Y.watermark=new kM(Y.api),g.b(Y,Y.watermark),Y.watermark.yF(Y.bottomButtons,0),g.PP(Y.watermark.element,"ytp-muted-autoplay-watermark",!0),Y.K=new g.Je(Y.watermark,0,!0,100),g.b(Y,
-Y.K))},my=function(Y){g.H.call(this,{D:"div",
-C:"ytp-pause-overlay",T:{tabIndex:"-1"}});var u=this;this.api=Y;this.X=new g.j3(this);this.fade=new g.Je(this,1E3,!1,100,function(){u.K.j=!1},function(){u.K.j=!0});
-this.j=!1;this.expandButton=new g.H({D:"button",Oc:["ytp-button","ytp-expand"],RV:this.api.isEmbedsShortsMode()?"Ve\u010d kratkih videoposnetkov":"Ve\u010d videoposnetkov"});Y.Y().controlsType==="0"&&g.UN(Y.getRootNode(),"ytp-pause-overlay-controls-hidden");g.b(this,this.X);g.b(this,this.fade);var n=new g.H({D:"button",Oc:["ytp-button","ytp-collapse"],T:{"aria-label":this.api.isEmbedsShortsMode()?"Skrij polico Ve\u010d kratkih videoposnetkov":"Skrij ve\u010d videoposnetkov"},U:[{D:"div",C:"ytp-collapse-icon",
-U:[g.pw()]}]});g.b(this,n);n.yF(this.element);n.listen("click",this.G,this);g.b(this,this.expandButton);this.expandButton.yF(this.element);this.expandButton.listen("click",this.W,this);this.K=new g.n7(Y);g.b(this,this.K);this.K.j=!1;this.K.yF(this.element);this.api.isEmbedsShortsMode()?this.api.createClientVe(this.element,this,157212):this.api.createClientVe(this.element,this,172777);this.X.B(this.api,"presentingplayerstatechange",this.QF);this.X.B(this.api,"videodatachange",this.QF);this.hide()},
-Xq=function(Y){g.H.call(this,{D:"div",
-Oc:["ytp-player-content","ytp-iv-player-content"],U:[{D:"div",C:"ytp-countdown-timer",U:[{D:"svg",T:{height:"100%",version:"1.1",viewBox:"0 0 72 72",width:"100%"},U:[{D:"circle",C:"ytp-svg-countdown-timer-ring",T:{cx:"-36",cy:"36","fill-opacity":"0",r:"33.5",stroke:"#FFFFFF","stroke-dasharray":"211","stroke-dashoffset":"-211","stroke-width":"4",transform:"rotate(-90)"}},{D:"circle",C:"ytp-svg-countdown-timer-background",T:{cx:"-36",cy:"36","fill-opacity":"0",r:"33.5",stroke:"#FFFFFF","stroke-opacity":"0.3",
-"stroke-width":"4",transform:"rotate(-90)"}}]},{D:"span",C:"ytp-countdown-timer-time",RV:"{{duration}}"}]}]});this.api=Y;this.S=this.Xk("ytp-svg-countdown-timer-ring");this.K=null;this.G=this.X=0;this.j=!1;this.W=0;this.api.createClientVe(this.element,this,159628)},Zc$=function(Y){Y.K||(Y.X=5E3,Y.G=(0,g.j2)(),Y.K=new g.EQ(function(){ic$(Y)},null),ic$(Y))},ic$=function(Y){if(!Y.j){var u=Math.min((0,g.j2)()-Y.G,Y.X);
-var n=Y.X-u;u=Y.X===0?0:Math.max(n/Y.X,0);n=Math.round(n/1E3);Y.S.setAttribute("stroke-dashoffset",""+-211*(u+1));Y.updateValue("duration",n);u<=0&&Y.K?Y.stopTimer():Y.K&&Y.K.start()}},rjC=function(Y){g.vH.call(this,Y);
-this.L=Y;this.K=new g.j3(this);this.j=null;this.S=!1;this.countdownTimer=null;this.N=!1;T2$(this);g.b(this,this.K);this.load()},sQX=function(Y){var u=g.ryL(Y.L);
-u!==Y.N&&(Y.N=u,Y.J&&(Y.J.dispose(),Y.J=null),Y.X&&(Y.X.dispose(),Y.X=null),Y.G&&(Y.G.dispose(),Y.G=null),Y.j&&(Y.j.stop(),Y.j.dispose(),Y.j=null),u&&(u=g.w6(Y.L),Y.L.isEmbedsShortsMode()&&(Y.G=new g.H({D:"div",C:"ytp-pause-overlay-backdrop",T:{tabIndex:"-1"}}),g.b(Y,Y.G),g.uc(Y.L,Y.G.element,4),Y.j=new g.Je(Y.G,1E3,!1,100),g.b(Y,Y.j),Y.G.hide()),Y.J=new g.H({D:"div",C:"ytp-pause-overlay-container",T:{tabIndex:"-1"}}),g.b(Y,Y.J),Y.X=new my(Y.L,u),g.b(Y,Y.X),Y.X.yF(Y.J.element),g.uc(Y.L,Y.J.element,
-4),M$u(Y,Y.L.getPlayerStateObject())))},M$u=function(Y,u){Y.j&&(!g.V(u,4)&&!g.V(u,2)||g.V(u,1024)?Y.j.hide():Y.j.show())},T2$=function(Y){var u=Y.L;
-Y=!!u.isEmbedsShortsMode();g.PP(u.getRootNode(),"ytp-shorts-mode",Y);if(u=u.getVideoData())u.Np=Y},P$=function(Y,u){var n=Y.L.Y();
-Y={adSource:"EMBEDS_AD_SOURCE_YOUTUBE",breakType:Y.L.getCurrentTime()===0?"EMBEDS_AD_BREAK_TYPE_PRE_ROLL":Y.L.getPlayerState()===0?"EMBEDS_AD_BREAK_TYPE_POST_ROLL":"EMBEDS_AD_BREAK_TYPE_MID_ROLL",embedUrl:g.eEm(Y.L.Y().loaderUrl),eventType:u,youtubeHost:g.fo(Y.L.Y().uE)||""};Y.embeddedPlayerMode=n.DW;g.ka("embedsAdEvent",Y)};
-g.d(aq$,g.H);g.M=aq$.prototype;g.M.hide=function(){this.S=!0;g.H.prototype.hide.call(this);$k$(this,!1)};
-g.M.show=function(){this.S=!1;g.H.prototype.show.call(this);$k$(this,!0)};
-g.M.isHidden=function(){return this.S};
-g.M.zx=function(){this.scrollTo(this.scrollPosition-this.containerWidth)};
-g.M.Tx=function(){this.scrollTo(this.scrollPosition+this.containerWidth)};
-g.M.resize=function(Y,u){var n=this.api.Y(),U=16/9,k=Y.width>=650,m=Y.width<480||Y.height<290,X=Math.min(this.suggestionData.length,this.K.length);if(Math.min(Y.width,Y.height)<=150||X===0||!n.lD)this.hide();else{var S;if(k){var C=S=28;this.j=16}else this.j=C=S=8;if(m){var f=6;k=14;var Q=12;m=24;n=12}else f=8,k=18,Q=16,m=36,n=16;Y=Y.width-(48+S+C);S=Math.ceil(Y/150);S=Math.min(3,S);C=Y/S-this.j;var N=Math.floor(C/U);u&&N+100>u&&C>50&&(N=Math.max(u,50/U),S=Math.ceil(Y/(U*(N-100)+this.j)),C=Y/S-this.j,
-N=Math.floor(C/U));C<50||g.qD(this.api)?this.hide():this.show();for(u=0;u<X;u++){U=this.K[u];var Z=U.Xk("ytp-suggestion-image");Z.style.width=C+"px";Z.style.height=N+"px";U.Xk("ytp-suggestion-title").style.width=C+"px";U.Xk("ytp-suggestion-author").style.width=C+"px";U=U.Xk("ytp-suggestion-duration");U.style.display=U&&C<100?"none":""}X=k+f+Q+4;this.W=X+n+(N-m)/2;this.suggestions.element.style.height=N+X+"px";this.X=C;this.containerWidth=Y;this.columns=S;this.scrollPosition=0;this.suggestions.element.scrollLeft=
--0;YoL(this)}};
-g.M.onVideoDataChange=function(){var Y=this.api.getVideoData(),u=this.api.Y();this.Z=Y.sD?!1:u.G;Y.suggestions?this.suggestionData=g.BV(Y.suggestions,function(n){return n&&!n.playlistId}):this.suggestionData.length=0;
-uIG(this);Y.sD?this.title.update({title:g.UR("Ve\u010d videoposnetkov v kanalu $DNI_RELATED_CHANNEL",{DNI_RELATED_CHANNEL:Y.author})}):this.title.update({title:"Ve\u010d videoposnetkov v YouTubu"})};
-g.M.scrollTo=function(Y){Y=g.gS(Y,this.containerWidth-this.suggestionData.length*(this.X+this.j),0);this.N.start(this.scrollPosition,Y,1E3);this.scrollPosition=Y;YoL(this);$k$(this,!0)};g.d(uM,g.FN);uM.prototype.show=function(){g.FN.prototype.show.call(this);UPu(this,this.api.tJ().getPlayerSize())};
-uM.prototype.resize=function(Y){g.FN.prototype.resize.call(this,Y);this.K&&(UPu(this,Y),g.PP(this.element,"related-on-error-overlay-visible",!this.K.isHidden()))};
-uM.prototype.j=function(Y){g.FN.prototype.j.call(this,Y);var u=this.api.getVideoData();if(u.CM||u.playerErrorMessageRenderer)(Y=u.CM)?XVJ(this,Y):u.playerErrorMessageRenderer&&XVJ(this,u.playerErrorMessageRenderer);else{var n;Y.RD&&(u.Rr?k5u(u.Rr)?n=g.fw(u.Rr):n=g.JL(g.Cw(u.Rr)):n=g.JL(Y.RD),this.dD(n,"subreason"))}};g.d(PIL,g.H);g.M=PIL.prototype;g.M.onVideoDataChange=function(){var Y=this.api.getVideoData(),u=JQJ(),n=96714;g.KQ(Y)?(u=qfg(),n=216165,g.UN(this.element,"ytp-music-impression-link")):g.mU(this.element,"ytp-music-impression-link");this.api.Y().V("embeds_enable_emc3ds_woyt_counterfactual")&&g.UN(this.element,"ytp-woyt-emc3ds-cf");this.updateValue("logoSvg",u);this.api.hasVe(this.element)&&this.api.destroyVe(this.element);this.api.createClientVe(this.element,this,n)};
-g.M.nF=function(){this.api.getPlayerStateObject().isCued()||(this.hide(),this.api.logVisibility(this.element,!1))};
-g.M.nS=function(){var Y=this.api.getVideoData(),u=this.api.Y(),n=this.api.getVideoData().sD,U=u.Qe&&!u.V("embeds_enable_emc3ds_woyt_counterfactual"),k=!u.lD,m=this.K.WW()&&!u.V("embeds_enable_emc3ds_woyt_counterfactual");u=u.X;U||m||n||k||u||this.api.isEmbedsShortsMode()||!Y.videoId?(this.hide(),this.api.logVisibility(this.element,!1)):(Y=Sog(this),this.updateValue("url",Y),this.show())};
-g.M.onClick=function(Y){this.api.V("web_player_log_click_before_generating_ve_conversion_params")&&this.api.logClick(this.element);var u=Sog(this);g.oP(u,this.api,Y);this.api.V("web_player_log_click_before_generating_ve_conversion_params")||this.api.logClick(this.element)};
-g.M.show=function(){this.api.getPlayerStateObject().isCued()&&(g.H.prototype.show.call(this),this.api.hasVe(this.element)&&this.api.logVisibility(this.element,!0))};g.d(ns,g.H);ns.prototype.nF=function(){var Y=this.api.getPlayerStateObject();!this.api.wV()||g.V(Y,2)&&g.OA(this.api)||g.V(Y,64)?(this.api.logVisibility(this.K,!1),this.api.logVisibility(this.forwardButton,!1),this.hide()):(this.show(),this.api.logVisibility(this.K,!0),this.api.logVisibility(this.forwardButton,!0))};
-ns.prototype.j=function(){this.api.seekBy(-10*this.api.getPlaybackRate(),void 0,void 0,83);this.api.logClick(this.K)};
-ns.prototype.X=function(){this.api.seekBy(10*this.api.getPlaybackRate(),void 0,void 0,82);this.api.logClick(this.forwardButton)};g.d(UG,g.H);
-UG.prototype.X=function(){var Y=this.api.getPlayerStateObject(),u=this.api.getVideoData();g.PP(this.element,"ytp-shorts-mode",this.api.isEmbedsShortsMode());!u.mutedAutoplay||u.limitedPlaybackDurationInSeconds===0&&u.endSeconds===0&&u.mutedAutoplayDurationMode===2||(g.V(Y,2)&&!this.KT?(this.show(),this.K||(this.K=new g.VU(this.api),g.b(this,this.K),this.K.yF(this.G,0),this.K.show()),Y=this.api.getVideoData(),this.updateValue("text",Y.wc),g.PP(this.element,"ytp-muted-autoplay-show-end-panel",!0),this.api.logVisibility(this.element,
-this.KT),this.api.oa("onMutedAutoplayEnds")):this.hide())};
-UG.prototype.onClick=function(){if(!this.j){this.K&&(this.K.nG(),this.K=null);g.PP(this.api.getRootNode(),"ytp-muted-autoplay",!1);var Y=this.api.getVideoData(),u=this.api.getCurrentTime();F0X(Y);this.api.loadVideoById(Y.videoId,u);this.api.qy();this.api.logClick(this.element);this.hide();this.j=!0}};
-UG.prototype.onMutedAutoplayStarts=function(){this.j=!1;this.K&&(this.K.nG(),this.K=null)};g.d(kM,g.H);g.M=kM.prototype;g.M.onStateChange=function(Y){this.Ve(Y.state)};
-g.M.Ve=function(Y){this.state!==Y&&(this.state=Y);CIu(this)};
-g.M.onVideoDataChange=function(){var Y=this.api.Y();Y.X&&g.UN(this.element,"ytp-no-hover");var u=this.api.getVideoData();u.videoId&&!Y.X?(Y=this.api.getVideoUrl(!0,!1,!1,!0),this.updateValue("url",Y),this.K||(this.K=this.listen("click",this.onClick))):this.K&&(this.updateValue("url",null),this.qR(this.K),this.K=null);Y=JQJ();var n=76758;g.KQ(u)&&(Y=qfg(),n=216164);this.updateValue("logoSvg",Y);this.api.hasVe(this.element)&&this.api.destroyVe(this.element);this.api.createClientVe(this.element,this,
-n);CIu(this)};
-g.M.onClick=function(Y){this.api.V("web_player_log_click_before_generating_ve_conversion_params")&&this.api.logClick(this.element);var u=this.api.getVideoUrl(!g.d7(Y),!1,!0,!0);if(this.api.V("web_player_log_click_before_generating_ve_conversion_params")){var n={};g.Rf(this.api,"addEmbedsConversionTrackingParams",[n]);u=g.Mk(u,n)}g.oP(u,this.api,Y);this.api.V("web_player_log_click_before_generating_ve_conversion_params")||this.api.logClick(this.element)};
-g.M.pT=function(Y){if((Y=Y.width<480)&&!this.j||!Y&&this.j){var u=new g.H(JQJ()),n=this.Xk("ytp-watermark");g.PP(n,"ytp-watermark-small",Y);g.dh(n);u.yF(n);this.j=Y}};g.d(N2g,g.H);g.M=N2g.prototype;g.M.cU=function(){var Y=this.api.getPlayerStateObject();!this.api.getVideoData().mutedAutoplay||g.V(Y,2)?this.hide():this.KT||(g.H.prototype.show.call(this),this.api.logVisibility(this.element,this.KT))};
-g.M.PJ=function(){this.K&&this.K.hide()};
-g.M.onAutoplayBlocked=function(){this.hide();F0X(this.api.getVideoData())};
-g.M.onClick=function(){if(!this.j){g.PP(this.api.getRootNode(),"ytp-muted-autoplay",!1);var Y=this.api.getVideoData(),u=this.api.getCurrentTime();F0X(Y);this.api.loadVideoById(Y.videoId,u);this.api.qy();this.api.logClick(this.element);this.api.oa("onMutedAutoplayEnds");this.j=!0}};
-g.M.onMutedAutoplayEnds=function(){this.watermark&&(this.watermark.nG(),this.watermark=null)};g.d(my,g.H);my.prototype.hide=function(){g.mU(this.api.getRootNode(),"ytp-expand-pause-overlay");g.H.prototype.hide.call(this)};
-my.prototype.G=function(){this.j=!0;g.mU(this.api.getRootNode(),"ytp-expand-pause-overlay");this.api.isEmbedsShortsMode()&&this.api.logVisibility(this.element,!1);this.expandButton.focus()};
-my.prototype.W=function(){this.j=!1;g.UN(this.api.getRootNode(),"ytp-expand-pause-overlay");this.api.isEmbedsShortsMode()&&this.api.logVisibility(this.element,!0);this.focus()};
-my.prototype.QF=function(){var Y=this.api.getPlayerStateObject();g.V(Y,1)||g.V(Y,16)||g.V(Y,32)||(!g.V(Y,4)||g.V(Y,2)||g.V(Y,1024)?(this.j||this.api.logVisibility(this.element,!1),this.fade.hide()):this.K.hasSuggestions()&&(this.j||(g.UN(this.api.getRootNode(),"ytp-expand-pause-overlay"),g.Uk(this.K),this.K.show(),this.api.logVisibility(this.element,!0)),this.fade.show()))};g.d(Xq,g.H);Xq.prototype.show=function(){g.H.prototype.show.call(this);this.api.logVisibility(this.element,!0)};
-Xq.prototype.stopTimer=function(){this.K&&(this.K.dispose(),this.K=null,this.j=!1)};
-Xq.prototype.nG=function(){this.stopTimer();g.H.prototype.nG.call(this)};g.d(rjC,g.vH);g.M=rjC.prototype;g.M.VO=function(){return!1};
-g.M.create=function(){var Y=this.L.Y(),u=g.w6(this.L),n,U=(n=this.L.getVideoData())==null?void 0:n.clientPlaybackNonce;U&&g.pg({clientPlaybackNonce:U});Y.TZ&&!Y.disableOrganicUi&&sQX(this);var k;(k=Y.getWebPlayerContextConfig())!=null&&k.embedsEnableEmc3ds||(this.Z=new N2g(this.L),g.b(this,this.Z),g.uc(this.L,this.Z.element,4),this.oV=new UG(this.L),g.b(this,this.oV),g.uc(this.L,this.oV.element,4));Y.Qe&&(this.watermark=new kM(this.L),g.b(this,this.watermark),g.uc(this.L,this.watermark.element,8));
-u&&!Y.disableOrganicUi&&(this.W=new PIL(this.L,u),g.b(this,this.W),g.uc(this.L,this.W.element,8),this.L.isMutedByEmbedsMutedAutoplay()&&(this.onMutedAutoplayStarts(),this.W.hide()));Y.j&&!Y.disableOrganicUi&&(this.KG=new ns(this.L),g.b(this,this.KG),g.uc(this.L,this.KG.element,4));this.K.B(this.L,"appresize",this.pT);this.K.B(this.L,"presentingplayerstatechange",this.nF);this.K.B(this.L,"videodatachange",this.onVideoDataChange);this.K.B(this.L,"videoplayerreset",this.onReset);this.K.B(this.L,"onMutedAutoplayStarts",
-this.onMutedAutoplayStarts);this.K.B(this.L,"onAdStart",this.onAdStart);this.K.B(this.L,"onAdComplete",this.onAdComplete);this.K.B(this.L,"onAdSkip",this.onAdSkip);this.K.B(this.L,"onAdStateChange",this.onAdStateChange);if(this.S=g.XJ(g.Qz(Y)))this.countdownTimer=new Xq(this.L),g.b(this,this.countdownTimer),g.uc(this.L,this.countdownTimer.element,4),this.countdownTimer.hide(),this.K.B(this.L,g.yk("embeds"),this.onCueRangeEnter),this.K.B(this.L,g.Vk("embeds"),this.onCueRangeExit);this.t_(this.L.getPlayerStateObject());
-this.player.rL("embed");var m,X;((m=this.L.Y().getWebPlayerContextConfig())==null?0:(X=m.embedsHostFlags)==null?0:X.allowOverridingVisitorDataPlayerVars)&&(Y=g.z6("IDENTITY_MEMENTO"))&&this.L.Ar("onMementoChange",Y)};
-g.M.onCueRangeEnter=function(Y){Y.getId()==="countdown timer"&&this.countdownTimer&&(this.countdownTimer.show(),Zc$(this.countdownTimer))};
-g.M.onCueRangeExit=function(Y){Y.getId()==="countdown timer"&&this.countdownTimer&&(this.countdownTimer.stopTimer(),this.countdownTimer.hide())};
-g.M.pT=function(){var Y=this.L.tJ().getPlayerSize();this.O6&&this.O6.resize(Y)};
-g.M.onReset=function(){T2$(this)};
-g.M.nF=function(Y){this.t_(Y.state)};
-g.M.t_=function(Y){g.V(Y,128)?(this.O6||(this.O6=new uM(this.L),g.b(this,this.O6),g.uc(this.L,this.O6.element,4)),this.O6.j(Y.Jt),this.O6.show(),g.UN(this.L.getRootNode(),"ytp-embed-error")):this.O6&&(this.O6.dispose(),this.O6=null,g.mU(this.L.getRootNode(),"ytp-embed-error"));if(this.countdownTimer&&this.countdownTimer.K)if(g.V(Y,64))this.countdownTimer.hide(),this.countdownTimer.stopTimer();else if(Y.isPaused()){var u=this.countdownTimer;u.j||(u.j=!0,u.W=(0,g.j2)())}else Y.isPlaying()&&this.countdownTimer.j&&
-(u=this.countdownTimer,u.j&&(u.G+=(0,g.j2)()-u.W,u.j=!1,ic$(u)));M$u(this,Y)};
-g.M.onMutedAutoplayStarts=function(){this.L.getVideoData().mutedAutoplay&&this.Z&&g.PP(this.L.getRootNode(),"ytp-muted-autoplay",!0)};
-g.M.onVideoDataChange=function(Y,u){var n=this.mp!==u.videoId;Y=!n&&Y==="dataloaded";var U={isShortsModeEnabled:!!this.L.isEmbedsShortsMode()};g.ka("embedsVideoDataDidChange",{clientPlaybackNonce:u.clientPlaybackNonce,isReload:Y,runtimeEnabledFeatures:U});n&&(this.mp=u.videoId,this.countdownTimer&&(this.countdownTimer.show(),this.countdownTimer.hide()),this.S&&(this.L.JS("embeds"),u.isAd()||u.limitedPlaybackDurationInSeconds<5||g.qD(this.L)||(u=Math.max((u.startSeconds+u.limitedPlaybackDurationInSeconds-
-5)*1E3,0),u=new g.EE(u,u+5E3,{id:"countdown timer",namespace:"embeds"}),this.L.l6([u]))),this.L.Y().TZ&&!this.L.Y().disableOrganicUi&&(T2$(this),sQX(this)));this.L.Y().X&&this.X&&this.X.detach()};
-g.M.onAdStart=function(){P$(this,"EMBEDS_AD_EVENT_TYPE_AD_STARTED")};
-g.M.onAdComplete=function(){P$(this,"EMBEDS_AD_EVENT_TYPE_AD_COMPLETED")};
-g.M.onAdSkip=function(){P$(this,"EMBEDS_AD_EVENT_TYPE_AD_SKIPPED")};
-g.M.onAdStateChange=function(Y){Y===2&&P$(this,"EMBEDS_AD_EVENT_TYPE_AD_PAUSED")};g.cH("embed",rjC);})(_yt_player);
+(function (g) {
+  var window = this;
+  ('use strict');
+  var F0X = function (Y) {
+      Y.mutedAutoplay = !1;
+      Y.endSeconds = NaN;
+      Y.limitedPlaybackDurationInSeconds = NaN;
+      g.Ax(Y);
+    },
+    JQJ = function () {
+      return {
+        D: 'svg',
+        T: { height: '100%', version: '1.1', viewBox: '0 0 110 26', width: '100%' },
+        U: [
+          {
+            D: 'path',
+            au: !0,
+            C: 'ytp-svg-fill',
+            T: {
+              d: 'M 16.68,.99 C 13.55,1.03 7.02,1.16 4.99,1.68 c -1.49,.4 -2.59,1.6 -2.99,3 -0.69,2.7 -0.68,8.31 -0.68,8.31 0,0 -0.01,5.61 .68,8.31 .39,1.5 1.59,2.6 2.99,3 2.69,.7 13.40,.68 13.40,.68 0,0 10.70,.01 13.40,-0.68 1.5,-0.4 2.59,-1.6 2.99,-3 .69,-2.7 .68,-8.31 .68,-8.31 0,0 .11,-5.61 -0.68,-8.31 -0.4,-1.5 -1.59,-2.6 -2.99,-3 C 29.11,.98 18.40,.99 18.40,.99 c 0,0 -0.67,-0.01 -1.71,0 z m 72.21,.90 0,21.28 2.78,0 .31,-1.37 .09,0 c .3,.5 .71,.88 1.21,1.18 .5,.3 1.08,.40 1.68,.40 1.1,0 1.99,-0.49 2.49,-1.59 .5,-1.1 .81,-2.70 .81,-4.90 l 0,-2.40 c 0,-1.6 -0.11,-2.90 -0.31,-3.90 -0.2,-0.89 -0.5,-1.59 -1,-2.09 -0.5,-0.4 -1.10,-0.59 -1.90,-0.59 -0.59,0 -1.18,.19 -1.68,.49 -0.49,.3 -1.01,.80 -1.21,1.40 l 0,-7.90 -3.28,0 z m -49.99,.78 3.90,13.90 .18,6.71 3.31,0 0,-6.71 3.87,-13.90 -3.37,0 -1.40,6.31 c -0.4,1.89 -0.71,3.19 -0.81,3.99 l -0.09,0 c -0.2,-1.1 -0.51,-2.4 -0.81,-3.99 l -1.37,-6.31 -3.40,0 z m 29.59,0 0,2.71 3.40,0 0,17.90 3.28,0 0,-17.90 3.40,0 c 0,0 .00,-2.71 -0.09,-2.71 l -9.99,0 z m -53.49,5.12 8.90,5.18 -8.90,5.09 0,-10.28 z m 89.40,.09 c -1.7,0 -2.89,.59 -3.59,1.59 -0.69,.99 -0.99,2.60 -0.99,4.90 l 0,2.59 c 0,2.2 .30,3.90 .99,4.90 .7,1.1 1.8,1.59 3.5,1.59 1.4,0 2.38,-0.3 3.18,-1 .7,-0.7 1.09,-1.69 1.09,-3.09 l 0,-0.5 -2.90,-0.21 c 0,1 -0.08,1.6 -0.28,2 -0.1,.4 -0.5,.62 -1,.62 -0.3,0 -0.61,-0.11 -0.81,-0.31 -0.2,-0.3 -0.30,-0.59 -0.40,-1.09 -0.1,-0.5 -0.09,-1.21 -0.09,-2.21 l 0,-0.78 5.71,-0.09 0,-2.62 c 0,-1.6 -0.10,-2.78 -0.40,-3.68 -0.2,-0.89 -0.71,-1.59 -1.31,-1.99 -0.7,-0.4 -1.48,-0.59 -2.68,-0.59 z m -50.49,.09 c -1.09,0 -2.01,.18 -2.71,.68 -0.7,.4 -1.2,1.12 -1.49,2.12 -0.3,1 -0.5,2.27 -0.5,3.87 l 0,2.21 c 0,1.5 .10,2.78 .40,3.78 .2,.9 .70,1.62 1.40,2.12 .69,.5 1.71,.68 2.81,.78 1.19,0 2.08,-0.28 2.78,-0.68 .69,-0.4 1.09,-1.09 1.49,-2.09 .39,-1 .49,-2.30 .49,-3.90 l 0,-2.21 c 0,-1.6 -0.2,-2.87 -0.49,-3.87 -0.3,-0.89 -0.8,-1.62 -1.49,-2.12 -0.7,-0.5 -1.58,-0.68 -2.68,-0.68 z m 12.18,.09 0,11.90 c -0.1,.3 -0.29,.48 -0.59,.68 -0.2,.2 -0.51,.31 -0.81,.31 -0.3,0 -0.58,-0.10 -0.68,-0.40 -0.1,-0.3 -0.18,-0.70 -0.18,-1.40 l 0,-10.99 -3.40,0 0,11.21 c 0,1.4 .18,2.39 .68,3.09 .49,.7 1.21,1 2.21,1 1.4,0 2.48,-0.69 3.18,-2.09 l .09,0 .31,1.78 2.59,0 0,-14.99 c 0,0 -3.40,.00 -3.40,-0.09 z m 17.31,0 0,11.90 c -0.1,.3 -0.29,.48 -0.59,.68 -0.2,.2 -0.51,.31 -0.81,.31 -0.3,0 -0.58,-0.10 -0.68,-0.40 -0.1,-0.3 -0.21,-0.70 -0.21,-1.40 l 0,-10.99 -3.40,0 0,11.21 c 0,1.4 .21,2.39 .71,3.09 .5,.7 1.18,1 2.18,1 1.39,0 2.51,-0.69 3.21,-2.09 l .09,0 .28,1.78 2.62,0 0,-14.99 c 0,0 -3.40,.00 -3.40,-0.09 z m 20.90,2.09 c .4,0 .58,.11 .78,.31 .2,.3 .30,.59 .40,1.09 .1,.5 .09,1.21 .09,2.21 l 0,1.09 -2.5,0 0,-1.09 c 0,-1 -0.00,-1.71 .09,-2.21 0,-0.4 .11,-0.8 .31,-1 .2,-0.3 .51,-0.40 .81,-0.40 z m -50.49,.12 c .5,0 .8,.18 1,.68 .19,.5 .28,1.30 .28,2.40 l 0,4.68 c 0,1.1 -0.08,1.90 -0.28,2.40 -0.2,.5 -0.5,.68 -1,.68 -0.5,0 -0.79,-0.18 -0.99,-0.68 -0.2,-0.5 -0.31,-1.30 -0.31,-2.40 l 0,-4.68 c 0,-1.1 .11,-1.90 .31,-2.40 .2,-0.5 .49,-0.68 .99,-0.68 z m 39.68,.09 c .3,0 .61,.10 .81,.40 .2,.3 .27,.67 .37,1.37 .1,.6 .12,1.51 .12,2.71 l .09,1.90 c 0,1.1 .00,1.99 -0.09,2.59 -0.1,.6 -0.19,1.08 -0.49,1.28 -0.2,.3 -0.50,.40 -0.90,.40 -0.3,0 -0.51,-0.08 -0.81,-0.18 -0.2,-0.1 -0.39,-0.29 -0.59,-0.59 l 0,-8.5 c .1,-0.4 .29,-0.7 .59,-1 .3,-0.3 .60,-0.40 .90,-0.40 z',
+            },
+          },
+        ],
+      };
+    },
+    qfg = function () {
+      return {
+        D: 'svg',
+        T: { fill: 'none', height: '100%', viewBox: '0 0 143 51', width: '100%' },
+        U: [
+          {
+            D: 'path',
+            T: {
+              d: 'M58.37 41.39H62.79V27.23C62.79 23.03 62.69 18.69 62.43 13.59H62.93L63.69 16.89L68.67 41.39H73.17L78.07 16.89L78.89 13.59H79.37C79.15 18.45 79.03 22.89 79.03 27.23V41.39H83.45V8.79H75.95L73.41 20.81C72.35 25.85 71.51 32.01 71.01 35.19H70.73C70.33 31.95 69.49 25.81 68.41 20.85L65.81 8.79H58.37V41.39Z',
+              fill: 'white',
+            },
+          },
+          {
+            D: 'path',
+            T: {
+              d: 'M91.45 41.73C93.91 41.73 95.83 40.59 97.17 38.13H97.35L97.69 41.39H101.43V17.73H96.47V36.61C95.91 37.67 94.81 38.29 93.73 38.29C92.33 38.29 91.89 37.17 91.89 35.13V17.73H86.93V35.43C86.93 39.49 88.19 41.73 91.45 41.73Z',
+              fill: 'white',
+            },
+          },
+          {
+            D: 'path',
+            T: {
+              d: 'M110.79 41.89C115.15 41.89 117.75 39.83 117.75 35.65C117.75 31.79 115.93 30.39 111.85 27.47C109.67 25.91 108.39 25.09 108.39 22.95C108.39 21.47 109.27 20.61 110.89 20.61C112.69 20.61 113.33 21.81 113.33 25.29L117.45 25.07C117.77 19.57 115.71 17.23 110.97 17.23C106.57 17.23 104.17 19.27 104.17 23.45C104.17 27.25 105.97 28.83 108.93 31.03C111.89 33.23 113.55 34.53 113.55 36.23C113.55 37.75 112.51 38.61 111.01 38.61C109.13 38.61 108.11 36.97 108.29 34.41L104.21 34.49C103.51 39.25 105.89 41.89 110.79 41.89Z',
+              fill: 'white',
+            },
+          },
+          {
+            D: 'path',
+            T: {
+              d: 'M122.5 14.59C124.22 14.59 125.04 13.99 125.04 11.59C125.04 9.33 124.16 8.65 122.5 8.65C120.84 8.65 119.94 9.27 119.94 11.59C119.94 13.99 120.82 14.59 122.5 14.59ZM120.2 41.39H125V17.73H120.2V41.39Z',
+              fill: 'white',
+            },
+          },
+          {
+            D: 'path',
+            T: {
+              d: 'M134.95 41.79C137.31 41.79 138.63 41.49 139.71 40.47C141.31 39.01 141.97 36.63 141.85 33.11L137.41 32.87C137.41 36.87 136.81 38.45 135.03 38.45C133.13 38.45 132.77 36.45 132.77 31.97V27.21C132.77 22.41 133.23 20.51 135.07 20.51C136.67 20.51 137.29 22.01 137.29 26.47L141.65 26.15C141.97 22.93 141.59 20.29 140.09 18.83C139.01 17.77 137.37 17.29 135.15 17.29C129.65 17.29 127.75 20.73 127.75 28.03V31.17C127.75 38.47 129.23 41.79 134.95 41.79Z',
+              fill: 'white',
+            },
+          },
+          {
+            D: 'path',
+            T: {
+              'clip-rule': 'evenodd',
+              d: 'M24.99 49C29.74 49.00 34.38 47.59 38.32 44.95C42.27 42.32 45.35 38.57 47.17 34.18C48.98 29.80 49.46 24.97 48.53 20.32C47.61 15.66 45.32 11.38 41.97 8.03C38.61 4.67 34.33 2.38 29.68 1.46C25.02 .53 20.20 1.01 15.81 2.82C11.43 4.64 7.68 7.71 5.04 11.66C2.40 15.61 1 20.25 1 25C0.99 28.15 1.61 31.27 2.82 34.18C4.03 37.09 5.79 39.74 8.02 41.97C10.25 44.19 12.89 45.96 15.81 47.17C18.72 48.37 21.84 49 24.99 49ZM24.99 12.36C27.49 12.36 29.94 13.10 32.02 14.48C34.10 15.87 35.72 17.84 36.68 20.15C37.64 22.46 37.89 25.01 37.41 27.46C36.92 29.91 35.72 32.17 33.95 33.94C32.18 35.70 29.93 36.91 27.48 37.40C25.02 37.89 22.48 37.64 20.17 36.68C17.86 35.72 15.88 34.10 14.50 32.02C13.11 29.94 12.37 27.50 12.37 25C12.37 21.65 13.70 18.44 16.07 16.07C18.43 13.70 21.64 12.37 24.99 12.36ZM24.99 10.43C22.11 10.43 19.29 11.28 16.89 12.88C14.50 14.48 12.63 16.76 11.53 19.42C10.42 22.09 10.13 25.02 10.70 27.85C11.26 30.67 12.65 33.27 14.69 35.31C16.73 37.35 19.32 38.73 22.15 39.30C24.98 39.86 27.91 39.57 30.57 38.46C33.23 37.36 35.51 35.49 37.11 33.09C38.71 30.70 39.57 27.88 39.56 25C39.56 23.08 39.19 21.19 38.46 19.42C37.72 17.65 36.65 16.04 35.30 14.69C33.94 13.34 32.34 12.27 30.57 11.53C28.80 10.80 26.90 10.43 24.99 10.43ZM32.63 24.99L20.36 32.09V17.91L32.63 24.99Z',
+              fill: 'white',
+              'fill-rule': 'evenodd',
+            },
+          },
+        ],
+      };
+    },
+    aq$ = function (Y) {
+      g.H.call(this, { D: 'div', C: 'ytp-related-on-error-overlay' });
+      var u = this;
+      this.api = Y;
+      this.W = this.j = 0;
+      this.G = new g.j3(this);
+      this.K = [];
+      this.suggestionData = [];
+      this.columns = this.containerWidth = 0;
+      this.title = new g.H({ D: 'h2', C: 'ytp-related-title', RV: '{{title}}' });
+      this.previous = new g.H({
+        D: 'button',
+        Oc: ['ytp-button', 'ytp-previous'],
+        T: { 'aria-label': 'Prikaz prej\u0161njih predlaganih videoposnetkov' },
+        U: [g.N7()],
+      });
+      this.N = new g.u1(function (m) {
+        u.suggestions.element.scrollLeft = -m;
+      });
+      this.X = this.scrollPosition = 0;
+      this.S = !0;
+      this.next = new g.H({
+        D: 'button',
+        Oc: ['ytp-button', 'ytp-next'],
+        T: { 'aria-label': 'Prikaz ve\u010d predlaganih videoposnetkov' },
+        U: [g.id()],
+      });
+      g.b(this, this.G);
+      Y = Y.Y();
+      this.Z = Y.G;
+      g.b(this, this.title);
+      this.title.yF(this.element);
+      this.suggestions = new g.H({ D: 'div', C: 'ytp-suggestions' });
+      g.b(this, this.suggestions);
+      this.suggestions.yF(this.element);
+      g.b(this, this.previous);
+      this.previous.yF(this.element);
+      this.previous.listen('click', this.Tx, this);
+      g.b(this, this.N);
+      for (var n = { w$: 0 }; n.w$ < 16; n = { w$: n.w$ }, n.w$++) {
+        var U = new g.H({
+          D: 'a',
+          C: 'ytp-suggestion-link',
+          T: { href: '{{link}}', target: Y.N, 'aria-label': '{{aria_label}}' },
+          U: [
+            {
+              D: 'div',
+              C: 'ytp-suggestion-image',
+              U: [
+                {
+                  D: 'div',
+                  T: { 'data-is-live': '{{is_live}}' },
+                  C: 'ytp-suggestion-duration',
+                  RV: '{{duration}}',
+                },
+              ],
+            },
+            {
+              D: 'div',
+              C: 'ytp-suggestion-title',
+              T: { title: '{{hover_title}}' },
+              RV: '{{title}}',
+            },
+            { D: 'div', C: 'ytp-suggestion-author', RV: '{{views_or_author}}' },
+          ],
+        });
+        g.b(this, U);
+        U.yF(this.suggestions.element);
+        var k = U.Xk('ytp-suggestion-link');
+        g.yV(k, 'transitionDelay', n.w$ / 20 + 's');
+        this.G.B(
+          k,
+          'click',
+          (function (m) {
+            return function (X) {
+              var S = m.w$,
+                C = u.suggestionData[S],
+                f = C.sessionData;
+              g.nV(u.api.Y()) &&
+              u.api.V('web_player_log_click_before_generating_ve_conversion_params')
+                ? (u.api.logClick(u.K[S].element),
+                  (S = C.yg()),
+                  (C = {}),
+                  g.af(u.api, C),
+                  (S = g.Mk(S, C)),
+                  g.oP(S, u.api, X))
+                : g.BO(X, u.api, u.Z, f || void 0) && u.api.EK(C.videoId, f, C.playlistId);
+            };
+          })(n)
+        );
+        this.K.push(U);
+      }
+      g.b(this, this.next);
+      this.next.yF(this.element);
+      this.next.listen('click', this.zx, this);
+      this.G.B(this.api, 'videodatachange', this.onVideoDataChange);
+      this.resize(this.api.tJ().getPlayerSize());
+      this.onVideoDataChange();
+      this.show();
+    },
+    $k$ = function (Y, u) {
+      if (Y.api.Y().V('web_player_log_click_before_generating_ve_conversion_params'))
+        for (
+          var n = Math.floor(-Y.scrollPosition / (Y.X + Y.j)),
+            U = Math.min(n + Y.columns, Y.suggestionData.length) - 1;
+          n <= U;
+          n++
+        )
+          Y.api.logVisibility(Y.K[n].element, u);
+    },
+    YoL = function (Y) {
+      Y.next.element.style.bottom = Y.W + 'px';
+      Y.previous.element.style.bottom = Y.W + 'px';
+      var u = Y.scrollPosition,
+        n = Y.containerWidth - Y.suggestionData.length * (Y.X + Y.j);
+      g.PP(Y.element, 'ytp-scroll-min', u >= 0);
+      g.PP(Y.element, 'ytp-scroll-max', u <= n);
+    },
+    uIG = function (Y) {
+      for (var u = 0; u < Y.suggestionData.length; u++) {
+        var n = Y.suggestionData[u],
+          U = Y.K[u],
+          k = n.shortViewCount ? n.shortViewCount : n.author,
+          m = n.yg(),
+          X = Y.api.Y();
+        if (g.nV(X) && !X.V('web_player_log_click_before_generating_ve_conversion_params')) {
+          var S = {};
+          g.Rf(Y.api, 'addEmbedsConversionTrackingParams', [S]);
+          m = g.Mk(m, S);
+        }
+        U.element.style.display = '';
+        S = U.Xk('ytp-suggestion-title');
+        g.N8.test(n.title) ? (S.dir = 'rtl') : g.NSX.test(n.title) && (S.dir = 'ltr');
+        S = U.Xk('ytp-suggestion-author');
+        g.N8.test(k) ? (S.dir = 'rtl') : g.NSX.test(k) && (S.dir = 'ltr');
+        U.update({
+          views_or_author: k,
+          duration: n.isLivePlayback ? 'V \u017eivo' : n.lengthSeconds ? g.sH(n.lengthSeconds) : '',
+          link: m,
+          hover_title: n.title,
+          title: n.title,
+          aria_label: n.ariaLabel || null,
+          is_live: n.isLivePlayback,
+        });
+        k = n.I_();
+        U.Xk('ytp-suggestion-image').style.backgroundImage = k ? 'url(' + k + ')' : '';
+        X.V('web_player_log_click_before_generating_ve_conversion_params') &&
+          (Y.api.createServerVe(U.element, U),
+          (n = (n = n.sessionData) && n.itct) && Y.api.setTrackingParams(U.element, n));
+      }
+      for (; u < Y.K.length; u++) Y.K[u].element.style.display = 'none';
+      YoL(Y);
+    },
+    uM = function (Y) {
+      g.FN.call(this, Y);
+      var u = this;
+      this.K = null;
+      var n = Y.Y(),
+        U = { target: n.N },
+        k = ['ytp-small-redirect'];
+      if (n.X) k.push('no-link');
+      else {
+        var m = g.RT(n);
+        U.href = m;
+        U['aria-label'] = 'V YouTubu poi\u0161\u010dite ve\u010d videoposnetkov';
+      }
+      var X = new g.H({
+        D: 'a',
+        Oc: k,
+        T: U,
+        U: [
+          {
+            D: 'svg',
+            T: { fill: '#fff', height: '100%', viewBox: '0 0 24 24', width: '100%' },
+            U: [
+              { D: 'path', T: { d: 'M0 0h24v24H0V0z', fill: 'none' } },
+              {
+                D: 'path',
+                T: {
+                  d: 'M21.58 7.19c-.23-.86-.91-1.54-1.77-1.77C18.25 5 12 5 12 5s-6.25 0-7.81.42c-.86.23-1.54.91-1.77 1.77C2 8.75 2 12 2 12s0 3.25.42 4.81c.23.86.91 1.54 1.77 1.77C5.75 19 12 19 12 19s6.25 0 7.81-.42c.86-.23 1.54-.91 1.77-1.77C22 15.25 22 12 22 12s0-3.25-.42-4.81zM10 15V9l5.2 3-5.2 3z',
+                },
+              },
+            ],
+          },
+        ],
+      });
+      X.yF(this.element);
+      Y.createClientVe(X.element, this, 178053);
+      this.B(X.element, 'click', function (S) {
+        n5C(u, S, X.element);
+      });
+      g.b(this, X);
+      n.X ||
+        n.disableOrganicUi ||
+        ((this.K = new aq$(Y)), this.K.yF(this.element), g.b(this, this.K));
+      this.B(Y, 'videodatachange', function () {
+        u.show();
+      });
+      this.resize(this.api.tJ().getPlayerSize());
+    },
+    n5C = function (Y, u, n) {
+      u.preventDefault();
+      Y.api.logClick(n);
+      u = n.getAttribute('href');
+      n = {};
+      g.Rf(Y.api, 'addEmbedsConversionTrackingParams', [n]);
+      u = g.i4(n) ? u : g.Mk(u, n);
+      g.rS(window, u);
+    },
+    UPu = function (Y, u) {
+      Y.Xk('ytp-error-content').style.paddingTop = '0px';
+      var n = Y.Xk('ytp-error-content'),
+        U = n.clientHeight;
+      Y.K && Y.K.resize(u, u.height - U);
+      n.style.paddingTop = (u.height - (Y.K ? Y.K.element.clientHeight : 0)) / 2 - U / 2 + 'px';
+    },
+    XVJ = function (Y, u) {
+      var n = Y.api.Y(),
+        U;
+      u.reason &&
+        (k5u(u.reason) ? (U = g.fw(u.reason)) : (U = g.JL(g.Cw(u.reason))), Y.dD(U, 'content'));
+      var k;
+      u.subreason &&
+        (k5u(u.subreason) ? (k = g.fw(u.subreason)) : (k = g.JL(g.Cw(u.subreason))),
+        Y.dD(k, 'subreason'));
+      if (u.proceedButton && u.proceedButton.buttonRenderer) {
+        U = Y.Xk('ytp-error-content-wrap-subreason');
+        u = u.proceedButton.buttonRenderer;
+        var m = g.rh('A');
+        if (
+          u.text &&
+          u.text.simpleText &&
+          ((k = u.text.simpleText), (m.textContent = k), !mP$(U, k) && (!n.X || n.embedsErrorLinks))
+        ) {
+          var X;
+          n = (X = g.z(u == null ? void 0 : u.navigationEndpoint, g.Rc)) == null ? void 0 : X.url;
+          var S;
+          X =
+            (S = g.z(u == null ? void 0 : u.navigationEndpoint, g.Rc)) == null ? void 0 : S.target;
+          n &&
+            (m.setAttribute('href', n),
+            Y.api.createClientVe(m, Y, 178424),
+            Y.B(m, 'click', function (C) {
+              n5C(Y, C, m);
+            }));
+          X && m.setAttribute('target', X);
+          S = g.rh('DIV');
+          S.appendChild(m);
+          U.appendChild(S);
+        }
+      }
+    },
+    k5u = function (Y) {
+      if (Y.runs)
+        for (var u = 0; u < Y.runs.length; u++) if (Y.runs[u].navigationEndpoint) return !0;
+      return !1;
+    },
+    mP$ = function (Y, u) {
+      Y = g.P_('A', Y);
+      for (var n = 0; n < Y.length; n++) if (Y[n].textContent === u) return !0;
+      return !1;
+    },
+    PIL = function (Y, u) {
+      g.H.call(this, {
+        D: 'a',
+        Oc: ['ytp-impression-link'],
+        T: { target: '{{target}}', href: '{{url}}', 'aria-label': 'Ogled v YouTubu' },
+        U: [
+          {
+            D: 'div',
+            C: 'ytp-impression-link-content',
+            T: { 'aria-hidden': 'true' },
+            U: [
+              { D: 'div', C: 'ytp-impression-link-text', RV: 'Glejte tukaj:' },
+              { D: 'div', C: 'ytp-impression-link-logo', RV: '{{logoSvg}}' },
+            ],
+          },
+        ],
+      });
+      this.api = Y;
+      this.K = u;
+      this.updateValue('target', Y.Y().N);
+      this.B(Y, 'videodatachange', this.onVideoDataChange);
+      this.B(this.api, 'presentingplayerstatechange', this.nF);
+      this.B(this.api, 'videoplayerreset', this.nS);
+      this.B(this.element, 'click', this.onClick);
+      this.onVideoDataChange();
+      this.nS();
+    },
+    Sog = function (Y) {
+      var u = {};
+      g.Rf(Y.api, 'addEmbedsConversionTrackingParams', [u]);
+      Y = Y.api.getVideoUrl();
+      return (Y = g.Mk(Y, u));
+    },
+    ns = function (Y) {
+      g.H.call(this, {
+        D: 'div',
+        Oc: ['ytp-mobile-a11y-hidden-seek-button'],
+        U: [
+          {
+            D: 'button',
+            Oc: ['ytp-mobile-a11y-hidden-seek-button-rewind', 'ytp-button'],
+            T: { 'aria-label': 'Premakni se nazaj za 10 sekund', 'aria-hidden': 'false' },
+          },
+          {
+            D: 'button',
+            Oc: ['ytp-mobile-a11y-hidden-seek-button-forward', 'ytp-button'],
+            T: { 'aria-label': 'Premakni se za 10 sekund naprej', 'aria-hidden': 'false' },
+          },
+        ],
+      });
+      this.api = Y;
+      this.K = this.Xk('ytp-mobile-a11y-hidden-seek-button-rewind');
+      this.forwardButton = this.Xk('ytp-mobile-a11y-hidden-seek-button-forward');
+      this.api.createClientVe(this.K, this, 141902);
+      this.api.createClientVe(this.forwardButton, this, 141903);
+      this.B(this.api, 'presentingplayerstatechange', this.nF);
+      this.B(this.K, 'click', this.j);
+      this.B(this.forwardButton, 'click', this.X);
+      this.nF();
+    },
+    UG = function (Y) {
+      g.H.call(this, {
+        D: 'div',
+        C: 'ytp-muted-autoplay-endscreen-overlay',
+        U: [
+          {
+            D: 'div',
+            C: 'ytp-muted-autoplay-end-panel',
+            U: [{ D: 'button', Oc: ['ytp-muted-autoplay-end-text', 'ytp-button'], RV: '{{text}}' }],
+          },
+        ],
+      });
+      this.api = Y;
+      this.G = this.Xk('ytp-muted-autoplay-end-panel');
+      this.j = !1;
+      this.api.createClientVe(this.element, this, 52428);
+      this.B(this.api, 'presentingplayerstatechange', this.X);
+      this.B(Y, 'onMutedAutoplayStarts', this.onMutedAutoplayStarts);
+      this.listen('click', this.onClick);
+      this.hide();
+    },
+    kM = function (Y) {
+      var u = Y.Y();
+      g.H.call(this, {
+        D: 'a',
+        Oc: ['ytp-watermark', 'yt-uix-sessionlink'],
+        T: {
+          target: u.N,
+          href: '{{url}}',
+          'aria-label': g.UR('Glejte na $WEBSITE', { WEBSITE: g.sg(u) }),
+          'data-sessionlink': 'feature=player-watermark',
+        },
+        RV: '{{logoSvg}}',
+      });
+      this.api = Y;
+      this.K = null;
+      this.j = !1;
+      this.state = Y.getPlayerStateObject();
+      this.B(Y, 'videodatachange', this.onVideoDataChange);
+      this.B(Y, 'presentingplayerstatechange', this.onStateChange);
+      this.B(Y, 'appresize', this.pT);
+      this.onVideoDataChange();
+      this.Ve(this.state);
+      this.pT(Y.tJ().getPlayerSize());
+    },
+    CIu = function (Y) {
+      var u = Y.api.getVideoData(),
+        n = Y.api.Y();
+      n =
+        n.Qe &&
+        !g.V(Y.state, 2) &&
+        !Y.api.getVideoData(1).sD &&
+        !(n.V('embeds_enable_emc3ds_woyt_counterfactual') && Y.api.getPlayerStateObject().isCued());
+      u.mutedAutoplay || Y.v$(n);
+      Y.api.logVisibility(Y.element, n);
+    },
+    N2g = function (Y) {
+      g.H.call(this, {
+        D: 'div',
+        C: 'ytp-muted-autoplay-overlay',
+        U: [
+          {
+            D: 'div',
+            C: 'ytp-muted-autoplay-bottom-buttons',
+            U: [
+              {
+                D: 'button',
+                Oc: ['ytp-muted-autoplay-equalizer', 'ytp-button'],
+                T: { 'aria-label': 'Kazalnik predvajanja z izklopljenim zvokom' },
+                U: [
+                  {
+                    D: 'div',
+                    Oc: ['ytp-muted-autoplay-equalizer-icon'],
+                    U: [
+                      {
+                        D: 'svg',
+                        T: {
+                          height: '100%',
+                          version: '1.1',
+                          viewBox: '-4 -4 24 24',
+                          width: '100%',
+                        },
+                        U: [
+                          {
+                            D: 'g',
+                            T: { fill: '#fff' },
+                            U: [
+                              {
+                                D: 'rect',
+                                C: 'ytp-equalizer-bar-left',
+                                T: { height: '9', width: '4', x: '1', y: '7' },
+                              },
+                              {
+                                D: 'rect',
+                                C: 'ytp-equalizer-bar-middle',
+                                T: { height: '14', width: '4', x: '6', y: '2' },
+                              },
+                              {
+                                D: 'rect',
+                                C: 'ytp-equalizer-bar-right',
+                                T: { height: '12', width: '4', x: '11', y: '4' },
+                              },
+                            ],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      });
+      var u = this;
+      this.api = Y;
+      this.bottomButtons = this.Xk('ytp-muted-autoplay-bottom-buttons');
+      this.X = new g.Vp(this.PJ, 4e3, this);
+      this.j = !1;
+      Y.createClientVe(this.element, this, 39306);
+      this.B(Y, 'presentingplayerstatechange', this.cU);
+      this.B(Y, 'onMutedAutoplayStarts', function () {
+        fN$(u);
+        u.cU();
+        QQy(u);
+        u.j = !1;
+      });
+      this.B(Y, 'onAutoplayBlocked', this.onAutoplayBlocked);
+      this.listen('click', this.onClick);
+      this.B(Y, 'onMutedAutoplayEnds', this.onMutedAutoplayEnds);
+      this.hide();
+      Y.isMutedByEmbedsMutedAutoplay() && (fN$(this), this.cU(), QQy(this));
+      g.b(this, this.X);
+    },
+    QQy = function (Y) {
+      Y.KT && Y.K && (Y.K.show(), Y.X.start());
+    },
+    fN$ = function (Y) {
+      Y.watermark ||
+        ((Y.watermark = new kM(Y.api)),
+        g.b(Y, Y.watermark),
+        Y.watermark.yF(Y.bottomButtons, 0),
+        g.PP(Y.watermark.element, 'ytp-muted-autoplay-watermark', !0),
+        (Y.K = new g.Je(Y.watermark, 0, !0, 100)),
+        g.b(Y, Y.K));
+    },
+    my = function (Y) {
+      g.H.call(this, { D: 'div', C: 'ytp-pause-overlay', T: { tabIndex: '-1' } });
+      var u = this;
+      this.api = Y;
+      this.X = new g.j3(this);
+      this.fade = new g.Je(
+        this,
+        1e3,
+        !1,
+        100,
+        function () {
+          u.K.j = !1;
+        },
+        function () {
+          u.K.j = !0;
+        }
+      );
+      this.j = !1;
+      this.expandButton = new g.H({
+        D: 'button',
+        Oc: ['ytp-button', 'ytp-expand'],
+        RV: this.api.isEmbedsShortsMode()
+          ? 'Ve\u010d kratkih videoposnetkov'
+          : 'Ve\u010d videoposnetkov',
+      });
+      Y.Y().controlsType === '0' && g.UN(Y.getRootNode(), 'ytp-pause-overlay-controls-hidden');
+      g.b(this, this.X);
+      g.b(this, this.fade);
+      var n = new g.H({
+        D: 'button',
+        Oc: ['ytp-button', 'ytp-collapse'],
+        T: {
+          'aria-label': this.api.isEmbedsShortsMode()
+            ? 'Skrij polico Ve\u010d kratkih videoposnetkov'
+            : 'Skrij ve\u010d videoposnetkov',
+        },
+        U: [{ D: 'div', C: 'ytp-collapse-icon', U: [g.pw()] }],
+      });
+      g.b(this, n);
+      n.yF(this.element);
+      n.listen('click', this.G, this);
+      g.b(this, this.expandButton);
+      this.expandButton.yF(this.element);
+      this.expandButton.listen('click', this.W, this);
+      this.K = new g.n7(Y);
+      g.b(this, this.K);
+      this.K.j = !1;
+      this.K.yF(this.element);
+      this.api.isEmbedsShortsMode()
+        ? this.api.createClientVe(this.element, this, 157212)
+        : this.api.createClientVe(this.element, this, 172777);
+      this.X.B(this.api, 'presentingplayerstatechange', this.QF);
+      this.X.B(this.api, 'videodatachange', this.QF);
+      this.hide();
+    },
+    Xq = function (Y) {
+      g.H.call(this, {
+        D: 'div',
+        Oc: ['ytp-player-content', 'ytp-iv-player-content'],
+        U: [
+          {
+            D: 'div',
+            C: 'ytp-countdown-timer',
+            U: [
+              {
+                D: 'svg',
+                T: { height: '100%', version: '1.1', viewBox: '0 0 72 72', width: '100%' },
+                U: [
+                  {
+                    D: 'circle',
+                    C: 'ytp-svg-countdown-timer-ring',
+                    T: {
+                      cx: '-36',
+                      cy: '36',
+                      'fill-opacity': '0',
+                      r: '33.5',
+                      stroke: '#FFFFFF',
+                      'stroke-dasharray': '211',
+                      'stroke-dashoffset': '-211',
+                      'stroke-width': '4',
+                      transform: 'rotate(-90)',
+                    },
+                  },
+                  {
+                    D: 'circle',
+                    C: 'ytp-svg-countdown-timer-background',
+                    T: {
+                      cx: '-36',
+                      cy: '36',
+                      'fill-opacity': '0',
+                      r: '33.5',
+                      stroke: '#FFFFFF',
+                      'stroke-opacity': '0.3',
+                      'stroke-width': '4',
+                      transform: 'rotate(-90)',
+                    },
+                  },
+                ],
+              },
+              { D: 'span', C: 'ytp-countdown-timer-time', RV: '{{duration}}' },
+            ],
+          },
+        ],
+      });
+      this.api = Y;
+      this.S = this.Xk('ytp-svg-countdown-timer-ring');
+      this.K = null;
+      this.G = this.X = 0;
+      this.j = !1;
+      this.W = 0;
+      this.api.createClientVe(this.element, this, 159628);
+    },
+    Zc$ = function (Y) {
+      Y.K ||
+        ((Y.X = 5e3),
+        (Y.G = (0, g.j2)()),
+        (Y.K = new g.EQ(function () {
+          ic$(Y);
+        }, null)),
+        ic$(Y));
+    },
+    ic$ = function (Y) {
+      if (!Y.j) {
+        var u = Math.min((0, g.j2)() - Y.G, Y.X);
+        var n = Y.X - u;
+        u = Y.X === 0 ? 0 : Math.max(n / Y.X, 0);
+        n = Math.round(n / 1e3);
+        Y.S.setAttribute('stroke-dashoffset', '' + -211 * (u + 1));
+        Y.updateValue('duration', n);
+        u <= 0 && Y.K ? Y.stopTimer() : Y.K && Y.K.start();
+      }
+    },
+    rjC = function (Y) {
+      g.vH.call(this, Y);
+      this.L = Y;
+      this.K = new g.j3(this);
+      this.j = null;
+      this.S = !1;
+      this.countdownTimer = null;
+      this.N = !1;
+      T2$(this);
+      g.b(this, this.K);
+      this.load();
+    },
+    sQX = function (Y) {
+      var u = g.ryL(Y.L);
+      u !== Y.N &&
+        ((Y.N = u),
+        Y.J && (Y.J.dispose(), (Y.J = null)),
+        Y.X && (Y.X.dispose(), (Y.X = null)),
+        Y.G && (Y.G.dispose(), (Y.G = null)),
+        Y.j && (Y.j.stop(), Y.j.dispose(), (Y.j = null)),
+        u &&
+          ((u = g.w6(Y.L)),
+          Y.L.isEmbedsShortsMode() &&
+            ((Y.G = new g.H({ D: 'div', C: 'ytp-pause-overlay-backdrop', T: { tabIndex: '-1' } })),
+            g.b(Y, Y.G),
+            g.uc(Y.L, Y.G.element, 4),
+            (Y.j = new g.Je(Y.G, 1e3, !1, 100)),
+            g.b(Y, Y.j),
+            Y.G.hide()),
+          (Y.J = new g.H({ D: 'div', C: 'ytp-pause-overlay-container', T: { tabIndex: '-1' } })),
+          g.b(Y, Y.J),
+          (Y.X = new my(Y.L, u)),
+          g.b(Y, Y.X),
+          Y.X.yF(Y.J.element),
+          g.uc(Y.L, Y.J.element, 4),
+          M$u(Y, Y.L.getPlayerStateObject())));
+    },
+    M$u = function (Y, u) {
+      Y.j && ((!g.V(u, 4) && !g.V(u, 2)) || g.V(u, 1024) ? Y.j.hide() : Y.j.show());
+    },
+    T2$ = function (Y) {
+      var u = Y.L;
+      Y = !!u.isEmbedsShortsMode();
+      g.PP(u.getRootNode(), 'ytp-shorts-mode', Y);
+      if ((u = u.getVideoData())) u.Np = Y;
+    },
+    P$ = function (Y, u) {
+      var n = Y.L.Y();
+      Y = {
+        adSource: 'EMBEDS_AD_SOURCE_YOUTUBE',
+        breakType:
+          Y.L.getCurrentTime() === 0
+            ? 'EMBEDS_AD_BREAK_TYPE_PRE_ROLL'
+            : Y.L.getPlayerState() === 0
+              ? 'EMBEDS_AD_BREAK_TYPE_POST_ROLL'
+              : 'EMBEDS_AD_BREAK_TYPE_MID_ROLL',
+        embedUrl: g.eEm(Y.L.Y().loaderUrl),
+        eventType: u,
+        youtubeHost: g.fo(Y.L.Y().uE) || '',
+      };
+      Y.embeddedPlayerMode = n.DW;
+      g.ka('embedsAdEvent', Y);
+    };
+  g.d(aq$, g.H);
+  g.M = aq$.prototype;
+  g.M.hide = function () {
+    this.S = !0;
+    g.H.prototype.hide.call(this);
+    $k$(this, !1);
+  };
+  g.M.show = function () {
+    this.S = !1;
+    g.H.prototype.show.call(this);
+    $k$(this, !0);
+  };
+  g.M.isHidden = function () {
+    return this.S;
+  };
+  g.M.zx = function () {
+    this.scrollTo(this.scrollPosition - this.containerWidth);
+  };
+  g.M.Tx = function () {
+    this.scrollTo(this.scrollPosition + this.containerWidth);
+  };
+  g.M.resize = function (Y, u) {
+    var n = this.api.Y(),
+      U = 16 / 9,
+      k = Y.width >= 650,
+      m = Y.width < 480 || Y.height < 290,
+      X = Math.min(this.suggestionData.length, this.K.length);
+    if (Math.min(Y.width, Y.height) <= 150 || X === 0 || !n.lD) this.hide();
+    else {
+      var S;
+      if (k) {
+        var C = (S = 28);
+        this.j = 16;
+      } else this.j = C = S = 8;
+      if (m) {
+        var f = 6;
+        k = 14;
+        var Q = 12;
+        m = 24;
+        n = 12;
+      } else ((f = 8), (k = 18), (Q = 16), (m = 36), (n = 16));
+      Y = Y.width - (48 + S + C);
+      S = Math.ceil(Y / 150);
+      S = Math.min(3, S);
+      C = Y / S - this.j;
+      var N = Math.floor(C / U);
+      u &&
+        N + 100 > u &&
+        C > 50 &&
+        ((N = Math.max(u, 50 / U)),
+        (S = Math.ceil(Y / (U * (N - 100) + this.j))),
+        (C = Y / S - this.j),
+        (N = Math.floor(C / U)));
+      C < 50 || g.qD(this.api) ? this.hide() : this.show();
+      for (u = 0; u < X; u++) {
+        U = this.K[u];
+        var Z = U.Xk('ytp-suggestion-image');
+        Z.style.width = C + 'px';
+        Z.style.height = N + 'px';
+        U.Xk('ytp-suggestion-title').style.width = C + 'px';
+        U.Xk('ytp-suggestion-author').style.width = C + 'px';
+        U = U.Xk('ytp-suggestion-duration');
+        U.style.display = U && C < 100 ? 'none' : '';
+      }
+      X = k + f + Q + 4;
+      this.W = X + n + (N - m) / 2;
+      this.suggestions.element.style.height = N + X + 'px';
+      this.X = C;
+      this.containerWidth = Y;
+      this.columns = S;
+      this.scrollPosition = 0;
+      this.suggestions.element.scrollLeft = -0;
+      YoL(this);
+    }
+  };
+  g.M.onVideoDataChange = function () {
+    var Y = this.api.getVideoData(),
+      u = this.api.Y();
+    this.Z = Y.sD ? !1 : u.G;
+    Y.suggestions
+      ? (this.suggestionData = g.BV(Y.suggestions, function (n) {
+          return n && !n.playlistId;
+        }))
+      : (this.suggestionData.length = 0);
+    uIG(this);
+    Y.sD
+      ? this.title.update({
+          title: g.UR('Ve\u010d videoposnetkov v kanalu $DNI_RELATED_CHANNEL', {
+            DNI_RELATED_CHANNEL: Y.author,
+          }),
+        })
+      : this.title.update({ title: 'Ve\u010d videoposnetkov v YouTubu' });
+  };
+  g.M.scrollTo = function (Y) {
+    Y = g.gS(Y, this.containerWidth - this.suggestionData.length * (this.X + this.j), 0);
+    this.N.start(this.scrollPosition, Y, 1e3);
+    this.scrollPosition = Y;
+    YoL(this);
+    $k$(this, !0);
+  };
+  g.d(uM, g.FN);
+  uM.prototype.show = function () {
+    g.FN.prototype.show.call(this);
+    UPu(this, this.api.tJ().getPlayerSize());
+  };
+  uM.prototype.resize = function (Y) {
+    g.FN.prototype.resize.call(this, Y);
+    this.K &&
+      (UPu(this, Y), g.PP(this.element, 'related-on-error-overlay-visible', !this.K.isHidden()));
+  };
+  uM.prototype.j = function (Y) {
+    g.FN.prototype.j.call(this, Y);
+    var u = this.api.getVideoData();
+    if (u.CM || u.playerErrorMessageRenderer)
+      (Y = u.CM)
+        ? XVJ(this, Y)
+        : u.playerErrorMessageRenderer && XVJ(this, u.playerErrorMessageRenderer);
+    else {
+      var n;
+      Y.RD &&
+        (u.Rr ? (k5u(u.Rr) ? (n = g.fw(u.Rr)) : (n = g.JL(g.Cw(u.Rr)))) : (n = g.JL(Y.RD)),
+        this.dD(n, 'subreason'));
+    }
+  };
+  g.d(PIL, g.H);
+  g.M = PIL.prototype;
+  g.M.onVideoDataChange = function () {
+    var Y = this.api.getVideoData(),
+      u = JQJ(),
+      n = 96714;
+    g.KQ(Y)
+      ? ((u = qfg()), (n = 216165), g.UN(this.element, 'ytp-music-impression-link'))
+      : g.mU(this.element, 'ytp-music-impression-link');
+    this.api.Y().V('embeds_enable_emc3ds_woyt_counterfactual') &&
+      g.UN(this.element, 'ytp-woyt-emc3ds-cf');
+    this.updateValue('logoSvg', u);
+    this.api.hasVe(this.element) && this.api.destroyVe(this.element);
+    this.api.createClientVe(this.element, this, n);
+  };
+  g.M.nF = function () {
+    this.api.getPlayerStateObject().isCued() ||
+      (this.hide(), this.api.logVisibility(this.element, !1));
+  };
+  g.M.nS = function () {
+    var Y = this.api.getVideoData(),
+      u = this.api.Y(),
+      n = this.api.getVideoData().sD,
+      U = u.Qe && !u.V('embeds_enable_emc3ds_woyt_counterfactual'),
+      k = !u.lD,
+      m = this.K.WW() && !u.V('embeds_enable_emc3ds_woyt_counterfactual');
+    u = u.X;
+    U || m || n || k || u || this.api.isEmbedsShortsMode() || !Y.videoId
+      ? (this.hide(), this.api.logVisibility(this.element, !1))
+      : ((Y = Sog(this)), this.updateValue('url', Y), this.show());
+  };
+  g.M.onClick = function (Y) {
+    this.api.V('web_player_log_click_before_generating_ve_conversion_params') &&
+      this.api.logClick(this.element);
+    var u = Sog(this);
+    g.oP(u, this.api, Y);
+    this.api.V('web_player_log_click_before_generating_ve_conversion_params') ||
+      this.api.logClick(this.element);
+  };
+  g.M.show = function () {
+    this.api.getPlayerStateObject().isCued() &&
+      (g.H.prototype.show.call(this),
+      this.api.hasVe(this.element) && this.api.logVisibility(this.element, !0));
+  };
+  g.d(ns, g.H);
+  ns.prototype.nF = function () {
+    var Y = this.api.getPlayerStateObject();
+    !this.api.wV() || (g.V(Y, 2) && g.OA(this.api)) || g.V(Y, 64)
+      ? (this.api.logVisibility(this.K, !1),
+        this.api.logVisibility(this.forwardButton, !1),
+        this.hide())
+      : (this.show(),
+        this.api.logVisibility(this.K, !0),
+        this.api.logVisibility(this.forwardButton, !0));
+  };
+  ns.prototype.j = function () {
+    this.api.seekBy(-10 * this.api.getPlaybackRate(), void 0, void 0, 83);
+    this.api.logClick(this.K);
+  };
+  ns.prototype.X = function () {
+    this.api.seekBy(10 * this.api.getPlaybackRate(), void 0, void 0, 82);
+    this.api.logClick(this.forwardButton);
+  };
+  g.d(UG, g.H);
+  UG.prototype.X = function () {
+    var Y = this.api.getPlayerStateObject(),
+      u = this.api.getVideoData();
+    g.PP(this.element, 'ytp-shorts-mode', this.api.isEmbedsShortsMode());
+    !u.mutedAutoplay ||
+      (u.limitedPlaybackDurationInSeconds === 0 &&
+        u.endSeconds === 0 &&
+        u.mutedAutoplayDurationMode === 2) ||
+      (g.V(Y, 2) && !this.KT
+        ? (this.show(),
+          this.K ||
+            ((this.K = new g.VU(this.api)), g.b(this, this.K), this.K.yF(this.G, 0), this.K.show()),
+          (Y = this.api.getVideoData()),
+          this.updateValue('text', Y.wc),
+          g.PP(this.element, 'ytp-muted-autoplay-show-end-panel', !0),
+          this.api.logVisibility(this.element, this.KT),
+          this.api.oa('onMutedAutoplayEnds'))
+        : this.hide());
+  };
+  UG.prototype.onClick = function () {
+    if (!this.j) {
+      this.K && (this.K.nG(), (this.K = null));
+      g.PP(this.api.getRootNode(), 'ytp-muted-autoplay', !1);
+      var Y = this.api.getVideoData(),
+        u = this.api.getCurrentTime();
+      F0X(Y);
+      this.api.loadVideoById(Y.videoId, u);
+      this.api.qy();
+      this.api.logClick(this.element);
+      this.hide();
+      this.j = !0;
+    }
+  };
+  UG.prototype.onMutedAutoplayStarts = function () {
+    this.j = !1;
+    this.K && (this.K.nG(), (this.K = null));
+  };
+  g.d(kM, g.H);
+  g.M = kM.prototype;
+  g.M.onStateChange = function (Y) {
+    this.Ve(Y.state);
+  };
+  g.M.Ve = function (Y) {
+    this.state !== Y && (this.state = Y);
+    CIu(this);
+  };
+  g.M.onVideoDataChange = function () {
+    var Y = this.api.Y();
+    Y.X && g.UN(this.element, 'ytp-no-hover');
+    var u = this.api.getVideoData();
+    u.videoId && !Y.X
+      ? ((Y = this.api.getVideoUrl(!0, !1, !1, !0)),
+        this.updateValue('url', Y),
+        this.K || (this.K = this.listen('click', this.onClick)))
+      : this.K && (this.updateValue('url', null), this.qR(this.K), (this.K = null));
+    Y = JQJ();
+    var n = 76758;
+    g.KQ(u) && ((Y = qfg()), (n = 216164));
+    this.updateValue('logoSvg', Y);
+    this.api.hasVe(this.element) && this.api.destroyVe(this.element);
+    this.api.createClientVe(this.element, this, n);
+    CIu(this);
+  };
+  g.M.onClick = function (Y) {
+    this.api.V('web_player_log_click_before_generating_ve_conversion_params') &&
+      this.api.logClick(this.element);
+    var u = this.api.getVideoUrl(!g.d7(Y), !1, !0, !0);
+    if (this.api.V('web_player_log_click_before_generating_ve_conversion_params')) {
+      var n = {};
+      g.Rf(this.api, 'addEmbedsConversionTrackingParams', [n]);
+      u = g.Mk(u, n);
+    }
+    g.oP(u, this.api, Y);
+    this.api.V('web_player_log_click_before_generating_ve_conversion_params') ||
+      this.api.logClick(this.element);
+  };
+  g.M.pT = function (Y) {
+    if (((Y = Y.width < 480) && !this.j) || (!Y && this.j)) {
+      var u = new g.H(JQJ()),
+        n = this.Xk('ytp-watermark');
+      g.PP(n, 'ytp-watermark-small', Y);
+      g.dh(n);
+      u.yF(n);
+      this.j = Y;
+    }
+  };
+  g.d(N2g, g.H);
+  g.M = N2g.prototype;
+  g.M.cU = function () {
+    var Y = this.api.getPlayerStateObject();
+    !this.api.getVideoData().mutedAutoplay || g.V(Y, 2)
+      ? this.hide()
+      : this.KT || (g.H.prototype.show.call(this), this.api.logVisibility(this.element, this.KT));
+  };
+  g.M.PJ = function () {
+    this.K && this.K.hide();
+  };
+  g.M.onAutoplayBlocked = function () {
+    this.hide();
+    F0X(this.api.getVideoData());
+  };
+  g.M.onClick = function () {
+    if (!this.j) {
+      g.PP(this.api.getRootNode(), 'ytp-muted-autoplay', !1);
+      var Y = this.api.getVideoData(),
+        u = this.api.getCurrentTime();
+      F0X(Y);
+      this.api.loadVideoById(Y.videoId, u);
+      this.api.qy();
+      this.api.logClick(this.element);
+      this.api.oa('onMutedAutoplayEnds');
+      this.j = !0;
+    }
+  };
+  g.M.onMutedAutoplayEnds = function () {
+    this.watermark && (this.watermark.nG(), (this.watermark = null));
+  };
+  g.d(my, g.H);
+  my.prototype.hide = function () {
+    g.mU(this.api.getRootNode(), 'ytp-expand-pause-overlay');
+    g.H.prototype.hide.call(this);
+  };
+  my.prototype.G = function () {
+    this.j = !0;
+    g.mU(this.api.getRootNode(), 'ytp-expand-pause-overlay');
+    this.api.isEmbedsShortsMode() && this.api.logVisibility(this.element, !1);
+    this.expandButton.focus();
+  };
+  my.prototype.W = function () {
+    this.j = !1;
+    g.UN(this.api.getRootNode(), 'ytp-expand-pause-overlay');
+    this.api.isEmbedsShortsMode() && this.api.logVisibility(this.element, !0);
+    this.focus();
+  };
+  my.prototype.QF = function () {
+    var Y = this.api.getPlayerStateObject();
+    g.V(Y, 1) ||
+      g.V(Y, 16) ||
+      g.V(Y, 32) ||
+      (!g.V(Y, 4) || g.V(Y, 2) || g.V(Y, 1024)
+        ? (this.j || this.api.logVisibility(this.element, !1), this.fade.hide())
+        : this.K.hasSuggestions() &&
+          (this.j ||
+            (g.UN(this.api.getRootNode(), 'ytp-expand-pause-overlay'),
+            g.Uk(this.K),
+            this.K.show(),
+            this.api.logVisibility(this.element, !0)),
+          this.fade.show()));
+  };
+  g.d(Xq, g.H);
+  Xq.prototype.show = function () {
+    g.H.prototype.show.call(this);
+    this.api.logVisibility(this.element, !0);
+  };
+  Xq.prototype.stopTimer = function () {
+    this.K && (this.K.dispose(), (this.K = null), (this.j = !1));
+  };
+  Xq.prototype.nG = function () {
+    this.stopTimer();
+    g.H.prototype.nG.call(this);
+  };
+  g.d(rjC, g.vH);
+  g.M = rjC.prototype;
+  g.M.VO = function () {
+    return !1;
+  };
+  g.M.create = function () {
+    var Y = this.L.Y(),
+      u = g.w6(this.L),
+      n,
+      U = (n = this.L.getVideoData()) == null ? void 0 : n.clientPlaybackNonce;
+    U && g.pg({ clientPlaybackNonce: U });
+    Y.TZ && !Y.disableOrganicUi && sQX(this);
+    var k;
+    ((k = Y.getWebPlayerContextConfig()) != null && k.embedsEnableEmc3ds) ||
+      ((this.Z = new N2g(this.L)),
+      g.b(this, this.Z),
+      g.uc(this.L, this.Z.element, 4),
+      (this.oV = new UG(this.L)),
+      g.b(this, this.oV),
+      g.uc(this.L, this.oV.element, 4));
+    Y.Qe &&
+      ((this.watermark = new kM(this.L)),
+      g.b(this, this.watermark),
+      g.uc(this.L, this.watermark.element, 8));
+    u &&
+      !Y.disableOrganicUi &&
+      ((this.W = new PIL(this.L, u)),
+      g.b(this, this.W),
+      g.uc(this.L, this.W.element, 8),
+      this.L.isMutedByEmbedsMutedAutoplay() && (this.onMutedAutoplayStarts(), this.W.hide()));
+    Y.j &&
+      !Y.disableOrganicUi &&
+      ((this.KG = new ns(this.L)), g.b(this, this.KG), g.uc(this.L, this.KG.element, 4));
+    this.K.B(this.L, 'appresize', this.pT);
+    this.K.B(this.L, 'presentingplayerstatechange', this.nF);
+    this.K.B(this.L, 'videodatachange', this.onVideoDataChange);
+    this.K.B(this.L, 'videoplayerreset', this.onReset);
+    this.K.B(this.L, 'onMutedAutoplayStarts', this.onMutedAutoplayStarts);
+    this.K.B(this.L, 'onAdStart', this.onAdStart);
+    this.K.B(this.L, 'onAdComplete', this.onAdComplete);
+    this.K.B(this.L, 'onAdSkip', this.onAdSkip);
+    this.K.B(this.L, 'onAdStateChange', this.onAdStateChange);
+    if ((this.S = g.XJ(g.Qz(Y))))
+      ((this.countdownTimer = new Xq(this.L)),
+        g.b(this, this.countdownTimer),
+        g.uc(this.L, this.countdownTimer.element, 4),
+        this.countdownTimer.hide(),
+        this.K.B(this.L, g.yk('embeds'), this.onCueRangeEnter),
+        this.K.B(this.L, g.Vk('embeds'), this.onCueRangeExit));
+    this.t_(this.L.getPlayerStateObject());
+    this.player.rL('embed');
+    var m, X;
+    ((m = this.L.Y().getWebPlayerContextConfig()) == null
+      ? 0
+      : (X = m.embedsHostFlags) == null
+        ? 0
+        : X.allowOverridingVisitorDataPlayerVars) &&
+      (Y = g.z6('IDENTITY_MEMENTO')) &&
+      this.L.Ar('onMementoChange', Y);
+  };
+  g.M.onCueRangeEnter = function (Y) {
+    Y.getId() === 'countdown timer' &&
+      this.countdownTimer &&
+      (this.countdownTimer.show(), Zc$(this.countdownTimer));
+  };
+  g.M.onCueRangeExit = function (Y) {
+    Y.getId() === 'countdown timer' &&
+      this.countdownTimer &&
+      (this.countdownTimer.stopTimer(), this.countdownTimer.hide());
+  };
+  g.M.pT = function () {
+    var Y = this.L.tJ().getPlayerSize();
+    this.O6 && this.O6.resize(Y);
+  };
+  g.M.onReset = function () {
+    T2$(this);
+  };
+  g.M.nF = function (Y) {
+    this.t_(Y.state);
+  };
+  g.M.t_ = function (Y) {
+    g.V(Y, 128)
+      ? (this.O6 ||
+          ((this.O6 = new uM(this.L)), g.b(this, this.O6), g.uc(this.L, this.O6.element, 4)),
+        this.O6.j(Y.Jt),
+        this.O6.show(),
+        g.UN(this.L.getRootNode(), 'ytp-embed-error'))
+      : this.O6 &&
+        (this.O6.dispose(), (this.O6 = null), g.mU(this.L.getRootNode(), 'ytp-embed-error'));
+    if (this.countdownTimer && this.countdownTimer.K)
+      if (g.V(Y, 64)) (this.countdownTimer.hide(), this.countdownTimer.stopTimer());
+      else if (Y.isPaused()) {
+        var u = this.countdownTimer;
+        u.j || ((u.j = !0), (u.W = (0, g.j2)()));
+      } else
+        Y.isPlaying() &&
+          this.countdownTimer.j &&
+          ((u = this.countdownTimer), u.j && ((u.G += (0, g.j2)() - u.W), (u.j = !1), ic$(u)));
+    M$u(this, Y);
+  };
+  g.M.onMutedAutoplayStarts = function () {
+    this.L.getVideoData().mutedAutoplay &&
+      this.Z &&
+      g.PP(this.L.getRootNode(), 'ytp-muted-autoplay', !0);
+  };
+  g.M.onVideoDataChange = function (Y, u) {
+    var n = this.mp !== u.videoId;
+    Y = !n && Y === 'dataloaded';
+    var U = { isShortsModeEnabled: !!this.L.isEmbedsShortsMode() };
+    g.ka('embedsVideoDataDidChange', {
+      clientPlaybackNonce: u.clientPlaybackNonce,
+      isReload: Y,
+      runtimeEnabledFeatures: U,
+    });
+    n &&
+      ((this.mp = u.videoId),
+      this.countdownTimer && (this.countdownTimer.show(), this.countdownTimer.hide()),
+      this.S &&
+        (this.L.JS('embeds'),
+        u.isAd() ||
+          u.limitedPlaybackDurationInSeconds < 5 ||
+          g.qD(this.L) ||
+          ((u = Math.max((u.startSeconds + u.limitedPlaybackDurationInSeconds - 5) * 1e3, 0)),
+          (u = new g.EE(u, u + 5e3, { id: 'countdown timer', namespace: 'embeds' })),
+          this.L.l6([u]))),
+      this.L.Y().TZ && !this.L.Y().disableOrganicUi && (T2$(this), sQX(this)));
+    this.L.Y().X && this.X && this.X.detach();
+  };
+  g.M.onAdStart = function () {
+    P$(this, 'EMBEDS_AD_EVENT_TYPE_AD_STARTED');
+  };
+  g.M.onAdComplete = function () {
+    P$(this, 'EMBEDS_AD_EVENT_TYPE_AD_COMPLETED');
+  };
+  g.M.onAdSkip = function () {
+    P$(this, 'EMBEDS_AD_EVENT_TYPE_AD_SKIPPED');
+  };
+  g.M.onAdStateChange = function (Y) {
+    Y === 2 && P$(this, 'EMBEDS_AD_EVENT_TYPE_AD_PAUSED');
+  };
+  g.cH('embed', rjC);
+})(_yt_player);

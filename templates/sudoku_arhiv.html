@@ -2,27 +2,35 @@
 {% block title %}Arhiv Sudoku – {{ tezavnost|capitalize }} | VUS{% endblock %}
 
 {% block content %}
-<h1>Arhiv sudokujev – {{ tezavnost|capitalize }}</h1>
+  <h1>Arhiv sudokujev – {{ tezavnost|capitalize }}</h1>
 
-{% if meseci %}
+  {% if meseci %}
     <h3 class="mt-4">Izberi mesec arhiva:</h3>
     <div class="mb-3">
-        {% for mesec in meseci %}
-            <a href="{{ url_for('arhiv_sudoku_mesec', tezavnost=tezavnost, mesec=mesec) }}"
-               class="btn btn-outline-warning mb-2">{{ mesec }}</a>
-        {% endfor %}
+      {% for mesec in meseci %}
+        <a
+          href="{{ url_for('arhiv_sudoku_mesec', tezavnost=tezavnost, mesec=mesec) }}"
+          class="btn btn-outline-warning mb-2"
+          >{{ mesec }}</a
+        >
+      {% endfor %}
     </div>
-{% endif %}
+  {% endif %}
 
-{% if aktualni %}
+  {% if aktualni %}
     <h3 class="mt-4">Aktualni sudokuji:</h3>
     <div class="d-flex flex-wrap">
-        {% for datum in aktualni %}
-            <a href="{{ url_for('prikazi_sudoku', tezavnost=tezavnost, datum=datum) }}"
-               class="btn btn-warning m-2">{{ datum }}</a>
-        {% endfor %}
+      {% for datum in aktualni %}
+        <a
+          href="{{ url_for('prikazi_sudoku', tezavnost=tezavnost, datum=datum) }}"
+          class="btn btn-warning m-2"
+          >{{ datum }}</a
+        >
+      {% endfor %}
     </div>
-{% endif %}
+  {% endif %}
 
-<a href="{{ url_for('arhiv_sudoku_pregled') }}" class="btn btn-secondary mt-4">Nazaj na izbiro težavnosti</a>
+  <a href="{{ url_for('arhiv_sudoku_pregled') }}" class="btn btn-secondary mt-4"
+    >Nazaj na izbiro težavnosti</a
+  >
 {% endblock %}

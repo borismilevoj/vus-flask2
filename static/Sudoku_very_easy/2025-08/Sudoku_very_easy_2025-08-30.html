@@ -1,82 +1,62 @@
-﻿<!DOCTYPE html>
-<HTML>
-<HEAD>
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+﻿<!doctype html>
+<html>
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <meta NAME="Generator" CONTENT="Crossword Compiler (www.crossword-compiler.com)">
-    
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-    
+    <meta name="Generator" content="Crossword Compiler (www.crossword-compiler.com)" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
     <style type="text/css">
-BODY, .Clues, .GridClues { font-size: 11pt; font-family: Times New Roman,Times; }
-</style>
-        <STYLE TYPE="text/css">
-            .PuzTitle {
-                font-size: 15pt;
-                color: #800000;
-                font-weight: bold;
-            }
+      BODY,
+      .Clues,
+      .GridClues {
+        font-size: 11pt;
+        font-family:
+          Times New Roman,
+          Times;
+      }
+    </style>
+    <style type="text/css">
+      .PuzTitle {
+        font-size: 15pt;
+        color: #800000;
+        font-weight: bold;
+      }
 
-            .CopyTag {
-                font-size: 10pt;
-                color: #000000
-            }
+      .CopyTag {
+        font-size: 10pt;
+        color: #000000;
+      }
 
-            .PuzContainer {
-                display: flex;
-                justify-content: center;
-            }
-        </STYLE>
-        
-            <TITLE>Crossword</TITLE>
-        
-        
-</HEAD>
+      .PuzContainer {
+        display: flex;
+        justify-content: center;
+      }
+    </style>
 
-<BODY TEXT="#000000" BGCOLOR="#ffffff">
-<script src="/static/CrosswordCompilerApp/jquery.js"></script>
-<script src="/static/CrosswordCompilerApp/raphael.js"></script>
-<script src="/static/CrosswordCompilerApp/crosswordCompiler.js"></script>
-<script src="/static/Sudoku_very_easy/2025-08/Sudoku_very_easy_2025-08-30.js"></script>
-<script>
-$(function(){
-  $("#CrosswordCompilerPuz").CrosswordCompiler(
-    CrosswordPuzzleData, null,
-    { SUBMITMETHOD: "POST", SAVE: "", PROGRESS: "" }
-  );
-});
-</script>
-<div id="CrosswordCompilerPuz"></div>
+    <title>Crossword</title>
+  </head>
 
+  <body text="#000000" bgcolor="#ffffff">
+    <script src="/static/CrosswordCompilerApp/jquery.js"></script>
+    <script src="/static/CrosswordCompilerApp/raphael.js"></script>
+    <script src="/static/CrosswordCompilerApp/crosswordCompiler.js"></script>
+    <script src="/static/Sudoku_very_easy/2025-08/Sudoku_very_easy_2025-08-30.js"></script>
+    <script>
+      $(function () {
+        $('#CrosswordCompilerPuz').CrosswordCompiler(CrosswordPuzzleData, null, {
+          SUBMITMETHOD: 'POST',
+          SAVE: '',
+          PROGRESS: '',
+        });
+      });
+    </script>
+    <div id="CrosswordCompilerPuz"></div>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
-
-    
-        
-        
-        
-        
-        
-        <HR>
-        <SPAN CLASS="CopyTag">
-            Web page created by <A
-                HREF="https://www.crossword-compiler.com/">Crossword Compiler</A>.
-        </SPAN>
-</BODY>
-
-</HTML> 
+    <hr />
+    <span CLASS="CopyTag">
+      Web page created by <a href="https://www.crossword-compiler.com/">Crossword Compiler</a>.
+    </span>
+  </body>
+</html>

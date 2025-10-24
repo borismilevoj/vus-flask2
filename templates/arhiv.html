@@ -1,18 +1,18 @@
-﻿<!doctype html><meta charset="utf-8">
+﻿<!doctype html><meta charset="utf-8" />
 <h1>Arhiv {{ 'križanke' if tip == 'krizanke' else 'sudoku ' ~ (tezavnost or '') }}</h1>
 {% if months_sorted %}
   {% for ym in months_sorted %}
     <h2>{{ ym }}</h2>
     <ul>
-    {% for d in meseci[ym] %}
-      <li>
-        {% if tip == 'krizanke' %}
-          <a href="{{ url_for('prikazi_krizanko', datum=d) }}">{{ d }}</a>
-        {% else %}
-          <a href="{{ url_for('prikazi_sudoku', tezavnost=tezavnost, datum=d) }}">{{ d }}</a>
-        {% endif %}
-      </li>
-    {% endfor %}
+      {% for d in meseci[ym] %}
+        <li>
+          {% if tip == 'krizanke' %}
+            <a href="{{ url_for('prikazi_krizanko', datum=d) }}">{{ d }}</a>
+          {% else %}
+            <a href="{{ url_for('prikazi_sudoku', tezavnost=tezavnost, datum=d) }}">{{ d }}</a>
+          {% endif %}
+        </li>
+      {% endfor %}
     </ul>
   {% endfor %}
 {% else %}

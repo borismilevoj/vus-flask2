@@ -2,15 +2,15 @@
 {% block title %}Arhiv Križank | VUS{% endblock %}
 
 {% block content %}
-<h1>Arhiv križank</h1>
+  <h1>Arhiv križank</h1>
 
-<ul class="list-group">
+  <ul class="list-group">
     {% for datum in datumi %}
-        <li class="list-group-item">
-            <a href="{{ url_for('prikazi_krizanko', datum=datum) }}">{{ datum }}</a>
-        </li>
+      <li class="list-group-item">
+        <a href="{{ url_for('prikazi_krizanko', datum=datum) }}">{{ datum }}</a>
+      </li>
     {% endfor %}
-</ul>
+  </ul>
 
-<a href="{{ url_for('home') }}" class="btn btn-secondary mt-4">Domov</a>
+  <a href="{{ url_for('home') }}" class="btn btn-secondary mt-4">Domov</a>
 {% endblock %}

@@ -1,2 +1,1001 @@
-(self.webpackChunk_N_E=self.webpackChunk_N_E||[]).push([[18743],{19831:(e,t,r)=>{"use strict";r.d(t,{$$:()=>x,BS:()=>y,_5:()=>j,_f:()=>f,gC:()=>h,tT:()=>u});var n=r(515407),i=r(707447),o=r(737006),a=r(886213),s=r(168663),l=r(119349),c=r(82281),m=r.n(c),d=r(566279);let{SSTK:g}=n.rI,{publicRuntimeConfig:{shutterstockBaseUrl:p}}=m()(),u=e=>{let{contentType:t,html:r}=e;return{type:"application/ld+json",innerHTML:JSON.stringify(r),...t?{contentType:t}:{}}},h=u({contentType:i.O$.ORGANIZATION,html:{"@context":i.cZ,"@type":i.wN.ORGANIZATION,name:g,url:p,logo:n.aB,sameAs:["https://www.facebook.com/Shutterstock","https://twitter.com/shutterstock","https://www.linkedin.com/company/shutterstock","https://www.youtube.com/user/ShutterstockInc","https://instagram.com/shutterstock/"]}}),x=function(){let e=arguments.length>0&&void 0!==arguments[0]?arguments[0]:[];return u({html:{"@context":i.cZ,"@type":i.wN.BREADCRUMBSLIST,itemListElement:e.map((t,r)=>{let{title:n,href:i}=t;return n&&(e.length-1===r||i)||window.NREUM?.noticeError?.(Error("Breadcrumb for linked data is malformed: potential SEO impact"),{msg:`Breadcrumb items must have a shape of "{ name: String, url: String }", currently: "{ name: ${n}, url: ${i} }"`}),{"@type":"ListItem",position:r+1,item:{"@id":i,name:n}}})}})},y=function(){let e,t=arguments.length>0&&void 0!==arguments[0]?arguments[0]:[],r=arguments.length>1&&void 0!==arguments[1]&&arguments[1];return e=r?t.map(e=>{let{fields:{cmsFaqItemTitle:t,cmsFaqItemBody:r}}=e;return t&&r||window.NREUM?.noticeError?.(Error("FAQ Items for linked data is malformed: potential SEO impact"),{msg:"FAQ items must have a shape of `{ question: String, answer: String }`"}),{"@type":"Question",name:t,acceptedAnswer:{"@type":"Answer",text:r}}}):t.map(e=>{let{cmsFaqItemTitle:t,cmsFaqItemBody:r}=e;return t&&r||window.NREUM?.noticeError?.(Error("FAQ Items for linked data is malformed: potential SEO impact"),{msg:"FAQ items must have a shape of `{ question: String, answer: String }`"}),{"@type":"Question",name:t,acceptedAnswer:{"@type":"Answer",text:r}}}),u({contentType:i.O$.FAQPAGE,html:{"@context":i.cZ,"@type":i.wN.FAQPAGE,mainEntity:e}})},f=function(){let{linksListTitle:e,linksListLinks:t=[]}=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{};return e?u({contentType:i.O$.HOWTO,html:{"@context":i.cZ,"@type":i.wN.HOWTO,name:e,step:t.map(e=>(e||window.NREUM?.noticeError?.(Error("How To items for linked data is malformed: potential SEO impact"),{msg:`How To items must be present, it is ${e}`}),{"@type":i.wN.HOWTOSTEP,text:e}))}}):{innerHTML:void 0}},j=e=>{let{assets:t=[],baseUrl:r=p,description:n="",locale:c="en",fullLocale:m="en-US",relatedKeywords:g=[],name:h="",getRoutePathProps:x=s.MH}=e;return u({html:{"@context":i.cZ,"@type":i.wN.WEB_PAGE,name:h,description:n,...g.length>0&&{relatedLink:g.map(e=>(0,l.BF)({baseUrl:r,language:c,pathname:x({term:e})[0]}))},...t.length>0&&{significantLink:t.map(e=>(0,l.BF)({baseUrl:r,language:c,pathname:(0,o.sD)({asset:e,getRoutePathProps:a.m,slugify:e=>(0,d.Y)({...e,locale:m}),locale:c})[0]}))}}})}},184327:(e,t,r)=>{"use strict";r.d(t,{r:()=>l});var n=r(406029),i=r(149234),o=r(511625),a=r(461266),s=r(455729);let l=e=>{let{metadata:t={},hero:r=null,noIndex:l=!1,schemas:c,pageTitle:m="",imagePreloadModule:d=a.vB}=e,{ogTitle:g=r?.title,ogDescription:p,ogImage:u,pageDescription:h}=t,x=p||r?.subtitle,y=h||r?.subtitle,f=u||r?.image&&(0,i.$3)(r.image),j=(0,s.useMemo)(()=>(0,i.vX)(d),[d]);return(0,n.jsx)(o.GD,{description:x,title:m||g,image:f,noIndexNoFollow:l,schemas:c,pageDescription:y,ogMetadata:{...t,ogTitle:t.ogTitle?t.ogTitle:r?.title},children:j&&(0,n.jsx)("link",{fetchpriority:"high",rel:"preload",href:j,as:"image"})})}},190022:(e,t,r)=>{"use strict";r.r(t),r.d(t,{CmsBreadcrumbs:()=>f});var n=r(406029),i=r(735922),o=r(687534),a=r(215075),s=r(149234),l=r(758018),c=r(756500),m=r(898257),d=r(323069),g=r(19831),p=r(461266),u=r(420013),h=r(795669),x=r.n(h);let y=(0,r(807703).n9)()(e=>{let{palette:t,tokens:{spacing:r}}=e;return{breadcrumbs:{color:t.info.main},separator:{margin:r.xs}}}),f=e=>{let{breadcrumbs:t,ariaLabel:r,breadcrumbRoutePathProps:h=p.tR}=e,{classes:f}=y(),{isGoodBot:j}=(0,m.l)(),{isBrandEnterprise:w}=(0,d.P)();try{let e=t.map(e=>w&&"/explore/royalty-free-images"===e.href?{...e,href:"/category"}:e).reverse(),s=(0,g.$$)(e),m=e.pop();return e.length?(0,n.jsxs)(n.Fragment,{children:[j&&(0,n.jsx)(x(),{children:(0,n.jsx)("script",{type:s.type,dangerouslySetInnerHTML:{__html:s.innerHTML}})}),(0,n.jsxs)(i.A,{classes:{separator:f.separator},separator:(0,n.jsx)(u.c,{fontSize:"small"}),"aria-label":r,children:[e.map((e,t)=>{let{linkAs:r,id:i,title:a,href:s}=e,[c,m]=h[t]?h[t]():[s,r];return(0,n.jsx)(o.A,{variant:"subtitle2",className:f.breadcrumbs,children:(0,n.jsx)(l.N,{linkAs:m,href:c,underline:!0,children:a})},i||`breadcrumb_${t}`)}),(0,n.jsx)(o.A,{color:"textPrimary",variant:"subtitle2",children:m.title||(0,n.jsx)(a.A,{variant:"text",width:c.Cw})})]})]}):(0,n.jsx)(n.Fragment,{})}catch(e){return(0,s.Q9)(e,"CmsBreadcrumbs")}}},291746:(e,t,r)=>{"use strict";r.r(t),r.d(t,{__N_SSP:()=>m,default:()=>d});var n=r(406029),i=r(475386),o=r(727326),a=r(438681),s=r(899906),l=r(461266);let c=e=>{let{schemas:t=l.tR,keyword:r=""}=e;return(0,n.jsx)(a.hd,{value:{...e,shouldIndex:!0},children:(0,n.jsx)(i.z,{schemas:t,keyword:r})})};c.layout={type:s.PrimaryLayout},c.analyticsData={pageType:o.c$9};var m=!0;let d=c},420013:(e,t,r)=>{"use strict";r.d(t,{c:()=>o});var n=r(406029);let i=(0,r(13068).A)((0,n.jsx)("path",{d:"M11.467 22.8l1.867 1.867 8-8-8-8-1.867 1.867 6.133 6.133-6.133 6.133z"}),"ChevronRight.svg"),o=e=>(0,n.jsx)(i,{viewBox:"0 0 32 32",...e})},475386:(e,t,r)=>{"use strict";r.d(t,{z:()=>_});var n=r(406029),i=r(907422),o=r(926114),a=r(770083),s=r(190022),l=r(942900),c=r(303623),m=r(620134),d=r(184327),g=r(804136),p=r(282420),u=r(268860),h=r(443599),x=r(438681),y=r(898257),f=r(63818),j=r(568880),w=r(455729);let v=(0,r(807703).n9)()(e=>{let{spacing:t}=e;return{searchBarContainer:{paddingBottom:t(4)}}}),b=e=>{let{t,keyword:r}=e;return{ogTitle:t("feature-category-landing:meta-title",{KEYWORD:r}),ogDescription:t("feature-category-landing:meta-description",{KEYWORD:r})}},T={componentProps:{}},_=e=>{let{schemas:t,keyword:r,modulesProps:_=T}=e,{classes:E}=v(),{hero:k,cmsModules:S,breadcrumbs:A,shouldIndex:B,entries:C,statusCode:L,legalText:R}=(0,x.wC)(),{isGoodBot:O}=(0,y.l)(),{t:N}=(0,j.Bd)(o.RWw),$=b({t:N,keyword:r}),[M,I]=(0,f.o)({triggerOnce:!0,rootMargin:"100000px 0px 50px 0px"}),P=!!L,H=(0,w.useMemo)(()=>({...k,...k?.pricingButton?{buttons:[{href:"/pricing",label:N("feature-category-landing:pricing-button"),ctaButtonType:"PrimaryRed",variant:a.yj,color:a.lS,trackAnalytics:{label:"showPricing",section:"categoryHero"}}]}:{}}),[k,N]),F=(0,w.useMemo)(()=>S?M||O?S:[S[0]]:[],[S,O,M]);return P?(0,n.jsx)(g.z,{statusCode:L}):(0,n.jsxs)(n.Fragment,{children:[$&&(0,n.jsx)(d.r,{metadata:$,hero:k,noIndex:!B,schemas:t}),(0,n.jsx)("div",{className:E.searchBarContainer,children:(0,n.jsx)(h.J,{})}),(0,n.jsx)(i.A,{my:3,children:A&&(0,n.jsx)(s.CmsBreadcrumbs,{breadcrumbs:A})}),k&&(0,n.jsx)(c.CmsHero,{...H}),(0,n.jsxs)(i.A,{mx:{xs:-4,sm:-5},children:[!!F?.length&&(0,n.jsx)(l._,{cmsModules:F,CustomContainerComponent:p.y,CustomContainerComponentDarkTheme:u.m,entries:C,isContentfulLP:!0,..._}),(0,n.jsx)("div",{ref:I}),S&&!(M||O)&&(0,n.jsx)("div",{style:{minHeight:"400px"}})]}),R&&(0,n.jsx)(m.s,{legalText:R})]})}},511625:(e,t,r)=>{"use strict";r.d(t,{GD:()=>eg});var n=r(406029),i=r(926114),o=r(707447),a=r(57530),s=r(743381),l=r(813631),c=r(345307),m=r(821790),d=r(581298),g=r(957797),p=r(559044),u=r(233681),h=r(737006),x=r(34504),y=r(323069),f=r(345622),j=r(238638),w=r(691369),v=r(119349),b=r(839047),T=r(82281),_=r.n(T),E=r(981278),k=r(455729);let S=[m.z4,m.x3],A=[m.EG,m.HT,m.zr,m.lr],B=[l.m$,l.vo,l.KB],{publicRuntimeConfig:{enterpriseBaseUrl:C,shutterstockBaseUrl:L,premiumBeatBaseUrl:R}}=_()(),O=/\/search(\?|\/).+$/,N=/\/editorial\/(?:video\/)?search\/.+$/,$=/\/video\/editorial\/?search/,M=/\/music\/search\/ras\/.+$/,I=/\/music\/search(\?|\/).+$/,P=/\/video\/embed\/\d+$/,H=/.*\/edit$/,F=e=>O.test(e)&&!(N.test(e)||M.test(e)),D=e=>I.test(e)&&!(N.test(e)||M.test(e)),Q=e=>P.test(e),U=e=>H.test(e),q=e=>$.test(e),K=e=>e.replace("video/editorial","editorial/video"),G=RegExp(`^/editorial/(${c.C0.join("|")})/`),z=e=>G.test(e),W=e=>e.replace(G,"/editorial/livefeed/"),Z=(e,t)=>{let r;if(!t)return r;let{query:n}=(0,b.Ru)(t),i=D(t),o=Object.entries(n).reduce((e,t)=>{let[r,n]=t;if(i&&A.includes(r)&&(e.push([r,Array.isArray(n)?n[0]:n]),i=!1),S.includes(r)&&!Array.isArray(n)){if(r===m.x3&&B.includes(n))return e;e.push([r,n])}return e},[]);if(o&&!o.length)return r;let a=Object.fromEntries(o.sort());return(0,b.FS)({pathname:e,query:a})},Y=function(){let{asset:e}=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{},{isBrandSstk:t}=(0,y.P)(),r=t?L:C,{asPath:n}=(0,E.useRouter)(),{locale:i}=(0,d.Y)(),{query:o,spellcheckInfo:{spellcheckedQuery:a="",origResultsCount:s}}=(0,g.Kg)(),{encodeSearchTerm:c}=(0,x.B)(),[m]=(0,h.$m)({asset:e});return{getCanonicalLink:(0,k.useCallback)(function(){let{appendLocale:t,code:d,isPremiumBeatTrack:g,overriddenSearchTerm:p}=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{},h=(0,b.Ru)((0,v.YT)(n))?.pathname??"",x=h;if(q(x)&&(x=K(x)),z(x)&&(x=W(x)),"/"!==m&&Q(x)&&(x=m),U(x)&&(x="/"!==m?m:x.replace("/edit","")),F(n)){let e=Z(h,n);e&&(x=e);let t=(0,u.iC)(p||(0===s&&a?a:o),i,j.G),{query:r}=(0,b.Ru)(n);r.image_type===l.KB&&r.entity&&""===t?[x]=(0,f.ll)():x=(0,v.B)({path:x,term:c(t)})}return("/templates/search"===x&&(x="/templates"),g)?(x=`/royalty-free-tracks/${(0,v.Db)(e.title)}`,(0,v.ud)(R+x,t&&(d||i))):(0,v.ud)(r+x,t&&(d||i))},[e,n,r,i,m,s,a,o,c])}},X=function(){let{overriddenSearchTerm:e,asset:t,assets:r,effectiveLanguage:n}=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{},{query:i,queryTranslations:o}=(0,g.Kg)(),{getCanonicalLink:a}=Y({asset:t}),{asPath:s}=(0,E.useRouter)(),{locale:l}=(0,d.Y)(),{encodeSearchTerm:c}=(0,x.B)(),m=a({appendLocale:!0,isPremiumBeatTrack:(0,p.pj)({track:t}),overriddenSearchTerm:e}),u=F(s),h=!u||"en"===l&&r&&r.length>0?a():"en"!==l&&o.en?a({code:"en",appendLocale:!0,overriddenSearchTerm:o.en}):void 0,y=w.Hn.reduce((e,t)=>{if(!o[t]&&l!==t&&u)return e;let r=o[t]||o.en,n=a({code:t,appendLocale:!0});return u&&r&&(n=n.replace(/\/search\/[^/?]*/,`/search/${c(r)}`)),e[t]={href:n,hrefLang:t},e},{});F(s)&&y[l]?.href!==m&&(y={},h=""),F(s)&&1===Object.keys(y).length&&y[l]&&(y={}),u&&void 0===y[l]&&(y[l]={href:m,hrefLang:l});let f=n;return u&&n&&"en"!==n&&["el","ja","ko","ru","th","zh"].includes(l)&&/^[\w\s\-_.,!?$@%#`~=+/\\*^()]*$/.test(i)&&(f="en"),u&&f&&f!==l&&("en"===f||(0,v.Wr)({effectiveLanguage:f}))&&void 0===y[f]&&(y[f]={href:a({code:f,appendLocale:!0}),hrefLang:f},void 0===y[l]&&(y[l]={href:m,hrefLang:l})),{altDefaultLink:h,altLinks:Object.values(y),canonicalLink:m}};var V=r(633449),J=r(786921),ee=r(461266),et=r(795669),er=r.n(et),en=r(568880);let ei="Shutterstock",eo="Shutterstock Editorial",ea=[["twitter:site","@shutterstock"],["twitter:card","summary_large_image"],["google-site-verification","1wsiFwGziBzqCcMecpMDlbZgN1jKL-Fh6m05QXpg4QY"]],es=e=>{let{isBrandSstk:t}=e,r=(0,V.eE)();return t&&r?eo:ei},el=e=>{let{metaTitle:t,isBrandSstk:r,isSEO2077ExperimentEligible:n}=e,i=(0,V.eE)()&&r;return n?t:t.includes(ei)?i?t.replace(ei,eo):t:`${t} | ${i?eo:ei}`},ec=(e,t,r)=>({title:t||r("home:lihp_meta_title"),description:e||r("home:lihp_meta_description")}),em=e=>{let{statusCode:t}=e,{t:r}=(0,en.Bd)([i.HFO,i.kr_]),{isBrandSstk:o,isBrandEnterprise:s}=(0,y.P)(),l=(0,J.ab)(t)?t:a.Q,c=r(`error:status_${l}_title`),m=r(s&&t===a.Vv?`${i.kr_}::ent:no_access_content`:`error:status_${l}_subtitle`),d=el({metaTitle:c,isBrandSstk:o});return(0,n.jsxs)(er(),{children:[(0,n.jsx)("title",{children:d},"title"),(0,n.jsx)("meta",{name:"description",content:m},"description"),(0,n.jsx)("meta",{content:d,property:"og:title"},"og:title"),(0,n.jsx)("meta",{content:m,property:"og:description"},"og:description")]})},ed=e=>{let{headProps:t,seoServiceData:r,isBrandEnterprise:i}=e,{noIndex:a,noIndexNoFollow:s}=t,l="";if(!i&&r?.isSeoServiceActive&&r?.disposition)r.disposition===o.hx?l="index":r.disposition===o.r8?l="noindex,nofollow":r.disposition===o.lg?l="noindex":r.disposition===o.ZD&&(l="noindex,follow");else{if(i)return{robotsMetaTag:null,googlebotMetaTag:null};l=s?"noindex,nofollow":a?"noindex":"max-image-preview:large"}return{robotsMetaTag:(0,n.jsx)("meta",{name:"robots",content:l},"robots"),googlebotMetaTag:"max-image-preview:large"===l?null:(0,n.jsx)("meta",{name:"googlebot",content:l},"googlebot")}},eg=e=>{let{assets:t=ee.tR,description:r,image:l=ee.vB,title:c,schemas:m,statusCode:d,noIndex:g=!1,noIndexNoFollow:p=!1,keywords:u=ee.tR,isAdultContent:h=!1,contributor:x=ee.vB,children:f,ogMetadata:j=ee.vB,seoServiceData:w=ee.vB,asset:v,pageDescription:b,isSEO2077ExperimentEligible:T=!1,effectiveLanguage:_}=e,{t:E}=(0,en.Bd)(i.K0D),{autocorrection:k}=(0,s.E)(),{altDefaultLink:S,altLinks:A,canonicalLink:B}=X({overriddenSearchTerm:w?.taxonomyCanonical||k,effectiveLanguage:_,asset:v,assets:t}),{isBrandSstk:C,isBrandEnterprise:L}=(0,y.P)(),{title:R,description:O}=ec(r,c,E),N=es({isBrandSstk:C}),$=el({metaTitle:R,isBrandSstk:C,isSEO2077ExperimentEligible:T}),{robotsMetaTag:M,googlebotMetaTag:I}=ed({headProps:{noIndex:g,noIndexNoFollow:p},seoServiceData:w,isBrandEnterprise:L}),P=w?.disposition===o.R6&&w?.canonicalURL||B;return(0,n.jsxs)(n.Fragment,{children:[d>a.o3?(0,n.jsx)(em,{statusCode:d}):(0,n.jsxs)(er(),{children:[f," ",(0,n.jsx)("title",{children:$},"title"),(0,n.jsx)("meta",{name:"description",content:b||O},"description"),(0,n.jsx)("meta",{content:j?.ogTitle?j?.ogTitle:$,property:"og:title"},"og:title"),(0,n.jsx)("meta",{content:j?.ogDescription?j?.ogDescription:O,property:"og:description"},"og:description")]}),(0,n.jsxs)(er(),{children:[ea.map(e=>{let[t,r]=e;return(0,n.jsx)("meta",{name:t,content:r},t)}),(0,n.jsx)("meta",{content:"website",property:"og:type"},"type"),(0,n.jsx)("meta",{content:N,property:"og:site_name"},"site"),(0,n.jsx)("meta",{content:"604800",property:"og:ttl"},"og:ttl"),x.twitterUsername&&(0,n.jsx)("meta",{content:`@${x.twitterUsername}`,name:"twitter:creator"},"twitter:creator"),x.twitterTitle&&(0,n.jsx)("meta",{content:x.twitterTitle,name:"twitter:title"},"twitter:title"),x.twitterDescription&&(0,n.jsx)("meta",{content:x.twitterDescription,name:"twitter:description"},"twitter:description"),l.url&&(0,n.jsx)("meta",{content:l.url,property:"og:image"},"og:image"),l.width&&(0,n.jsx)("meta",{content:Math.round(l.width),property:"og:image:width"},"og:image:width"),l.height&&(0,n.jsx)("meta",{content:Math.round(l.height),property:"og:image:height"},"og:image:height"),l?.imageSmall?.url&&(0,n.jsx)("meta",{content:l.imageSmall.url,property:"og:image"},"og:imageSmall"),l?.imageSmall?.width&&(0,n.jsx)("meta",{content:Math.round(l.imageSmall.width),property:"og:image:width"},"og:imageSmall:width"),l?.imageSmall?.height&&(0,n.jsx)("meta",{content:Math.round(l.imageSmall.height),property:"og:image:height"},"og:imageSmall:height"),l.alt&&(0,n.jsx)("meta",{content:l.alt,property:"og:image:alt"},"og:image:alt"),l?.videoUrl&&(0,n.jsxs)(n.Fragment,{children:[(0,n.jsx)("meta",{content:l.videoUrl,property:"og:video:url"},"og:video:url"),(0,n.jsx)("meta",{content:l.videoUrl,property:"og:video:secure_url"},"og:video:secure_url"),l.width&&(0,n.jsx)("meta",{content:l.width,property:"og:video:width"},"og:video:width"),l.height&&(0,n.jsx)("meta",{content:l.height,property:"og:video:height"},"og:video:height"),(0,n.jsx)("meta",{content:l.videoUrl,property:"twitter:player"},"twitter:player")]}),P&&(0,n.jsx)("meta",{content:P,property:"og:url"},"og:url"),h?(0,n.jsx)("meta",{name:"rating",content:"adult"}):null,m&&m.map(e=>{let{type:t,contentType:r,innerHTML:i}=e;return(0,n.jsx)("script",{type:t,dangerouslySetInnerHTML:{__html:i}},r)}),P&&(0,n.jsx)("link",{rel:"canonical",href:P}),w?.seo1830HrefLang&&(0,n.jsx)("link",{rel:"alternate",href:w?.seo1830Href,hrefLang:w?.seo1830HrefLang}),A&&A.filter(e=>!w?.seo1830HrefLang||"en"!==e.hrefLang).map(e=>{let{href:t,hrefLang:r}=e;return(0,n.jsx)("link",{rel:"alternate",href:t,hrefLang:r},r)}),S&&!w?.seo1830HrefLang&&(0,n.jsx)("link",{rel:"alternate",href:S,hrefLang:"x-default"}),!!u?.length&&(0,n.jsx)("meta",{name:"keywords",content:u.join(", ")}),M,I]})]})}},620134:(e,t,r)=>{"use strict";r.d(t,{s:()=>m});var n=r(406029),i=r(907422),o=r(687534),a=r(149234),s=r(52044),l=r(472527);let c=(0,r(807703).n9)()(e=>{let{tokens:{opacity:t}}=e;return{box:{textAlign:"center",justifyContent:"center",marginTop:"3rem",marginBottom:"3rem",display:"flex",flexDirection:"column",opacity:t[60]}}}),m=e=>{let{legalText:t=null,isFullWidth:r=!1,uniformModuleSpacing:m}=e,{classes:d}=c();try{return t&&(0,n.jsx)(l.R,{cmsBgContainerProps:{index:0,isFullWidth:r,uniformModuleSpacing:m,respectLastItem:!1},children:(0,n.jsx)(i.A,{className:d.box,children:(0,n.jsx)(s._,{stringToTransform:t,Component:(0,n.jsx)(o.A,{color:"primary",variant:"subtitle2"})})})})}catch(e){return(0,a.Q9)(e,"CmsLegalText")}}},725466:(e,t,r)=>{(window.__NEXT_P=window.__NEXT_P||[]).push(["/category/[category]",function(){return r(291746)}])},743381:(e,t,r)=>{"use strict";r.d(t,{E:()=>o});var n=r(957797),i=r(106222);let o=()=>{let{spellcheckInfo:e}=(0,n.Kg)();return(0,i.h9)({spellcheckInfo:e})}},786921:(e,t,r)=>{"use strict";r.d(t,{IK:()=>m,PQ:()=>s,ab:()=>c,hm:()=>a,tP:()=>l});var n=r(57530);let i=[n.Vv,n.Oe,n.lq,n.bP],o=[...i,n.Q],a=e=>{let t="string"==typeof e?parseInt(e,10):e;return i.includes(t)},s=e=>{let t="string"==typeof e?parseInt(e,10):e;return n.Oe===t},l=e=>{let t="string"==typeof e?parseInt(e,10):e;return[n.Vv,n.lq].includes(t)},c=e=>o.includes(parseInt(e,10)),m=e=>{let{error:t}=e;if("string"==typeof t)return 500;if(t?.code==="ERR_NOCK_NO_MATCH")return 417;if(t?.message?.startsWith("timeout"))return 524;if(t?.code==="ENETUNREACH")return 419;if("EOPENBREAKER"===t.code)return 518;let{status:r}=t?.response||t;return r||500}},942900:(e,t,r)=>{"use strict";r.d(t,{_:()=>i});var n=r(571024);let i=r.n(n)()(()=>r.e(57152).then(r.bind(r,293252)).then(e=>({default:e.CmsDynamicModules})),{loadableGenerated:{webpack:()=>[293252]}})}},e=>{var t=t=>e(e.s=t);e.O(0,[27510,10382,21376,56171,72423,63714,14576,32231,48073,87025,3623,72076,43630,37400,90636,46593,38792],()=>t(725466)),_N_E=e.O()}]);
+(self.webpackChunk_N_E = self.webpackChunk_N_E || []).push([
+  [18743],
+  {
+    19831: (e, t, r) => {
+      'use strict';
+      r.d(t, { $$: () => x, BS: () => y, _5: () => j, _f: () => f, gC: () => h, tT: () => u });
+      var n = r(515407),
+        i = r(707447),
+        o = r(737006),
+        a = r(886213),
+        s = r(168663),
+        l = r(119349),
+        c = r(82281),
+        m = r.n(c),
+        d = r(566279);
+      let { SSTK: g } = n.rI,
+        {
+          publicRuntimeConfig: { shutterstockBaseUrl: p },
+        } = m()(),
+        u = (e) => {
+          let { contentType: t, html: r } = e;
+          return {
+            type: 'application/ld+json',
+            innerHTML: JSON.stringify(r),
+            ...(t ? { contentType: t } : {}),
+          };
+        },
+        h = u({
+          contentType: i.O$.ORGANIZATION,
+          html: {
+            '@context': i.cZ,
+            '@type': i.wN.ORGANIZATION,
+            name: g,
+            url: p,
+            logo: n.aB,
+            sameAs: [
+              'https://www.facebook.com/Shutterstock',
+              'https://twitter.com/shutterstock',
+              'https://www.linkedin.com/company/shutterstock',
+              'https://www.youtube.com/user/ShutterstockInc',
+              'https://instagram.com/shutterstock/',
+            ],
+          },
+        }),
+        x = function () {
+          let e = arguments.length > 0 && void 0 !== arguments[0] ? arguments[0] : [];
+          return u({
+            html: {
+              '@context': i.cZ,
+              '@type': i.wN.BREADCRUMBSLIST,
+              itemListElement: e.map((t, r) => {
+                let { title: n, href: i } = t;
+                return (
+                  (n && (e.length - 1 === r || i)) ||
+                    window.NREUM?.noticeError?.(
+                      Error('Breadcrumb for linked data is malformed: potential SEO impact'),
+                      {
+                        msg: `Breadcrumb items must have a shape of "{ name: String, url: String }", currently: "{ name: ${n}, url: ${i} }"`,
+                      }
+                    ),
+                  { '@type': 'ListItem', position: r + 1, item: { '@id': i, name: n } }
+                );
+              }),
+            },
+          });
+        },
+        y = function () {
+          let e,
+            t = arguments.length > 0 && void 0 !== arguments[0] ? arguments[0] : [],
+            r = arguments.length > 1 && void 0 !== arguments[1] && arguments[1];
+          return (
+            (e = r
+              ? t.map((e) => {
+                  let {
+                    fields: { cmsFaqItemTitle: t, cmsFaqItemBody: r },
+                  } = e;
+                  return (
+                    (t && r) ||
+                      window.NREUM?.noticeError?.(
+                        Error('FAQ Items for linked data is malformed: potential SEO impact'),
+                        {
+                          msg: 'FAQ items must have a shape of `{ question: String, answer: String }`',
+                        }
+                      ),
+                    { '@type': 'Question', name: t, acceptedAnswer: { '@type': 'Answer', text: r } }
+                  );
+                })
+              : t.map((e) => {
+                  let { cmsFaqItemTitle: t, cmsFaqItemBody: r } = e;
+                  return (
+                    (t && r) ||
+                      window.NREUM?.noticeError?.(
+                        Error('FAQ Items for linked data is malformed: potential SEO impact'),
+                        {
+                          msg: 'FAQ items must have a shape of `{ question: String, answer: String }`',
+                        }
+                      ),
+                    { '@type': 'Question', name: t, acceptedAnswer: { '@type': 'Answer', text: r } }
+                  );
+                })),
+            u({
+              contentType: i.O$.FAQPAGE,
+              html: { '@context': i.cZ, '@type': i.wN.FAQPAGE, mainEntity: e },
+            })
+          );
+        },
+        f = function () {
+          let { linksListTitle: e, linksListLinks: t = [] } =
+            arguments.length > 0 && void 0 !== arguments[0] ? arguments[0] : {};
+          return e
+            ? u({
+                contentType: i.O$.HOWTO,
+                html: {
+                  '@context': i.cZ,
+                  '@type': i.wN.HOWTO,
+                  name: e,
+                  step: t.map(
+                    (e) => (
+                      e ||
+                        window.NREUM?.noticeError?.(
+                          Error('How To items for linked data is malformed: potential SEO impact'),
+                          { msg: `How To items must be present, it is ${e}` }
+                        ),
+                      { '@type': i.wN.HOWTOSTEP, text: e }
+                    )
+                  ),
+                },
+              })
+            : { innerHTML: void 0 };
+        },
+        j = (e) => {
+          let {
+            assets: t = [],
+            baseUrl: r = p,
+            description: n = '',
+            locale: c = 'en',
+            fullLocale: m = 'en-US',
+            relatedKeywords: g = [],
+            name: h = '',
+            getRoutePathProps: x = s.MH,
+          } = e;
+          return u({
+            html: {
+              '@context': i.cZ,
+              '@type': i.wN.WEB_PAGE,
+              name: h,
+              description: n,
+              ...(g.length > 0 && {
+                relatedLink: g.map((e) =>
+                  (0, l.BF)({ baseUrl: r, language: c, pathname: x({ term: e })[0] })
+                ),
+              }),
+              ...(t.length > 0 && {
+                significantLink: t.map((e) =>
+                  (0, l.BF)({
+                    baseUrl: r,
+                    language: c,
+                    pathname: (0, o.sD)({
+                      asset: e,
+                      getRoutePathProps: a.m,
+                      slugify: (e) => (0, d.Y)({ ...e, locale: m }),
+                      locale: c,
+                    })[0],
+                  })
+                ),
+              }),
+            },
+          });
+        };
+    },
+    184327: (e, t, r) => {
+      'use strict';
+      r.d(t, { r: () => l });
+      var n = r(406029),
+        i = r(149234),
+        o = r(511625),
+        a = r(461266),
+        s = r(455729);
+      let l = (e) => {
+        let {
+            metadata: t = {},
+            hero: r = null,
+            noIndex: l = !1,
+            schemas: c,
+            pageTitle: m = '',
+            imagePreloadModule: d = a.vB,
+          } = e,
+          { ogTitle: g = r?.title, ogDescription: p, ogImage: u, pageDescription: h } = t,
+          x = p || r?.subtitle,
+          y = h || r?.subtitle,
+          f = u || (r?.image && (0, i.$3)(r.image)),
+          j = (0, s.useMemo)(() => (0, i.vX)(d), [d]);
+        return (0, n.jsx)(o.GD, {
+          description: x,
+          title: m || g,
+          image: f,
+          noIndexNoFollow: l,
+          schemas: c,
+          pageDescription: y,
+          ogMetadata: { ...t, ogTitle: t.ogTitle ? t.ogTitle : r?.title },
+          children:
+            j &&
+            (0, n.jsx)('link', { fetchpriority: 'high', rel: 'preload', href: j, as: 'image' }),
+        });
+      };
+    },
+    190022: (e, t, r) => {
+      'use strict';
+      (r.r(t), r.d(t, { CmsBreadcrumbs: () => f }));
+      var n = r(406029),
+        i = r(735922),
+        o = r(687534),
+        a = r(215075),
+        s = r(149234),
+        l = r(758018),
+        c = r(756500),
+        m = r(898257),
+        d = r(323069),
+        g = r(19831),
+        p = r(461266),
+        u = r(420013),
+        h = r(795669),
+        x = r.n(h);
+      let y = (0, r(807703).n9)()((e) => {
+          let {
+            palette: t,
+            tokens: { spacing: r },
+          } = e;
+          return { breadcrumbs: { color: t.info.main }, separator: { margin: r.xs } };
+        }),
+        f = (e) => {
+          let { breadcrumbs: t, ariaLabel: r, breadcrumbRoutePathProps: h = p.tR } = e,
+            { classes: f } = y(),
+            { isGoodBot: j } = (0, m.l)(),
+            { isBrandEnterprise: w } = (0, d.P)();
+          try {
+            let e = t
+                .map((e) =>
+                  w && '/explore/royalty-free-images' === e.href ? { ...e, href: '/category' } : e
+                )
+                .reverse(),
+              s = (0, g.$$)(e),
+              m = e.pop();
+            return e.length
+              ? (0, n.jsxs)(n.Fragment, {
+                  children: [
+                    j &&
+                      (0, n.jsx)(x(), {
+                        children: (0, n.jsx)('script', {
+                          type: s.type,
+                          dangerouslySetInnerHTML: { __html: s.innerHTML },
+                        }),
+                      }),
+                    (0, n.jsxs)(i.A, {
+                      classes: { separator: f.separator },
+                      separator: (0, n.jsx)(u.c, { fontSize: 'small' }),
+                      'aria-label': r,
+                      children: [
+                        e.map((e, t) => {
+                          let { linkAs: r, id: i, title: a, href: s } = e,
+                            [c, m] = h[t] ? h[t]() : [s, r];
+                          return (0, n.jsx)(
+                            o.A,
+                            {
+                              variant: 'subtitle2',
+                              className: f.breadcrumbs,
+                              children: (0, n.jsx)(l.N, {
+                                linkAs: m,
+                                href: c,
+                                underline: !0,
+                                children: a,
+                              }),
+                            },
+                            i || `breadcrumb_${t}`
+                          );
+                        }),
+                        (0, n.jsx)(o.A, {
+                          color: 'textPrimary',
+                          variant: 'subtitle2',
+                          children: m.title || (0, n.jsx)(a.A, { variant: 'text', width: c.Cw }),
+                        }),
+                      ],
+                    }),
+                  ],
+                })
+              : (0, n.jsx)(n.Fragment, {});
+          } catch (e) {
+            return (0, s.Q9)(e, 'CmsBreadcrumbs');
+          }
+        };
+    },
+    291746: (e, t, r) => {
+      'use strict';
+      (r.r(t), r.d(t, { __N_SSP: () => m, default: () => d }));
+      var n = r(406029),
+        i = r(475386),
+        o = r(727326),
+        a = r(438681),
+        s = r(899906),
+        l = r(461266);
+      let c = (e) => {
+        let { schemas: t = l.tR, keyword: r = '' } = e;
+        return (0, n.jsx)(a.hd, {
+          value: { ...e, shouldIndex: !0 },
+          children: (0, n.jsx)(i.z, { schemas: t, keyword: r }),
+        });
+      };
+      ((c.layout = { type: s.PrimaryLayout }), (c.analyticsData = { pageType: o.c$9 }));
+      var m = !0;
+      let d = c;
+    },
+    420013: (e, t, r) => {
+      'use strict';
+      r.d(t, { c: () => o });
+      var n = r(406029);
+      let i = (0, r(13068).A)(
+          (0, n.jsx)('path', {
+            d: 'M11.467 22.8l1.867 1.867 8-8-8-8-1.867 1.867 6.133 6.133-6.133 6.133z',
+          }),
+          'ChevronRight.svg'
+        ),
+        o = (e) => (0, n.jsx)(i, { viewBox: '0 0 32 32', ...e });
+    },
+    475386: (e, t, r) => {
+      'use strict';
+      r.d(t, { z: () => _ });
+      var n = r(406029),
+        i = r(907422),
+        o = r(926114),
+        a = r(770083),
+        s = r(190022),
+        l = r(942900),
+        c = r(303623),
+        m = r(620134),
+        d = r(184327),
+        g = r(804136),
+        p = r(282420),
+        u = r(268860),
+        h = r(443599),
+        x = r(438681),
+        y = r(898257),
+        f = r(63818),
+        j = r(568880),
+        w = r(455729);
+      let v = (0, r(807703).n9)()((e) => {
+          let { spacing: t } = e;
+          return { searchBarContainer: { paddingBottom: t(4) } };
+        }),
+        b = (e) => {
+          let { t, keyword: r } = e;
+          return {
+            ogTitle: t('feature-category-landing:meta-title', { KEYWORD: r }),
+            ogDescription: t('feature-category-landing:meta-description', { KEYWORD: r }),
+          };
+        },
+        T = { componentProps: {} },
+        _ = (e) => {
+          let { schemas: t, keyword: r, modulesProps: _ = T } = e,
+            { classes: E } = v(),
+            {
+              hero: k,
+              cmsModules: S,
+              breadcrumbs: A,
+              shouldIndex: B,
+              entries: C,
+              statusCode: L,
+              legalText: R,
+            } = (0, x.wC)(),
+            { isGoodBot: O } = (0, y.l)(),
+            { t: N } = (0, j.Bd)(o.RWw),
+            $ = b({ t: N, keyword: r }),
+            [M, I] = (0, f.o)({ triggerOnce: !0, rootMargin: '100000px 0px 50px 0px' }),
+            P = !!L,
+            H = (0, w.useMemo)(
+              () => ({
+                ...k,
+                ...(k?.pricingButton
+                  ? {
+                      buttons: [
+                        {
+                          href: '/pricing',
+                          label: N('feature-category-landing:pricing-button'),
+                          ctaButtonType: 'PrimaryRed',
+                          variant: a.yj,
+                          color: a.lS,
+                          trackAnalytics: { label: 'showPricing', section: 'categoryHero' },
+                        },
+                      ],
+                    }
+                  : {}),
+              }),
+              [k, N]
+            ),
+            F = (0, w.useMemo)(() => (S ? (M || O ? S : [S[0]]) : []), [S, O, M]);
+          return P
+            ? (0, n.jsx)(g.z, { statusCode: L })
+            : (0, n.jsxs)(n.Fragment, {
+                children: [
+                  $ && (0, n.jsx)(d.r, { metadata: $, hero: k, noIndex: !B, schemas: t }),
+                  (0, n.jsx)('div', {
+                    className: E.searchBarContainer,
+                    children: (0, n.jsx)(h.J, {}),
+                  }),
+                  (0, n.jsx)(i.A, {
+                    my: 3,
+                    children: A && (0, n.jsx)(s.CmsBreadcrumbs, { breadcrumbs: A }),
+                  }),
+                  k && (0, n.jsx)(c.CmsHero, { ...H }),
+                  (0, n.jsxs)(i.A, {
+                    mx: { xs: -4, sm: -5 },
+                    children: [
+                      !!F?.length &&
+                        (0, n.jsx)(l._, {
+                          cmsModules: F,
+                          CustomContainerComponent: p.y,
+                          CustomContainerComponentDarkTheme: u.m,
+                          entries: C,
+                          isContentfulLP: !0,
+                          ..._,
+                        }),
+                      (0, n.jsx)('div', { ref: I }),
+                      S && !(M || O) && (0, n.jsx)('div', { style: { minHeight: '400px' } }),
+                    ],
+                  }),
+                  R && (0, n.jsx)(m.s, { legalText: R }),
+                ],
+              });
+        };
+    },
+    511625: (e, t, r) => {
+      'use strict';
+      r.d(t, { GD: () => eg });
+      var n = r(406029),
+        i = r(926114),
+        o = r(707447),
+        a = r(57530),
+        s = r(743381),
+        l = r(813631),
+        c = r(345307),
+        m = r(821790),
+        d = r(581298),
+        g = r(957797),
+        p = r(559044),
+        u = r(233681),
+        h = r(737006),
+        x = r(34504),
+        y = r(323069),
+        f = r(345622),
+        j = r(238638),
+        w = r(691369),
+        v = r(119349),
+        b = r(839047),
+        T = r(82281),
+        _ = r.n(T),
+        E = r(981278),
+        k = r(455729);
+      let S = [m.z4, m.x3],
+        A = [m.EG, m.HT, m.zr, m.lr],
+        B = [l.m$, l.vo, l.KB],
+        {
+          publicRuntimeConfig: {
+            enterpriseBaseUrl: C,
+            shutterstockBaseUrl: L,
+            premiumBeatBaseUrl: R,
+          },
+        } = _()(),
+        O = /\/search(\?|\/).+$/,
+        N = /\/editorial\/(?:video\/)?search\/.+$/,
+        $ = /\/video\/editorial\/?search/,
+        M = /\/music\/search\/ras\/.+$/,
+        I = /\/music\/search(\?|\/).+$/,
+        P = /\/video\/embed\/\d+$/,
+        H = /.*\/edit$/,
+        F = (e) => O.test(e) && !(N.test(e) || M.test(e)),
+        D = (e) => I.test(e) && !(N.test(e) || M.test(e)),
+        Q = (e) => P.test(e),
+        U = (e) => H.test(e),
+        q = (e) => $.test(e),
+        K = (e) => e.replace('video/editorial', 'editorial/video'),
+        G = RegExp(`^/editorial/(${c.C0.join('|')})/`),
+        z = (e) => G.test(e),
+        W = (e) => e.replace(G, '/editorial/livefeed/'),
+        Z = (e, t) => {
+          let r;
+          if (!t) return r;
+          let { query: n } = (0, b.Ru)(t),
+            i = D(t),
+            o = Object.entries(n).reduce((e, t) => {
+              let [r, n] = t;
+              if (
+                (i && A.includes(r) && (e.push([r, Array.isArray(n) ? n[0] : n]), (i = !1)),
+                S.includes(r) && !Array.isArray(n))
+              ) {
+                if (r === m.x3 && B.includes(n)) return e;
+                e.push([r, n]);
+              }
+              return e;
+            }, []);
+          if (o && !o.length) return r;
+          let a = Object.fromEntries(o.sort());
+          return (0, b.FS)({ pathname: e, query: a });
+        },
+        Y = function () {
+          let { asset: e } = arguments.length > 0 && void 0 !== arguments[0] ? arguments[0] : {},
+            { isBrandSstk: t } = (0, y.P)(),
+            r = t ? L : C,
+            { asPath: n } = (0, E.useRouter)(),
+            { locale: i } = (0, d.Y)(),
+            {
+              query: o,
+              spellcheckInfo: { spellcheckedQuery: a = '', origResultsCount: s },
+            } = (0, g.Kg)(),
+            { encodeSearchTerm: c } = (0, x.B)(),
+            [m] = (0, h.$m)({ asset: e });
+          return {
+            getCanonicalLink: (0, k.useCallback)(
+              function () {
+                let {
+                    appendLocale: t,
+                    code: d,
+                    isPremiumBeatTrack: g,
+                    overriddenSearchTerm: p,
+                  } = arguments.length > 0 && void 0 !== arguments[0] ? arguments[0] : {},
+                  h = (0, b.Ru)((0, v.YT)(n))?.pathname ?? '',
+                  x = h;
+                if (
+                  (q(x) && (x = K(x)),
+                  z(x) && (x = W(x)),
+                  '/' !== m && Q(x) && (x = m),
+                  U(x) && (x = '/' !== m ? m : x.replace('/edit', '')),
+                  F(n))
+                ) {
+                  let e = Z(h, n);
+                  e && (x = e);
+                  let t = (0, u.iC)(p || (0 === s && a ? a : o), i, j.G),
+                    { query: r } = (0, b.Ru)(n);
+                  r.image_type === l.KB && r.entity && '' === t
+                    ? ([x] = (0, f.ll)())
+                    : (x = (0, v.B)({ path: x, term: c(t) }));
+                }
+                return ('/templates/search' === x && (x = '/templates'), g)
+                  ? ((x = `/royalty-free-tracks/${(0, v.Db)(e.title)}`),
+                    (0, v.ud)(R + x, t && (d || i)))
+                  : (0, v.ud)(r + x, t && (d || i));
+              },
+              [e, n, r, i, m, s, a, o, c]
+            ),
+          };
+        },
+        X = function () {
+          let {
+              overriddenSearchTerm: e,
+              asset: t,
+              assets: r,
+              effectiveLanguage: n,
+            } = arguments.length > 0 && void 0 !== arguments[0] ? arguments[0] : {},
+            { query: i, queryTranslations: o } = (0, g.Kg)(),
+            { getCanonicalLink: a } = Y({ asset: t }),
+            { asPath: s } = (0, E.useRouter)(),
+            { locale: l } = (0, d.Y)(),
+            { encodeSearchTerm: c } = (0, x.B)(),
+            m = a({
+              appendLocale: !0,
+              isPremiumBeatTrack: (0, p.pj)({ track: t }),
+              overriddenSearchTerm: e,
+            }),
+            u = F(s),
+            h =
+              !u || ('en' === l && r && r.length > 0)
+                ? a()
+                : 'en' !== l && o.en
+                  ? a({ code: 'en', appendLocale: !0, overriddenSearchTerm: o.en })
+                  : void 0,
+            y = w.Hn.reduce((e, t) => {
+              if (!o[t] && l !== t && u) return e;
+              let r = o[t] || o.en,
+                n = a({ code: t, appendLocale: !0 });
+              return (
+                u && r && (n = n.replace(/\/search\/[^/?]*/, `/search/${c(r)}`)),
+                (e[t] = { href: n, hrefLang: t }),
+                e
+              );
+            }, {});
+          (F(s) && y[l]?.href !== m && ((y = {}), (h = '')),
+            F(s) && 1 === Object.keys(y).length && y[l] && (y = {}),
+            u && void 0 === y[l] && (y[l] = { href: m, hrefLang: l }));
+          let f = n;
+          return (
+            u &&
+              n &&
+              'en' !== n &&
+              ['el', 'ja', 'ko', 'ru', 'th', 'zh'].includes(l) &&
+              /^[\w\s\-_.,!?$@%#`~=+/\\*^()]*$/.test(i) &&
+              (f = 'en'),
+            u &&
+              f &&
+              f !== l &&
+              ('en' === f || (0, v.Wr)({ effectiveLanguage: f })) &&
+              void 0 === y[f] &&
+              ((y[f] = { href: a({ code: f, appendLocale: !0 }), hrefLang: f }),
+              void 0 === y[l] && (y[l] = { href: m, hrefLang: l })),
+            { altDefaultLink: h, altLinks: Object.values(y), canonicalLink: m }
+          );
+        };
+      var V = r(633449),
+        J = r(786921),
+        ee = r(461266),
+        et = r(795669),
+        er = r.n(et),
+        en = r(568880);
+      let ei = 'Shutterstock',
+        eo = 'Shutterstock Editorial',
+        ea = [
+          ['twitter:site', '@shutterstock'],
+          ['twitter:card', 'summary_large_image'],
+          ['google-site-verification', '1wsiFwGziBzqCcMecpMDlbZgN1jKL-Fh6m05QXpg4QY'],
+        ],
+        es = (e) => {
+          let { isBrandSstk: t } = e,
+            r = (0, V.eE)();
+          return t && r ? eo : ei;
+        },
+        el = (e) => {
+          let { metaTitle: t, isBrandSstk: r, isSEO2077ExperimentEligible: n } = e,
+            i = (0, V.eE)() && r;
+          return n ? t : t.includes(ei) ? (i ? t.replace(ei, eo) : t) : `${t} | ${i ? eo : ei}`;
+        },
+        ec = (e, t, r) => ({
+          title: t || r('home:lihp_meta_title'),
+          description: e || r('home:lihp_meta_description'),
+        }),
+        em = (e) => {
+          let { statusCode: t } = e,
+            { t: r } = (0, en.Bd)([i.HFO, i.kr_]),
+            { isBrandSstk: o, isBrandEnterprise: s } = (0, y.P)(),
+            l = (0, J.ab)(t) ? t : a.Q,
+            c = r(`error:status_${l}_title`),
+            m = r(
+              s && t === a.Vv ? `${i.kr_}::ent:no_access_content` : `error:status_${l}_subtitle`
+            ),
+            d = el({ metaTitle: c, isBrandSstk: o });
+          return (0, n.jsxs)(er(), {
+            children: [
+              (0, n.jsx)('title', { children: d }, 'title'),
+              (0, n.jsx)('meta', { name: 'description', content: m }, 'description'),
+              (0, n.jsx)('meta', { content: d, property: 'og:title' }, 'og:title'),
+              (0, n.jsx)('meta', { content: m, property: 'og:description' }, 'og:description'),
+            ],
+          });
+        },
+        ed = (e) => {
+          let { headProps: t, seoServiceData: r, isBrandEnterprise: i } = e,
+            { noIndex: a, noIndexNoFollow: s } = t,
+            l = '';
+          if (!i && r?.isSeoServiceActive && r?.disposition)
+            r.disposition === o.hx
+              ? (l = 'index')
+              : r.disposition === o.r8
+                ? (l = 'noindex,nofollow')
+                : r.disposition === o.lg
+                  ? (l = 'noindex')
+                  : r.disposition === o.ZD && (l = 'noindex,follow');
+          else {
+            if (i) return { robotsMetaTag: null, googlebotMetaTag: null };
+            l = s ? 'noindex,nofollow' : a ? 'noindex' : 'max-image-preview:large';
+          }
+          return {
+            robotsMetaTag: (0, n.jsx)('meta', { name: 'robots', content: l }, 'robots'),
+            googlebotMetaTag:
+              'max-image-preview:large' === l
+                ? null
+                : (0, n.jsx)('meta', { name: 'googlebot', content: l }, 'googlebot'),
+          };
+        },
+        eg = (e) => {
+          let {
+              assets: t = ee.tR,
+              description: r,
+              image: l = ee.vB,
+              title: c,
+              schemas: m,
+              statusCode: d,
+              noIndex: g = !1,
+              noIndexNoFollow: p = !1,
+              keywords: u = ee.tR,
+              isAdultContent: h = !1,
+              contributor: x = ee.vB,
+              children: f,
+              ogMetadata: j = ee.vB,
+              seoServiceData: w = ee.vB,
+              asset: v,
+              pageDescription: b,
+              isSEO2077ExperimentEligible: T = !1,
+              effectiveLanguage: _,
+            } = e,
+            { t: E } = (0, en.Bd)(i.K0D),
+            { autocorrection: k } = (0, s.E)(),
+            {
+              altDefaultLink: S,
+              altLinks: A,
+              canonicalLink: B,
+            } = X({
+              overriddenSearchTerm: w?.taxonomyCanonical || k,
+              effectiveLanguage: _,
+              asset: v,
+              assets: t,
+            }),
+            { isBrandSstk: C, isBrandEnterprise: L } = (0, y.P)(),
+            { title: R, description: O } = ec(r, c, E),
+            N = es({ isBrandSstk: C }),
+            $ = el({ metaTitle: R, isBrandSstk: C, isSEO2077ExperimentEligible: T }),
+            { robotsMetaTag: M, googlebotMetaTag: I } = ed({
+              headProps: { noIndex: g, noIndexNoFollow: p },
+              seoServiceData: w,
+              isBrandEnterprise: L,
+            }),
+            P = (w?.disposition === o.R6 && w?.canonicalURL) || B;
+          return (0, n.jsxs)(n.Fragment, {
+            children: [
+              d > a.o3
+                ? (0, n.jsx)(em, { statusCode: d })
+                : (0, n.jsxs)(er(), {
+                    children: [
+                      f,
+                      ' ',
+                      (0, n.jsx)('title', { children: $ }, 'title'),
+                      (0, n.jsx)('meta', { name: 'description', content: b || O }, 'description'),
+                      (0, n.jsx)(
+                        'meta',
+                        { content: j?.ogTitle ? j?.ogTitle : $, property: 'og:title' },
+                        'og:title'
+                      ),
+                      (0, n.jsx)(
+                        'meta',
+                        {
+                          content: j?.ogDescription ? j?.ogDescription : O,
+                          property: 'og:description',
+                        },
+                        'og:description'
+                      ),
+                    ],
+                  }),
+              (0, n.jsxs)(er(), {
+                children: [
+                  ea.map((e) => {
+                    let [t, r] = e;
+                    return (0, n.jsx)('meta', { name: t, content: r }, t);
+                  }),
+                  (0, n.jsx)('meta', { content: 'website', property: 'og:type' }, 'type'),
+                  (0, n.jsx)('meta', { content: N, property: 'og:site_name' }, 'site'),
+                  (0, n.jsx)('meta', { content: '604800', property: 'og:ttl' }, 'og:ttl'),
+                  x.twitterUsername &&
+                    (0, n.jsx)(
+                      'meta',
+                      { content: `@${x.twitterUsername}`, name: 'twitter:creator' },
+                      'twitter:creator'
+                    ),
+                  x.twitterTitle &&
+                    (0, n.jsx)(
+                      'meta',
+                      { content: x.twitterTitle, name: 'twitter:title' },
+                      'twitter:title'
+                    ),
+                  x.twitterDescription &&
+                    (0, n.jsx)(
+                      'meta',
+                      { content: x.twitterDescription, name: 'twitter:description' },
+                      'twitter:description'
+                    ),
+                  l.url && (0, n.jsx)('meta', { content: l.url, property: 'og:image' }, 'og:image'),
+                  l.width &&
+                    (0, n.jsx)(
+                      'meta',
+                      { content: Math.round(l.width), property: 'og:image:width' },
+                      'og:image:width'
+                    ),
+                  l.height &&
+                    (0, n.jsx)(
+                      'meta',
+                      { content: Math.round(l.height), property: 'og:image:height' },
+                      'og:image:height'
+                    ),
+                  l?.imageSmall?.url &&
+                    (0, n.jsx)(
+                      'meta',
+                      { content: l.imageSmall.url, property: 'og:image' },
+                      'og:imageSmall'
+                    ),
+                  l?.imageSmall?.width &&
+                    (0, n.jsx)(
+                      'meta',
+                      { content: Math.round(l.imageSmall.width), property: 'og:image:width' },
+                      'og:imageSmall:width'
+                    ),
+                  l?.imageSmall?.height &&
+                    (0, n.jsx)(
+                      'meta',
+                      { content: Math.round(l.imageSmall.height), property: 'og:image:height' },
+                      'og:imageSmall:height'
+                    ),
+                  l.alt &&
+                    (0, n.jsx)(
+                      'meta',
+                      { content: l.alt, property: 'og:image:alt' },
+                      'og:image:alt'
+                    ),
+                  l?.videoUrl &&
+                    (0, n.jsxs)(n.Fragment, {
+                      children: [
+                        (0, n.jsx)(
+                          'meta',
+                          { content: l.videoUrl, property: 'og:video:url' },
+                          'og:video:url'
+                        ),
+                        (0, n.jsx)(
+                          'meta',
+                          { content: l.videoUrl, property: 'og:video:secure_url' },
+                          'og:video:secure_url'
+                        ),
+                        l.width &&
+                          (0, n.jsx)(
+                            'meta',
+                            { content: l.width, property: 'og:video:width' },
+                            'og:video:width'
+                          ),
+                        l.height &&
+                          (0, n.jsx)(
+                            'meta',
+                            { content: l.height, property: 'og:video:height' },
+                            'og:video:height'
+                          ),
+                        (0, n.jsx)(
+                          'meta',
+                          { content: l.videoUrl, property: 'twitter:player' },
+                          'twitter:player'
+                        ),
+                      ],
+                    }),
+                  P && (0, n.jsx)('meta', { content: P, property: 'og:url' }, 'og:url'),
+                  h ? (0, n.jsx)('meta', { name: 'rating', content: 'adult' }) : null,
+                  m &&
+                    m.map((e) => {
+                      let { type: t, contentType: r, innerHTML: i } = e;
+                      return (0, n.jsx)(
+                        'script',
+                        { type: t, dangerouslySetInnerHTML: { __html: i } },
+                        r
+                      );
+                    }),
+                  P && (0, n.jsx)('link', { rel: 'canonical', href: P }),
+                  w?.seo1830HrefLang &&
+                    (0, n.jsx)('link', {
+                      rel: 'alternate',
+                      href: w?.seo1830Href,
+                      hrefLang: w?.seo1830HrefLang,
+                    }),
+                  A &&
+                    A.filter((e) => !w?.seo1830HrefLang || 'en' !== e.hrefLang).map((e) => {
+                      let { href: t, hrefLang: r } = e;
+                      return (0, n.jsx)('link', { rel: 'alternate', href: t, hrefLang: r }, r);
+                    }),
+                  S &&
+                    !w?.seo1830HrefLang &&
+                    (0, n.jsx)('link', { rel: 'alternate', href: S, hrefLang: 'x-default' }),
+                  !!u?.length && (0, n.jsx)('meta', { name: 'keywords', content: u.join(', ') }),
+                  M,
+                  I,
+                ],
+              }),
+            ],
+          });
+        };
+    },
+    620134: (e, t, r) => {
+      'use strict';
+      r.d(t, { s: () => m });
+      var n = r(406029),
+        i = r(907422),
+        o = r(687534),
+        a = r(149234),
+        s = r(52044),
+        l = r(472527);
+      let c = (0, r(807703).n9)()((e) => {
+          let {
+            tokens: { opacity: t },
+          } = e;
+          return {
+            box: {
+              textAlign: 'center',
+              justifyContent: 'center',
+              marginTop: '3rem',
+              marginBottom: '3rem',
+              display: 'flex',
+              flexDirection: 'column',
+              opacity: t[60],
+            },
+          };
+        }),
+        m = (e) => {
+          let { legalText: t = null, isFullWidth: r = !1, uniformModuleSpacing: m } = e,
+            { classes: d } = c();
+          try {
+            return (
+              t &&
+              (0, n.jsx)(l.R, {
+                cmsBgContainerProps: {
+                  index: 0,
+                  isFullWidth: r,
+                  uniformModuleSpacing: m,
+                  respectLastItem: !1,
+                },
+                children: (0, n.jsx)(i.A, {
+                  className: d.box,
+                  children: (0, n.jsx)(s._, {
+                    stringToTransform: t,
+                    Component: (0, n.jsx)(o.A, { color: 'primary', variant: 'subtitle2' }),
+                  }),
+                }),
+              })
+            );
+          } catch (e) {
+            return (0, a.Q9)(e, 'CmsLegalText');
+          }
+        };
+    },
+    725466: (e, t, r) => {
+      (window.__NEXT_P = window.__NEXT_P || []).push([
+        '/category/[category]',
+        function () {
+          return r(291746);
+        },
+      ]);
+    },
+    743381: (e, t, r) => {
+      'use strict';
+      r.d(t, { E: () => o });
+      var n = r(957797),
+        i = r(106222);
+      let o = () => {
+        let { spellcheckInfo: e } = (0, n.Kg)();
+        return (0, i.h9)({ spellcheckInfo: e });
+      };
+    },
+    786921: (e, t, r) => {
+      'use strict';
+      r.d(t, { IK: () => m, PQ: () => s, ab: () => c, hm: () => a, tP: () => l });
+      var n = r(57530);
+      let i = [n.Vv, n.Oe, n.lq, n.bP],
+        o = [...i, n.Q],
+        a = (e) => {
+          let t = 'string' == typeof e ? parseInt(e, 10) : e;
+          return i.includes(t);
+        },
+        s = (e) => {
+          let t = 'string' == typeof e ? parseInt(e, 10) : e;
+          return n.Oe === t;
+        },
+        l = (e) => {
+          let t = 'string' == typeof e ? parseInt(e, 10) : e;
+          return [n.Vv, n.lq].includes(t);
+        },
+        c = (e) => o.includes(parseInt(e, 10)),
+        m = (e) => {
+          let { error: t } = e;
+          if ('string' == typeof t) return 500;
+          if (t?.code === 'ERR_NOCK_NO_MATCH') return 417;
+          if (t?.message?.startsWith('timeout')) return 524;
+          if (t?.code === 'ENETUNREACH') return 419;
+          if ('EOPENBREAKER' === t.code) return 518;
+          let { status: r } = t?.response || t;
+          return r || 500;
+        };
+    },
+    942900: (e, t, r) => {
+      'use strict';
+      r.d(t, { _: () => i });
+      var n = r(571024);
+      let i = r.n(n)()(
+        () =>
+          r
+            .e(57152)
+            .then(r.bind(r, 293252))
+            .then((e) => ({ default: e.CmsDynamicModules })),
+        { loadableGenerated: { webpack: () => [293252] } }
+      );
+    },
+  },
+  (e) => {
+    var t = (t) => e((e.s = t));
+    (e.O(
+      0,
+      [
+        27510, 10382, 21376, 56171, 72423, 63714, 14576, 32231, 48073, 87025, 3623, 72076, 43630,
+        37400, 90636, 46593, 38792,
+      ],
+      () => t(725466)
+    ),
+      (_N_E = e.O()));
+  },
+]);
 //# sourceMappingURL=[category]-1bd3e4dc67820c48.js.map

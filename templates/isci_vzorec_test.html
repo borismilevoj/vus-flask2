@@ -2,85 +2,85 @@
 {% block title %}Testiranje iskanja{% endblock %}
 
 {% block content %}
-<h2 class="text-center mt-4">TEST: Iskanje po vzorcu</h2>
-<div class="d-flex justify-content-center gap-3 mt-3">
-  <button class="btn btn-success" onclick="isciVzorec()">IŠČI</button>
-  <button class="btn btn-warning" onclick="ponastaviIskanje()">PONASTAVI</button>
-</div>
-<div class="form-group text-center mt-3">
-  <input type="text" id="dodatno" class="form-control" placeholder="Dodatno (neobvezno)">
-</div>
-<div class="text-center mt-3" id="inputsContainer"></div>
-<div class="result-container container mt-4" id="rezultati"></div>
+  <h2 class="text-center mt-4">TEST: Iskanje po vzorcu</h2>
+  <div class="d-flex justify-content-center gap-3 mt-3">
+    <button class="btn btn-success" onclick="isciVzorec()">IŠČI</button>
+    <button class="btn btn-warning" onclick="ponastaviIskanje()">PONASTAVI</button>
+  </div>
+  <div class="form-group text-center mt-3">
+    <input type="text" id="dodatno" class="form-control" placeholder="Dodatno (neobvezno)" />
+  </div>
+  <div class="text-center mt-3" id="inputsContainer"></div>
+  <div class="result-container container mt-4" id="rezultati"></div>
 {% endblock %}
 
 {% block scripts %}
-<script>
-  document.addEventListener("DOMContentLoaded", function () {
-    generirajPolja();
-  });
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      generirajPolja();
+    });
 
-  function generirajPolja() {
-    const container = document.getElementById("inputsContainer");
-    container.innerHTML = "";
-    for (let i = 0; i < 5; i++) {
-      const input = document.createElement("input");
-      input.type = "text";
-      input.maxLength = 1;
-      input.style.width = "50px";
-      input.style.height = "50px";
-      input.style.textAlign = "center";
-      input.style.fontSize = "1.5rem";
-      input.style.margin = "5px";
-      container.appendChild(input);
+    function generirajPolja() {
+      const container = document.getElementById('inputsContainer');
+      container.innerHTML = '';
+      for (let i = 0; i < 5; i++) {
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.maxLength = 1;
+        input.style.width = '50px';
+        input.style.height = '50px';
+        input.style.textAlign = 'center';
+        input.style.fontSize = '1.5rem';
+        input.style.margin = '5px';
+        container.appendChild(input);
+      }
     }
-  }
 
-  window.isciVzorec = function () {
-    const crke = Array.from(document.querySelectorAll('#inputsContainer input'))
-      .map(input => input.value || '_')
-      .join('');
+    window.isciVzorec = function () {
+      const crke = Array.from(document.querySelectorAll('#inputsContainer input'))
+        .map((input) => input.value || '_')
+        .join('');
 
-    const dodatno = document.getElementById('dodatno').value;
+      const dodatno = document.getElementById('dodatno').value;
 
-    alert("Pošiljam: " + crke + " | dodatno: " + dodatno);
+      alert('Pošiljam: ' + crke + ' | dodatno: ' + dodatno);
 
-    fetch('/isci_vzorec', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ vzorec: crke, dodatno: dodatno })
-    })
-      .then(response => {
-        if (!response.ok) throw new Error("Napaka " + response.status);
-        return response.json();
+      fetch('/isci_vzorec', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ vzorec: crke, dodatno: dodatno }),
       })
-      .then(data => {
-        console.log("Podatki:", data);
-        const container = document.getElementById('rezultati');
-        container.innerHTML = '';
+        .then((response) => {
+          if (!response.ok) throw new Error('Napaka ' + response.status);
+          return response.json();
+        })
+        .then((data) => {
+          console.log('Podatki:', data);
+          const container = document.getElementById('rezultati');
+          container.innerHTML = '';
 
-        if (data.length > 0) {
-          container.innerHTML = `<div class="alert alert-info">Najdeno: ${data.length} zadetkov</div>`;
-          let tabela = `<table class="table table-bordered"><thead><tr><th>Geslo</th><th>Opis</th></tr></thead><tbody>`;
-          data.forEach(r => {
-            tabela += `<tr><td>${r.GESLO}</td><td>${r.OPIS}</td></tr>`;
-          });
-          tabela += '</tbody></table>';
-          container.innerHTML += tabela;
-        } else {
-          container.innerHTML = '<div class="alert alert-warning">Ni najdenih rezultatov.</div>';
-        }
-      })
-      .catch(err => {
-        console.error("NAPAKA PRI FETCHU:", err);
-        alert("Napaka: " + err.message);
-      });
-  }
+          if (data.length > 0) {
+            container.innerHTML = `<div class="alert alert-info">Najdeno: ${data.length} zadetkov</div>`;
+            let tabela = `<table class="table table-bordered"><thead><tr><th>Geslo</th><th>Opis</th></tr></thead><tbody>`;
+            data.forEach((r) => {
+              tabela += `<tr><td>${r.GESLO}</td><td>${r.OPIS}</td></tr>`;
+            });
+            tabela += '</tbody></table>';
+            container.innerHTML += tabela;
+          } else {
+            container.innerHTML = '<div class="alert alert-warning">Ni najdenih rezultatov.</div>';
+          }
+        })
+        .catch((err) => {
+          console.error('NAPAKA PRI FETCHU:', err);
+          alert('Napaka: ' + err.message);
+        });
+    };
 
-  window.ponastaviIskanje = function () {
-    document.getElementById('dodatno').value = '';
-    generirajPolja();
-    document.getElementById('rezultati').innerHTML = '';
-  }
-</script>
+    window.ponastaviIskanje = function () {
+      document.getElementById('dodatno').value = '';
+      generirajPolja();
+      document.getElementById('rezultati').innerHTML = '';
+    };
+  </script>
 {% endblock %}
