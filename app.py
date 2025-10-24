@@ -271,21 +271,21 @@ GESLO = "Tifumannam1_vus-flask2.onrender.com"
 
 
 app = Flask(__name__, static_folder="static", static_url_path="/static")
-# trailing slash naj ne povzroča 404 (/home in /home/)
 app.url_map.strict_slashes = False
 
-# /  → Home (glavna stran)
-@app.get("/", endpoint="home")
-def home():
+from flask import render_template, redirect, url_for, request
+
+# /  → glavna stran (brez endpointa 'home', da se izognemo konfliktu)
+@app.get("/", endpoint="index")
+def index():
     return render_template("home.html")
 
-# /home → preusmeri na /
+# /home → samo preusmeri na /
 @app.get("/home", endpoint="home_redirect")
 def home_redirect():
-    return redirect(url_for("home"), code=302)
+    return redirect(url_for("index"), code=302)
 
 # (opcijsko) HTML naj bo svež, statika naj se kešira
-from flask import request
 @app.after_request
 def _no_cache_html(resp):
     ctype = (resp.headers.get("Content-Type") or "").lower()
@@ -293,6 +293,7 @@ def _no_cache_html(resp):
         resp.headers["Cache-Control"] = "no-store"
         resp.headers.pop("ETag", None)
     return resp
+
 
 @app.after_request
 def _no_cache_html(resp):
