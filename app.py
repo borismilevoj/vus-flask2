@@ -819,6 +819,9 @@ def krizanka():
     js_url, xml_url, resolved_date = _cc_urls(d)
     return render_template("krizanka.html", js_url=js_url, xml_url=xml_url, datum=resolved_date)
 
+# alias za stare templejte: url_for('prikazi_krizanko') → /krizanka
+app.add_url_rule("/krizanka", endpoint="prikazi_krizanko", view_func=krizanka)
+
 def zberi_pretekle(base: Path):
     """Prebere datoteke iz korena in YYYY-MM podmap, filtrira < danes."""
     today = date.today()
