@@ -270,6 +270,29 @@ def _download_and_swap_db(src_url_or_path: str, dst_path: str | Path) -> tuple[b
 GESLO = "Tifumannam1_vus-flask2.onrender.com"
 
 app = Flask(__name__, static_folder='static', static_url_path='/static')
+
+@app.get("/home")
+def home():
+    return render_template("home.html")
+
+
+@app.after_request
+def _no_cache_html(resp):
+    # HTML naj bo svež (odpravi 502 zaradi starega edge/brskalniškega cache-a)
+    # statika ostane keširana kot doslej
+    ctype = (resp.headers.get("Content-Type") or "").lower()
+    if "text/html" in ctype:
+        resp.headers["Cache-Control"] = "no-store"
+        resp.headers.pop("ETag", None)  # opcijsko: še bolj prisili svežino
+    return resp
+
+from flask import request
+@app.after_request
+def _no_cache_html(resp):
+    # HTML naj bo svež, statika naj se lahko kešira
+    if resp.content_type and 'text/html' in resp.content_type:
+        resp.headers['Cache-Control'] = 'no-store'
+    return resp
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 app.secret_key = "Tifumannam1_vus-flask2.onrender.com"
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
