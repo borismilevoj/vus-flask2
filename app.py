@@ -286,25 +286,6 @@ def home_redirect():
     return redirect(url_for("index"), code=302)
 
 # (opcijsko) HTML naj bo svež, statika naj se kešira
-@app.after_request
-def _no_cache_html(resp):
-    ctype = (resp.headers.get("Content-Type") or "").lower()
-    if "text/html" in ctype:
-        resp.headers["Cache-Control"] = "no-store"
-        resp.headers.pop("ETag", None)
-    return resp
-
-
-@app.after_request
-def _no_cache_html(resp):
-    # HTML naj bo svež (odpravi 502 zaradi starega edge/brskalniškega cache-a)
-    # statika ostane keširana kot doslej
-    ctype = (resp.headers.get("Content-Type") or "").lower()
-    if "text/html" in ctype:
-        resp.headers["Cache-Control"] = "no-store"
-        resp.headers.pop("ETag", None)  # opcijsko: še bolj prisili svežino
-    return resp
-
 from flask import request
 @app.after_request
 def _no_cache_html(resp):
@@ -407,7 +388,7 @@ def login():
     if request.method == 'POST':
         if request.form.get('geslo') == GESLO:
             session['prijavljen'] = True
-            next_url = request.args.get('next') or url_for('home')
+            next_url = request.args.get('next') or url_for('index')
             return redirect(next_url)
         else:
             napaka = "Napačno geslo."
@@ -777,30 +758,6 @@ def krizanka_static_file(filename):
     pot = os.path.join('static', 'CrosswordCompilerApp')
     return send_from_directory(pot, filename)
 
-@app.route('/krizanka', defaults={'datum': None})
-@app.route('/krizanka/<datum>')
-def prikazi_krizanko(datum):
-    if datum is None:
-        datum = datetime.today().strftime('%Y-%m-%d')
-    ime_datoteke = f"{datum}.xml"
-    osnovna_pot = os.path.dirname(os.path.abspath(__file__))
-    mesec = datum[:7]
-    pot_arhiv = os.path.join(osnovna_pot, 'static', 'CrosswordCompilerApp', mesec, ime_datoteke)
-    pot_glavna = os.path.join(osnovna_pot, 'static', 'CrosswordCompilerApp', ime_datoteke)
-    if os.path.exists(pot_arhiv):
-        pot_do_datoteke = pot_arhiv
-    elif os.path.exists(pot_glavna):
-        pot_do_datoteke = pot_glavna
-    else:
-        return render_template('napaka.html', sporocilo="Križanka za ta datum še ni objavljena.")
-    if pridobi_podatke_iz_xml is None:
-        return render_template('napaka.html', sporocilo="Modul za branje križank ni na voljo.")
-    try:
-        podatki = pridobi_podatke_iz_xml(pot_do_datoteke)
-    except Exception as e:
-        import traceback; traceback.print_exc()
-        return render_template('napaka.html', sporocilo=f"Napaka pri branju križanke: {e}")
-    return render_template('krizanka.html', podatki=podatki, datum=datum)
 
 # ===== ARHIV KRIŽANK (kanonične in legacy poti) ==============================
 CC_BASE = Path(app.root_path) / "static" / "CrosswordCompilerApp"
@@ -811,8 +768,6 @@ from pathlib import Path
 from datetime import date, datetime
 from flask import url_for, render_template, request, abort, send_from_directory
 import os
-
-CC_BASE = Path(app.root_path) / "static" / "CrosswordCompilerApp"
 
 def _latest_available():
     """Najdi najnovejši datum, za katerega obstajata .js in .xml."""
