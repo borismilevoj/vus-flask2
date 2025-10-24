@@ -381,7 +381,7 @@ def diag_sync_check():
         return jsonify(info), 502
 
 # ===== Domača stran ===========================================================
-@app.get("/", endpoint="home")
+@app.get("/")
 def home():
     return redirect(url_for("prikazi_krizanko"))
 
