@@ -163,8 +163,8 @@ document.addEventListener('DOMContentLoaded', function(){
 
   // GA open (če je na voljo)
   try{
-    if(typeof gtagEvent==='function'){ gtagEvent('crossword_open', {date:'{{ datum }}'}); }
-    else if(typeof gtag==='function'){ gtag('event','crossword_open',{date:'{{ datum }}'}); }
+    if(typeof gtagEvent==='function'){ gtagEvent('crossword_open', {date:'{{ datum|default('', true) }}'}); }
+    else if(typeof gtag==='function'){ gtag('event','crossword_open',{date:'{{ datum|default('', true) }}'}); }
   }catch(_){}
 
   grid.style.gridTemplateColumns=`repeat(${width}, 40px)`;
@@ -219,73 +219,71 @@ document.addEventListener('DOMContentLoaded', function(){
   }
 
   window.prikaziOpis = function (x, y) {
-  aktivniX = x; aktivniY = y;
-  const kartica = document.getElementById('opisKartica');
-  kartica.style.display = "block";
-  document.querySelectorAll('.cell').forEach(c => c.classList.remove('highlight'));
+    aktivniX = x; aktivniY = y;
+    const kartica = document.getElementById('opisKartica');
+    kartica.style.display = "block";
+    document.querySelectorAll('.cell').forEach(c => c.classList.remove('highlight'));
 
-  const g = gesla_opisi.find(t =>
-    t.smer === trenutnaSmer &&
-    ((t.smer === 'across' && t.y === y && x >= t.x && x < t.x + t.dolzina) ||
-     (t.smer === 'down'  && t.x === x && y >= t.y && y < t.y + t.dolzina))
-  );
+    const g = gesla_opisi.find(t =>
+      t.smer === trenutnaSmer &&
+      ((t.smer === 'across' && t.y === y && x >= t.x && x < t.x + t.dolzina) ||
+       (t.smer === 'down'  && t.x === x && y >= t.y && y < t.y + t.dolzina))
+    );
 
-  const opisPolje = document.getElementById('karticaOpis');
-  const slikaImg  = document.getElementById('karticaSlika');
+    const opisPolje = document.getElementById('karticaOpis');
+    const slikaImg  = document.getElementById('karticaSlika');
 
-  if (g) {
-    // highlight aktivnega gesla
-    for (let i = 0; i < g.dolzina; i++) {
-      const tx = (g.smer === 'across') ? g.x + i : g.x;
-      const ty = (g.smer === 'down')  ? g.y + i : g.y;
-      const inp = document.querySelector(`input[data-x='${tx}'][data-y='${ty}']`);
-      if (inp) inp.parentElement.classList.add('highlight');
-    }
-
-    // opis
-    opisPolje.textContent = `${g.stevilka}. ${g.opis}`;
-
-    // --- SLIKA: najprej OPIS+REŠITEV, potem fallback na samo OPIS ---
-    const exti = ['jpg', 'png', 'webp'];
-    const baseOpis = normalizirajNaziv(g.opis);
-    const baseFull = g.solution ? `${baseOpis}_${normalizirajNaziv(g.solution)}` : null;
-
-    function nalozi(indExt, faza) {
-      // faza 0 = poskusi OPIS+REŠITEV (če imamo solution), faza 1 = samo OPIS
-      const base = (faza === 0 && baseFull) ? baseFull : baseOpis;
-      if (indExt >= exti.length) {
-        if (faza === 0 && baseFull) return nalozi(0, 1); // preklop na fallback
-        slikaImg.src = ""; // nič ni našel
-        return;
+    if (g) {
+      // highlight aktivnega gesla
+      for (let i = 0; i < g.dolzina; i++) {
+        const tx = (g.smer === 'across') ? g.x + i : g.x;
+        const ty = (g.smer === 'down')  ? g.y + i : g.y;
+        const inp = document.querySelector(`input[data-x='${tx}'][data-y='${ty}']`);
+        if (inp) inp.parentElement.classList.add('highlight');
       }
-      const pot = `/static/Images/${base}.${exti[indExt]}`;
-      slikaImg.src = pot;
-      slikaImg.onerror = () => nalozi(indExt + 1, faza);
+
+      // opis
+      opisPolje.textContent = `${g.stevilka}. ${g.opis}`;
+
+      // --- SLIKA: najprej OPIS+REŠITEV, potem fallback na samo OPIS ---
+      const exti = ['jpg', 'png', 'webp'];
+      const baseOpis = normalizirajNaziv(g.opis);
+      const baseFull = g.solution ? `${baseOpis}_${normalizirajNaziv(g.solution)}` : null;
+
+      function nalozi(indExt, faza) {
+        // faza 0 = poskusi OPIS+REŠITEV (če imamo solution), faza 1 = samo OPIS
+        const base = (faza === 0 && baseFull) ? baseFull : baseOpis;
+        if (indExt >= exti.length) {
+          if (faza === 0 && baseFull) return nalozi(0, 1); // preklop na fallback
+          slikaImg.src = ""; // nič ni našel
+          return;
+        }
+        const pot = `/static/Images/${base}.${exti[indExt]}`;
+        slikaImg.src = pot;
+        slikaImg.onerror = () => nalozi(indExt + 1, faza);
+      }
+
+      nalozi(0, 0);
+    } else {
+      opisPolje.textContent = 'Klikni na polje za prikaz opisa';
+      slikaImg.src = "";
     }
+  };
 
-    nalozi(0, 0);
-  } else {
-    opisPolje.textContent = 'Klikni na polje za prikaz opisa';
-    slikaImg.src = "";
+  // ✓ končana križanka = noben input ni prazen in ni rdečih polj
+  function checkSolved() {
+    const inputs = document.querySelectorAll('#grid input');
+    for (const inp of inputs) {
+      if (!inp.value) return false;
+      if (inp.classList.contains('incorrect')) return false;
+    }
+    if (!window.__cwDoneOnce) {
+      window.__cwDoneOnce = true;
+      try { trackCrosswordComplete(); } catch (_) {}
+    }
+    return true;
   }
-};
 
-// ✓ končana križanka = noben input ni prazen in ni rdečih polj
-function checkSolved() {
-  const inputs = document.querySelectorAll('#grid input');
-  // če je katerokoli polje prazno ali rdeče -> ni rešeno
-  for (const inp of inputs) {
-    if (!inp.value) return false;
-    if (inp.classList.contains('incorrect')) return false;
-  }
-  // enkraten trigger (poleg localStorage varovalke v trackCrosswordComplete)
-  if (!window.__cwDoneOnce) {
-    window.__cwDoneOnce = true;
-    try { trackCrosswordComplete(); } catch (_) {}
-    // (po želji lahko tu prikažeš svoj "ČESTITAMO!" overlay/toast)
-  }
-  return true;
-}
   function preveriCelotnoGeslo(input){
     const x=+input.dataset.x, y=+input.dataset.y;
     const g=gesla_opisi.find(t =>
@@ -311,27 +309,31 @@ function checkSolved() {
       if(znak===res[idx]) inp.classList.add('correct'); else inp.classList.add('incorrect');
     }
 
-    // če želiš: ko je vse pravilno -> sproži "complete"
     if(polja.length && polja.every((inp,i)=>{
       const idx=(g.smer==='across')? (+inp.dataset.x-g.x) : (+inp.dataset.y-g.y);
       return (inp.value||'').toUpperCase()===res[idx];
     })){
-      // tukaj lahko preveriš celotno mrežo in nato pokličeš trackCrosswordComplete()
+      // po želji: tu lahko preveriš celotno mrežo in sprožiš trackCrosswordComplete()
     }
   }
 });
 
 /* Enkraten GA, ko zaključiš (pokliči trackCrosswordComplete() v tvoji “ČESTITAMO” logiki) */
 (function(){
-  const key=`cw_done_{{ datum }}`;
+  const key=`cw_done_{{ datum|default('', true) }}`;
   window.trackCrosswordComplete=function(){
     try{
       if(localStorage.getItem(key)) return;
       localStorage.setItem(key,'1');
-      if(typeof gtagEvent==='function'){ gtagEvent('crossword_complete',{date:'{{ datum }}'}); }
-      else if(typeof gtag==='function'){ gtag('event','crossword_complete',{date:'{{ datum }}'}); }
+      const d='{{ datum|default('', true) }}';
+      if(typeof gtagEvent==='function'){ gtagEvent('crossword_complete',{date:d}); }
+      else if(typeof gtag==='function'){ gtag('event','crossword_complete',{date:d}); }
     }catch(_){}
   };
 })();
 </script>
+
+<!-- CC assets: dinamični URL-ji pridejo iz view-a -->
+<link rel="preload" href="{{ xml_url }}" as="fetch" type="application/xml">
+<script defer src="{{ js_url }}"></script>
 {% endblock %}

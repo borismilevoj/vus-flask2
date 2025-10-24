@@ -769,6 +769,63 @@ CC_BASE = Path(app.root_path) / "static" / "CrosswordCompilerApp"
 SUDOKU_BASE = Path(app.root_path) / "static" / "SudokuCompilerApp"
 DATE_RE_ANY = re.compile(r"^(20\d{2})-(\d{2})-(\d{2})\.(js|xml)$")
 
+from pathlib import Path
+from datetime import date, datetime
+from flask import url_for, render_template, request, abort, send_from_directory
+import os
+
+CC_BASE = Path(app.root_path) / "static" / "CrosswordCompilerApp"
+
+def _latest_available():
+    """Najdi najnovejši datum, za katerega obstajata .js in .xml."""
+    best = None
+    if not CC_BASE.exists():
+        return None
+    for ym_dir in CC_BASE.iterdir():                # npr. 2025-11
+        if not ym_dir.is_dir():
+            continue
+        for f in ym_dir.glob("*.js"):
+            try:
+                d = datetime.strptime(f.stem, "%Y-%m-%d").date()
+            except ValueError:
+                continue
+            if (ym_dir / (f.stem + ".xml")).is_file():
+                best = d if (best is None or d > best) else best
+    return best
+
+def _cc_urls(d: date | None):
+    """Vrne (js_url, xml_url, resolved_date) za dan; če manjka, pade na zadnjega obstoječega."""
+    if d:
+        ym = d.strftime("%Y-%m")
+        stem = CC_BASE / ym / d.strftime("%Y-%m-%d")
+        if not (stem.with_suffix(".js").is_file() and stem.with_suffix(".xml").is_file()):
+            d = None
+    if d is None:
+        d = _latest_available()
+        if d is None:
+            abort(404)
+    ym = d.strftime("%Y-%m")
+    ymd = d.strftime("%Y-%m-%d")
+    stem_rel = f"CrosswordCompilerApp/{ym}/{ymd}"
+    return (
+        url_for("static", filename=stem_rel + ".js"),
+        url_for("static", filename=stem_rel + ".xml"),
+        d,
+    )
+
+@app.get("/krizanka")
+def krizanka():
+    # optional: ?d=YYYY-MM-DD
+    d_str = request.args.get("d")
+    d = None
+    if d_str:
+        try:
+            d = datetime.strptime(d_str, "%Y-%m-%d").date()
+        except ValueError:
+            d = None
+    js_url, xml_url, resolved_date = _cc_urls(d)
+    return render_template("krizanka.html", js_url=js_url, xml_url=xml_url, datum=resolved_date)
+
 def zberi_pretekle(base: Path):
     """Prebere datoteke iz korena in YYYY-MM podmap, filtrira < danes."""
     today = date.today()
@@ -1152,9 +1209,26 @@ def prispevaj_geslo():
 
 # ==== ŠTEVEC: unikaten endpoint + ime funkcije (duplikat-proof) ===============
 
+import os, sqlite3, logging
+# ... (ostalo)
+
 def _count_slovar() -> int:
-    with get_conn() as conn:
-        return int(conn.execute("SELECT COUNT(*) FROM slovar").fetchone()[0])
+    try:
+        conn = get_conn()
+        try:
+            row = conn.execute("SELECT COUNT(1) FROM slovar").fetchone()
+            return int(row[0]) if row and row[0] is not None else 0
+        finally:
+            conn.close()
+    except sqlite3.Error as e:
+        app.logger.warning(
+            "Tabela 'slovar' manjka ali baza ni inicializirana (DB_PATH=%s) – %s",
+            app.config.get("DB_PATH", "?"),
+            e,
+        )
+        return 0
+
+
 
 @app.get("/stevec_gesel.txt", endpoint="stevec_count_txt")
 def stevec_count_txt():
