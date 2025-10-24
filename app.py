@@ -281,7 +281,7 @@ def index():
     return render_template("home.html")
 
 # /home → samo preusmeri na /
-@app.get("/home", endpoint="home_redirect")
+@app.get("/home", endpoint="home")
 def home_redirect():
     return redirect(url_for("index"), code=302)
 
