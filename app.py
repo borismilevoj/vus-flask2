@@ -1,28 +1,49 @@
-# app.py — CLEAN / CONSOLIDATED
+# ===== Imports ================================================================
 from __future__ import annotations
 
-# ===== Imports ================================================================
 import os
 import re
-import glob
+import html
 import io
+import glob
+import ssl
 import zipfile
 import sqlite3
-import unicodedata
 import tempfile
 import shutil
-import requests
-import ssl
+import logging
+import unicodedata
 import urllib.request
 from pathlib import Path
-from functools import wraps
 from datetime import datetime, date
+from functools import wraps
 from urllib.parse import urlparse, parse_qs
+import requests
+import xml.etree.ElementTree as ET
 
 from flask import (
-    Flask, jsonify, session, redirect, url_for, request, render_template,
-    flash, send_from_directory, send_file
+    Flask,
+    abort,
+    flash,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    send_file,
+    send_from_directory,
+    session,
+    url_for,
 )
+
+# (neobvezen) dinamičen import zunanjega parserja 'krizanka'
+import importlib
+try:
+    _m = importlib.import_module("krizanka")
+    pridobi_podatke_iz_xml = getattr(_m, "pridobi_podatke_iz_xml", None)
+except Exception:
+    pridobi_podatke_iz_xml = None
+
+
 
 # ===== Optionalni moduli (ne podre app-a, če manjka) =========================
 try:
@@ -273,7 +294,6 @@ GESLO = "Tifumannam1_vus-flask2.onrender.com"
 app = Flask(__name__, static_folder="static", static_url_path="/static")
 app.url_map.strict_slashes = False
 
-from flask import render_template, redirect, url_for, request
 
 # /  → glavna stran (brez endpointa 'home', da se izognemo konfliktu)
 @app.get("/", endpoint="index")
@@ -753,109 +773,379 @@ def dbdiag_txt():
 
 # ===== Križanka ===============================================================
 
-@app.get('/krizanka/static/<path:filename>')
-def krizanka_static_file(filename):
-    pot = os.path.join('static', 'CrosswordCompilerApp')
-    return send_from_directory(pot, filename)
+# -----------------------------------------------------------------------------
+# KRIŽANKA: statične datoteke, helperji, arhiv in prikaz
+## ---- uvozi (dodaj abort, jsonify) ----
+from flask import render_template, request, url_for, send_from_directory, redirect, abort, jsonify
+from datetime import datetime, date
+from pathlib import Path
+import os, re
+import xml.etree.ElementTree as ET
 
-
-# ===== ARHIV KRIŽANK (kanonične in legacy poti) ==============================
+# ---- baze poti ----
 CC_BASE = Path(app.root_path) / "static" / "CrosswordCompilerApp"
-SUDOKU_BASE = Path(app.root_path) / "static" / "SudokuCompilerApp"
+TEMP_CC = CC_BASE / "CrosswordImages"  # tu najprej pristanejo datoteke
 DATE_RE_ANY = re.compile(r"^(20\d{2})-(\d{2})-(\d{2})\.(js|xml)$")
 
-from pathlib import Path
-from datetime import date, datetime
-from flask import url_for, render_template, request, abort, send_from_directory
-import os
+@app.get('/krizanka/static/<path:filename>')
+def krizanka_static_file(filename):
+    return send_from_directory(str(CC_BASE), filename)
+
 
 def _latest_available():
-    """Najdi najnovejši datum, za katerega obstajata .js in .xml."""
-    best = None
     if not CC_BASE.exists():
         return None
-    for ym_dir in CC_BASE.iterdir():                # npr. 2025-11
-        if not ym_dir.is_dir():
+    best = None
+    for f in list(CC_BASE.glob("*.js")) + list(CC_BASE.glob("20??-??/*.js")):
+        try:
+            d = datetime.strptime(f.stem, "%Y-%m-%d").date()
+        except ValueError:
             continue
-        for f in ym_dir.glob("*.js"):
+        if f.with_suffix(".xml").is_file():
+            best = d if best is None or d > best else best
+    return best
+
+import re
+from pathlib import Path
+from datetime import date
+
+TEMP_CC = CC_BASE / "CrosswordImages"   # začasna mapa (če je še nimaš)
+
+def _cc_paths_for_date(d: date) -> tuple[Path | None, Path | None]:
+    """Vrne (js_path, xml_path) za dan d; poišče v YYYY-MM/, v TEMP_CC in v korenu CC_BASE."""
+    ymd = d.strftime("%Y-%m-%d")
+    ym  = d.strftime("%Y-%m")
+
+    # 1) kanonično: /YYYY-MM/YYYY-MM-DD.*
+    js1  = CC_BASE / ym / f"{ymd}.js"
+    xml1 = CC_BASE / ym / f"{ymd}.xml"
+    if js1.is_file() and xml1.is_file():
+        return js1, xml1
+
+    # 2) začasno: /CrosswordImages/YYYY-MM-DD.*
+    js2  = TEMP_CC / f"{ymd}.js"
+    xml2 = TEMP_CC / f"{ymd}.xml"
+    if js2.is_file() and xml2.is_file():
+        return js2, xml2
+
+    # 3) fallback: koren /CrosswordCompilerApp
+    js3  = CC_BASE / f"{ymd}.js"
+    xml3 = CC_BASE / f"{ymd}.xml"
+    return (js3 if js3.is_file() else None, xml3 if xml3.is_file() else None)
+
+
+from flask import url_for, abort
+
+def pridobi_podatke_iz_xml(xml_path: Path) -> dict:
+    """
+    STARI parser CC XML:
+      vrne: {sirina, visina, crna_polja:[[x,y],...], gesla_opisi:[{x,y,smer,stevilka,opis,slika,dolzina,solution}], sol_by_xy:{'x,y':'Č'}}
+    """
+    out = {"sirina": 0, "visina": 0, "crna_polja": [], "gesla_opisi": [], "sol_by_xy": {}}
+    if not xml_path or not xml_path.exists():
+        return out
+
+    try:
+        root = ET.parse(xml_path).getroot()
+    except Exception as e:
+        print("[OLD] parse error:", e)
+        return out
+
+    NS_R = "http://crossword.info/xml/rectangular-puzzle"
+    ns = {"r": NS_R}
+
+    # --- mere ---
+    grid = root.find(".//r:grid", ns)
+    if grid is None:
+        grid = root.find(".//grid")
+    try:
+        w = int(grid.get("width") or grid.get("columns") or grid.get("cols") or 0)
+        h = int(grid.get("height") or grid.get("rows") or 0)
+    except Exception:
+        w = h = 0
+    out["sirina"], out["visina"] = w, h
+
+    # --- črna + rešitve iz <cell> ---
+    crna = []
+    sol_by_xy = {}
+    cells = root.findall(".//r:cell", ns) or root.findall(".//cell")
+    if cells:
+        xs = []
+        for c in cells:
+            xv = (c.get("x") or c.get("col") or c.get("column"))
+            if xv and str(xv).isdigit(): xs.append(int(xv))
+        one_based = bool(xs and min(xs) == 1)
+
+        for c in cells:
             try:
-                d = datetime.strptime(f.stem, "%Y-%m-%d").date()
-            except ValueError:
+                x_raw = int(c.get("x") or c.get("col") or c.get("column") or 0)
+                y_raw = int(c.get("y") or c.get("row") or 0)
+            except Exception:
                 continue
-            if (ym_dir / (f.stem + ".xml")).is_file():
-                best = d if (best is None or d > best) else best
+            x = x_raw - 1 if one_based else x_raw
+            y = y_raw - 1 if one_based else y_raw
+            if not (0 <= x < w and 0 <= y < h):
+                continue
+
+            t  = (c.get("type") or "").lower()
+            ch = (c.get("ch") or c.get("letter") or "") or None
+            if t in {"block", "black", "bar"}:
+                crna.append([x, y])
+            else:
+                if ch:
+                    sol_by_xy[f"{x},{y}"] = str(ch).upper()
+
+    out["crna_polja"] = crna
+    out["sol_by_xy"]  = sol_by_xy
+
+    # --- helperji ---
+    def _parse_range(s: str):
+        s = (s or "").strip()
+        if "-" in s:
+            a, b = s.split("-", 1)
+            try: return int(a), int(b)
+            except: return None
+        if s.isdigit():
+            v = int(s); return v, v
+        return None
+
+    def _text_with_br(node):
+        parts = []
+        def walk(n):
+            if n.text: parts.append(n.text)
+            for ch in list(n):
+                if ch.tag.split('}')[-1].lower() == "br":
+                    parts.append("\n")
+                walk(ch)
+                if ch.tail: parts.append(ch.tail)
+        walk(node)
+        return html.unescape("".join(parts)).strip()
+
+    # --- <word id=".."> mapa ---
+    word_map = {}   # id -> {x0,y0,smer,dolzina,solution}
+    for wnode in (root.findall(".//{*}word") or root.findall(".//word")):
+        wid = (wnode.get("id") or wnode.get("{http://www.w3.org/XML/1998/namespace}id") or "").strip()
+        if not wid: continue
+        rx = _parse_range(wnode.get("x") or "")
+        ry = _parse_range(wnode.get("y") or "")
+        if not rx or not ry: continue
+        (xa, xb), (ya, yb) = rx, ry
+
+        if xa != xb and ya == yb:
+            x0, y0, smer, ln = xa - 1, ya - 1, "across", (xb - xa + 1)
+        elif ya != yb and xa == xb:
+            x0, y0, smer, ln = xa - 1, ya - 1, "down",   (yb - ya + 1)
+        else:
+            continue
+
+        sol = (wnode.get("solution") or "").strip()
+        word_map[wid] = {"x0": x0, "y0": y0, "smer": smer, "dolzina": ln, "solution": sol}
+
+    # --- inicialni 'gesla' iz word_map ---
+    gesla = []
+    g_by_key = {}
+    for wid, info in word_map.items():
+        g = {
+            "x": info["x0"], "y": info["y0"], "smer": info["smer"],
+            "stevilka": "", "opis": "", "slika": "",
+            "dolzina": info["dolzina"], "solution": info["solution"]
+        }
+        g_by_key[(g["x"], g["y"], g["smer"])] = len(gesla)
+        gesla.append(g)
+
+    # --- <clues> ---
+    for grp in (root.findall(".//{*}clues") or root.findall(".//clues")):
+        for c in (grp.findall(".//{*}clue") + grp.findall(".//clue")):
+            wid = (c.get("word") or "").strip()
+            num = (c.get("number") or c.get("n") or c.get("num") or "").strip()
+            if not num:
+                m = re.match(r"\s*(\d+)[\.)]?\s+", "".join(c.itertext() or ""))
+                if m: num = m.group(1)
+
+            opis = _text_with_br(c)
+            img_node = (c.find(".//img") or c.find(".//image") or c.find(".//{*}img") or c.find(".//{*}image"))
+            slika = (c.get("image") or c.get("img") or
+                     (img_node.get("src") if img_node is not None else "") or
+                     (img_node.get("href") if img_node is not None else "") or "")
+
+            if wid and wid in word_map:
+                info = word_map[wid]
+                key = (info["x0"], info["y0"], info["smer"])
+                idx = g_by_key.get(key)
+                if idx is not None:
+                    if num:   gesla[idx]["stevilka"] = str(num)
+                    if opis:  gesla[idx]["opis"]     = opis
+                    if slika: gesla[idx]["slika"]    = slika
+
+    out["gesla_opisi"] = gesla
+    return out
+
+
+def _cc_urls(d: date | None):
+    """Vrne (js_url, xml_url, resolved_date). Če para manjka, pade na zadnji razpoložljivi datum."""
+    if d:
+        js_p, xml_p = _cc_paths_for_date(d)
+        if not (js_p and xml_p):
+            d = None
+
+    if d is None:
+        latest = _latest_available()
+        if latest is None:
+            # nič na disku → naj bo 404 ali tvoj fallback
+            abort(404)
+        d = latest
+
+    js_p, xml_p = _cc_paths_for_date(d)
+    if not (js_p and xml_p):
+        abort(404)
+
+    # naredi pot relativno na /static za url_for('static', filename=...)
+    static_root = Path(app.root_path) / "static"
+    def rel(p: Path) -> str:
+        return str(p.relative_to(static_root)).replace("\\", "/")
+
+    return (
+        url_for("static", filename=rel(js_p)),
+        url_for("static", filename=rel(xml_p)),
+        d,
+    )
+
+# ---------------------- DIAGNOSTIKA ----------------------
+# --- Utišaj Chrome/DevTools probe (ni povezano z aplikacijo) ---
+
+@app.get("/.well-known/appspecific/com.chrome.devtools.json")
+def _chrome_devtools_probe():
+    return "", 204
+
+@app.get("/.well-known/<path:_rest>")
+def _well_known_passthrough(_rest):
+    return "", 204
+
+
+@app.get("/diag/krizanka_dbg")
+def diag_krizanka_dbg():
+    d_str = request.args.get("d")
+    d = None
+    if d_str:
+        try: d = datetime.strptime(d_str.strip(), "%Y-%m-%d").date()
+        except ValueError: d = None
+    js_url, xml_url, resolved = _cc_urls(d)
+    ym = resolved.strftime("%Y-%m")
+    xml_path = CC_BASE / ym / f"{resolved}.xml"
+    parsed = _parse_cc_xml_local(xml_path)
+    return jsonify({
+        "resolved_date": resolved.isoformat(),
+        "xml_path": str(xml_path),
+        "xml_exists": xml_path.exists(),
+        "width": parsed["width"], "height": parsed["height"],
+        "crna_polja_len": len(parsed["crna_polja"]),
+        "gesla_opisi_len": len(parsed["gesla_opisi"]),
+        "js_url": js_url, "xml_url": xml_url,
+    })
+
+# ---------------------- ENOTNI PRIKAZ --------------------
+
+from datetime import date, datetime
+
+def _latest_available_on_or_before(ref: date) -> date | None:
+    """Najdi najnovejši datum ≤ ref, za katerega obstajata .js in .xml."""
+    if not CC_BASE.exists():
+        return None
+    best = None
+    # preišči koren in podmape YYYY-MM
+    candidates = list(CC_BASE.glob("*.js")) + list(CC_BASE.glob("20??-??/*.js"))
+    for f in candidates:
+        try:
+            d = datetime.strptime(f.stem, "%Y-%m-%d").date()
+        except ValueError:
+            continue
+        if d > ref:
+            continue  # ignoriraj prihodnost
+        if f.with_suffix(".xml").is_file():
+            if best is None or d > best:
+                best = d
     return best
 
 def _cc_urls(d: date | None):
-    """Vrne (js_url, xml_url, resolved_date) za dan; če manjka, pade na zadnjega obstoječega."""
-    if d:
-        ym = d.strftime("%Y-%m")
-        stem = CC_BASE / ym / d.strftime("%Y-%m-%d")
-        if not (stem.with_suffix(".js").is_file() and stem.with_suffix(".xml").is_file()):
-            d = None
-    if d is None:
-        d = _latest_available()
-        if d is None:
-            abort(404)
-    ym = d.strftime("%Y-%m")
-    ymd = d.strftime("%Y-%m-%d")
+    """
+    Vrne (js_url, xml_url, resolved_date).
+    Pravila:
+      - Če je podan d in obstaja par → uporabi d.
+      - Brez d: poskusi današnji datum.
+      - Če današnji manjka → najdi zadnji ≤ danes.
+      - Če nič ne obstaja → vrni (None, None, današnji datum) in naj frontend nariše fallback.
+    """
+    today = date.today()
+
+    def pair_exists(day: date) -> bool:
+        ym = day.strftime("%Y-%m")
+        stem = CC_BASE / ym / day.strftime("%Y-%m-%d")
+        return stem.with_suffix(".js").is_file() and stem.with_suffix(".xml").is_file()
+
+    # 1) Če je podan d in par obstaja, ga uporabi
+    if d and pair_exists(d):
+        resolved = d
+    else:
+        # 2) poskusi danes
+        if pair_exists(today):
+            resolved = today
+        else:
+            # 3) zadnji ≤ danes
+            resolved = _latest_available_on_or_before(today)
+
+    if not resolved:
+        # Ni ničesar na disku → naj se stran vseeno odpre (fallback 5×5)
+        return None, None, today
+
+    ym = resolved.strftime("%Y-%m")
+    ymd = resolved.strftime("%Y-%m-%d")
     stem_rel = f"CrosswordCompilerApp/{ym}/{ymd}"
     return (
         url_for("static", filename=stem_rel + ".js"),
         url_for("static", filename=stem_rel + ".xml"),
-        d,
+        resolved,
     )
 
-@app.get("/krizanka")
-def krizanka():
-    # optional: ?d=YYYY-MM-DD
-    d_str = request.args.get("d")
-    d = None
-    if d_str:
-        try:
-            d = datetime.strptime(d_str, "%Y-%m-%d").date()
-        except ValueError:
-            d = None
-    js_url, xml_url, resolved_date = _cc_urls(d)
-    return render_template("krizanka.html", js_url=js_url, xml_url=xml_url, datum=resolved_date)
-
-# alias za stare templejte: url_for('prikazi_krizanko') → /krizanka
-app.add_url_rule("/krizanka", endpoint="prikazi_krizanko", view_func=krizanka)
 
 def zberi_pretekle(base: Path):
-    """Prebere datoteke iz korena in YYYY-MM podmap, filtrira < danes."""
+    """Zbere datume (< danes) iz korena in podmap YYYY-MM ter jih razporedi po mesecih."""
     today = date.today()
     meseci: dict[str, list[str]] = {}
 
     def add_file(p: Path):
         m = DATE_RE_ANY.match(p.name)
-        if not m: return
+        if not m:
+            return
         y, mth, d = map(int, m.groups()[:3])
         dt = date(y, mth, d)
-        if dt >= today: return
+        if dt >= today:
+            return
         ym = f"{y:04d}-{mth:02d}"
         meseci.setdefault(ym, []).append(f"{y:04d}-{mth:02d}-{d:02d}")
 
+    # koren
     for p in sorted(base.glob("*.*")):
-        if p.is_file(): add_file(p)
-
+        if p.is_file():
+            add_file(p)
+    # podmape YYYY-MM
     for folder in sorted(base.glob("20??-??")):
-        if not folder.is_dir(): continue
+        if not folder.is_dir():
+            continue
         for p in sorted(folder.glob("*.*")):
-            if p.is_file(): add_file(p)
+            if p.is_file():
+                add_file(p)
 
+    # sortiranja
     meseci = {ym: sorted(days, reverse=True) for ym, days in meseci.items() if days}
     months_sorted = sorted(meseci.keys(), reverse=True)
     return months_sorted, meseci
+
+# ----------------------- Arhiv: kanonične in legacy poti ---------------------
 
 @app.get("/arhiv/krizanke", endpoint="arhiv_krizanke")
 def arhiv_krizanke():
     months_sorted, meseci = zberi_pretekle(CC_BASE)
     return render_template("arhiv.html", months_sorted=months_sorted, meseci=meseci, tip="krizanke")
-
-@app.route("/krizanka/arhiv", methods=["GET", "HEAD"], endpoint="arhiv_krizanke_legacy_redirect")
-def arhiv_krizanke_legacy_redirect():
-    return redirect(url_for("arhiv_krizanke"), code=302)
 
 @app.get("/arhiv/krizanke/<mesec>", endpoint="arhiv_krizanke_mesec")
 def arhiv_krizanke_mesec(mesec):
@@ -865,11 +1155,622 @@ def arhiv_krizanke_mesec(mesec):
     datumi = sorted(meseci.get(mesec, []), reverse=True)
     return render_template("arhiv_mesec.html", mesec=mesec, datumi=datumi)
 
-@app.route("/krizanka/arhiv/<mesec>", methods=["GET","HEAD"], endpoint="arhiv_krizanke_mesec_legacy")
+# legacy preusmeritve (ostanejo, a vodijo na kanonične poti)
+@app.route("/krizanka/arhiv", methods=["GET", "HEAD"], endpoint="arhiv_krizanke_legacy_redirect")
+def arhiv_krizanke_legacy_redirect():
+    return redirect(url_for("arhiv_krizanke"), code=302)
+
+@app.route("/krizanka/arhiv/<mesec>", methods=["GET", "HEAD"], endpoint="arhiv_krizanke_mesec_legacy")
 def arhiv_krizanke_mesec_legacy(mesec):
     return redirect(url_for("arhiv_krizanke_mesec", mesec=mesec), code=302)
 
+# ----------------------------- Prikaz dnevne križanke ------------------------
+# ⚠️ Pomembno: /krizanka definiramo točno enkrat (brez duplikatov/endpoints).
+def _merge_clues_into_gesla(rootxml, gesla):
+    """Vzame <clues> iz XML in jih po (smer, številka) zapiše v gesla_opisi[]."""
+    def _lower(s): return (s or "").strip().lower()
+
+    clue_map = {"across": {}, "down": {}}
+
+    # najdi vse skupine z ugankami
+    clue_groups = rootxml.findall(".//{*}clues") or rootxml.findall(".//clues")
+    for grp in clue_groups:
+        title_el = grp.find(".//{*}title") or grp.find("title")
+        t = "".join(title_el.itertext()) if title_el is not None else (grp.attrib.get("title") or "")
+        smer = "down" if ("navpi" in _lower(t) or "down" in _lower(t)) else "across"
+
+        # posamezni opisi
+        for c in (grp.findall(".//{*}clue") + grp.findall(".//clue")):
+            num = (c.get("number") or c.get("n") or c.get("num") or "").strip()
+            if not num:
+                m = re.match(r"\s*(\d+)[\.)]?\s+", "".join(c.itertext() or ""))
+                if m: num = m.group(1)
+
+            # besedilo z upoštevanimi <br>
+            parts = []
+            def walk(n):
+                if n.text: parts.append(n.text)
+                for ch in list(n):
+                    tag = ch.tag.split('}')[-1].lower()
+                    if tag == "br": parts.append("\n")
+                    walk(ch)
+                    if ch.tail: parts.append(ch.tail)
+            walk(c)
+            opis = html.unescape("".join(parts)).strip()
+
+            # slika iz atributa ali podvozla
+            slika = (c.get("image") or c.get("img") or "") or ""
+            if not slika:
+                img = (c.find(".//img") or c.find(".//image") or
+                       c.find(".//{*}img") or c.find(".//{*}image"))
+                if img is not None:
+                    slika = (img.get("src") or img.get("href") or "") or slika
+
+            if num:
+                clue_map[smer][num] = (opis, slika)
+
+    # združi v tvojo strukturo
+    for g in gesla:
+        smer = "down" if _lower(g.get("smer")) == "down" else "across"
+        num  = str(g.get("stevilka") or g.get("number") or "").strip()
+        if num and num in clue_map[smer]:
+            op, img = clue_map[smer][num]
+            if op:  g["opis"]  = op
+            if img: g["slika"] = img
+
+    return gesla
+
+import json
+
+def _adapt_old_parser_res(res) -> dict:
+    """Pretvori rezultat iz pridobi_podatke_iz_xml v enoten CC dict.
+       Podpira: dict / (dict, meta) / JSON str. Izračuna w×h, če manjka."""
+    # 0) normaliziraj tip
+    if isinstance(res, tuple) and res:
+        res = res[0]
+    if isinstance(res, str):
+        try:
+            res = json.loads(res)
+        except Exception:
+            res = {}
+
+    if not isinstance(res, dict):
+        return {"width":0,"height":0,"crna_polja":[], "gesla_opisi":[], "sol_by_xy":{}}
+
+    # 1) preberi osnovno
+    w = int(res.get("sirina") or res.get("width") or 0)
+    h = int(res.get("visina") or res.get("height") or 0)
+
+    crna = res.get("crna_polja") or res.get("crnaPolja") or []
+    raw  = res.get("gesla_opisi") or res.get("geslaOpisi") or []
+    sol_by_xy = res.get("sol_by_xy") or res.get("solByXY") or {}
+
+    # 2) normaliziraj gesla
+    gesla = []
+    for g in (raw if isinstance(raw, list) else []):
+        try:
+            x = int(g.get("x"))
+            y = int(g.get("y"))
+        except Exception:
+            continue
+        smer = (g.get("smer") or "").lower()
+        smer = "down" if smer.startswith("d") else "across"
+        gesla.append({
+            "x": x, "y": y, "smer": smer,
+            "stevilka": str(g.get("stevilka") or g.get("number") or ""),
+            "opis": g.get("opis") or "",
+            "slika": g.get("slika") or g.get("slika_url") or "",
+            "dolzina": int(g.get("dolzina") or g.get("length") or 0),
+            "solution": g.get("solution") or "",
+        })
+
+    # 3) če w×h manjkata, POSKUSNO izračunaj
+    if not w or not h:
+        maxx = max([c[0] for c in crna if isinstance(c, (list,tuple)) and len(c)>=2] + [0])
+        maxy = max([c[1] for c in crna if isinstance(c, (list,tuple)) and len(c)>=2] + [0])
+        for g in gesla:
+            maxx = max(maxx, g["x"])
+            maxy = max(maxy, g["y"])
+            if g.get("dolzina", 0) > 0:
+                if g["smer"] == "across":
+                    maxx = max(maxx, g["x"] + g["dolzina"] - 1)
+                else:
+                    maxy = max(maxy, g["y"] + g["dolzina"] - 1)
+        # koordinate so 0-based → +1
+        w = max(w, maxx + 1)
+        h = max(h, maxy + 1)
+
+    return {
+        "width": w, "height": h,
+        "crna_polja": crna,
+        "gesla_opisi": gesla,
+        "sol_by_xy": sol_by_xy,
+    }
+
+
+
+def _parse_cc_xml_local(xml_path: Path) -> dict:
+    """
+    Prebere Crossword Compiler XML (z/brez namespaces) in vrne:
+      {
+        width, height,
+        crna_polja: [[x,y], ...],
+        gesla_opisi: [{x,y,smer,stevilka,opis,slika,dolzina,solution}],   # 0-based
+        sol_by_xy: {"x,y": "Č"},
+        numbers_xy: {"x,y": "n"}  # številke polj iz <cell number="…">
+      }
+    """
+    print("[PARSER] CC v3 running:", xml_path)
+
+    out = {
+        "width": 0, "height": 0,
+        "crna_polja": [], "gesla_opisi": [],
+        "sol_by_xy": {}, "numbers_xy": {}
+    }
+    if not xml_path or not xml_path.exists():
+        return out
+
+    # --- PARSE ---
+    try:
+        import xml.etree.ElementTree as ET
+        root = ET.parse(xml_path).getroot()
+    except Exception as e:
+        print("[CC XML] parse error:", e)
+        return out
+
+    NS_R = "http://crossword.info/xml/rectangular-puzzle"
+    ns = {"r": NS_R}
+
+    # --- GRID (robustno) ---
+    grid = root.find(".//r:grid", ns)
+    if grid is None:
+        grid = root.find(".//grid")
+    if grid is None:
+        print("[PARSER] no <grid> found")
+        return out
+
+    try:
+        w = int(grid.get("width") or grid.get("columns") or grid.get("cols") or 0)
+        h = int(grid.get("height") or grid.get("rows") or 0)
+    except Exception:
+        w = h = 0
+    if w <= 0 or h <= 0:
+        return out
+
+    # --- CELICE ---
+    letters = [[None for _ in range(w)] for _ in range(h)]
+    number_at: dict[tuple[int, int], str] = {}
+    crna: list[list[int]] = []
+    sol_by_xy: dict[str, str] = {}
+
+    cells = (root.findall(".//r:cell", ns) or root.findall(".//cell"))
+    if cells:
+        # 1-based koordinata?
+        xs = [int(c.get("x") or c.get("col") or c.get("column") or 0)
+              for c in cells if (c.get("x") or c.get("col") or c.get("column"))]
+        one_based = bool(xs and min(xs) == 1)
+
+        for c in cells:
+            try:
+                x_raw = int(c.get("x") or c.get("col") or c.get("column") or 0)
+                y_raw = int(c.get("y") or c.get("row") or 0)
+            except (TypeError, ValueError):
+                continue
+            x = x_raw - 1 if one_based else x_raw
+            y = y_raw - 1 if one_based else y_raw
+            if not (0 <= x < w and 0 <= y < h):
+                continue
+
+            t = (c.get("type") or "").lower()
+            ch = (c.get("ch") or c.get("letter") or "") or None
+            if t in {"block", "black", "bar"}:
+                letters[y][x] = None
+                crna.append([x, y])
+            else:
+                letters[y][x] = ch
+                if ch:
+                    sol_by_xy[f"{x},{y}"] = str(ch).upper()
+
+            n = (c.get("number") or c.get("n") or "").strip()
+            if n:
+                number_at[(x, y)] = n
+    else:
+        # fallback: <row>AAAA#...
+        row_nodes = (root.findall(".//r:row", ns) or root.findall(".//row"))
+        if row_nodes:
+            lines = [r.text or "" for r in row_nodes]
+            h = len(lines)
+            w = max((len(s) for s in lines), default=0)
+            letters = []
+            for line in lines:
+                letters.append([None if (i >= len(line) or line[i] in "#■█") else line[i] for i in range(w)])
+            crna.clear()
+            sol_by_xy.clear()
+            for yy in range(h):
+                for xx in range(w):
+                    ch = letters[yy][xx]
+                    if ch is None:
+                        crna.append([xx, yy])
+                    else:
+                        sol_by_xy[f"{xx},{yy}"] = str(ch).upper()
+
+    # --- ZGRADI GESELA (across/down) ---
+
+    gesla: list[dict] = []
+    seq_num = 1  # rezervna številka, če je na začetku besede ni number_at
+
+    # across
+    for yy in range(h):
+        xx = 0
+        while xx < w:
+            if letters[yy][xx] not in (None, "#", "■", "█") and (xx == 0 or letters[yy][xx-1] in (None, "#", "■", "█")):
+                xx2 = xx
+                sol = []
+                while xx2 < w and letters[yy][xx2] not in (None, "#", "■", "█"):
+                    sol.append(letters[yy][xx2] or "")
+                    xx2 += 1
+                if xx2 - xx >= 1:
+                    stevilka = number_at.get((xx, yy), str(seq_num))
+                    gesla.append({
+                        "x": xx, "y": yy, "smer": "across",
+                        "dolzina": xx2 - xx, "stevilka": stevilka,
+                        "opis": "", "slika": "", "solution": "".join(sol)
+                    })
+                    seq_num += 1
+                xx = xx2
+            else:
+                xx += 1
+
+    # down
+    for xx in range(w):
+        yy = 0
+        while yy < h:
+            if letters[yy][xx] not in (None, "#", "■", "█") and (yy == 0 or letters[yy-1][xx] in (None, "#", "■", "█")):
+                yy2 = yy
+                sol = []
+                while yy2 < h and letters[yy2][xx] not in (None, "#", "■", "█"):
+                    sol.append(letters[yy2][xx] or "")
+                    yy2 += 1
+                if yy2 - yy >= 1:
+                    stevilka = number_at.get((xx, yy), str(seq_num))
+                    gesla.append({
+                        "x": xx, "y": yy, "smer": "down",
+                        "dolzina": yy2 - yy, "stevilka": stevilka,
+                        "opis": "", "slika": "", "solution": "".join(sol)
+                    })
+                    seq_num += 1
+                yy = yy2
+            else:
+                yy += 1
+
+    # --- CLUES (opis + slika) – podpira word=ID in/ali number=XX ----------------
+
+    def _lower(s):
+        return (s or "").strip().lower()
+
+    # 1) Preberi <word id="..."> in določi (x0,y0,dir,len) za vsako besedo
+    word_map = {}  # id -> {"x0":..,"y0":..,"dir":"across|down","len":..}
+    for wnode in (root.findall(".//{*}word") or root.findall(".//word")):
+        wid = (wnode.get("id") or wnode.get("{http://www.w3.org/XML/1998/namespace}id") or "").strip()
+        if not wid:
+            continue
+        # x in y sta lahko "2-4" ali "7", v CC so 1-based
+        xr = (wnode.get("x") or "").strip()
+        yr = (wnode.get("y") or "").strip()
+
+        def _parse_range(s):
+            s = (s or "").strip()
+            if "-" in s:
+                a, b = s.split("-", 1)
+                return int(a), int(b)
+            if s.isdigit():
+                v = int(s)
+                return v, v
+            return None
+
+        rx = _parse_range(xr)
+        ry = _parse_range(yr)
+        if not rx or not ry:
+            continue
+
+        (xa, xb), (ya, yb) = rx, ry
+        # 1-based -> 0-based začetna točka in smer
+        if xa != xb and ya == yb:
+            # across
+            x0, y0 = xa - 1, ya - 1
+            d, ln = "across", (xb - xa + 1)
+        elif ya != yb and xa == xb:
+            # down
+            x0, y0 = xa - 1, ya - 1
+            d, ln = "down", (yb - ya + 1)
+        else:
+            # če ni čisto enodimenzionalno, preskoči
+            continue
+
+        if 0 <= x0 < w and 0 <= y0 < h:
+            word_map[wid] = {"x0": x0, "y0": y0, "dir": d, "len": ln}
+
+    # 2) Zgradi hitri lookup za tvoja 'gesla' po (x0,y0,dir)
+    g_by_key = {(g["x"], g["y"], ("down" if _lower(g.get("smer")) == "down" else "across")): g for g in gesla}
+
+    # 3) Preberi <clues> in združi:
+    #    - če <clue word="ID">: uporabi word_map → (x0,y0,dir) in zapiši opis/sliko v ustrezno 'geslo'
+    #    - sicer, če ima number: uporabi number-match (tvoj obstoječi fallback)
+    clue_groups = (root.findall(".//{*}clues") or root.findall(".//clues"))
+    hits_word = hits_num = 0
+
+    # za fallback po številki
+    clue_map_by_dir = {"across": {}, "down": {}}
+    any_by_num = {}
+
+    def _text_with_br(node):
+        parts = []
+
+        def walk(n):
+            if n.text: parts.append(n.text)
+            for ch in list(n):
+                # <br> ali kateri koli 'br' v drugem namespacu
+                if ch.tag.split('}')[-1].lower() == "br":
+                    parts.append("\n")
+                walk(ch)
+                if ch.tail: parts.append(ch.tail)
+
+        walk(node)
+        return html.unescape("".join(parts)).strip()
+
+    for grp in clue_groups:
+        title_el = grp.find(".//{*}title") or grp.find("title")
+        t_raw = "".join(title_el.itertext()) if title_el is not None else (grp.attrib.get("title") or "")
+        t = _lower(t_raw)
+
+        if "navpi" in t or "down" in t or "vertical" in t:
+            smer_grp = "down"
+        elif "vodorav" in t or "across" in t or "horizontal" in t:
+            smer_grp = "across"
+        else:
+            smer_grp = None  # neznano, damo v any_by_num za fallback
+
+        for c in (grp.findall(".//{*}clue") + grp.findall(".//clue")):
+            wid = (c.get("word") or "").strip()
+            num = (c.get("number") or c.get("n") or c.get("num") or "").strip()
+            if not num:
+                m = re.match(r"\s*(\d+)[\.)]?\s+", "".join(c.itertext() or ""))
+                if m: num = m.group(1)
+
+            opis = _text_with_br(c)
+            img_node = (c.find(".//img") or c.find(".//image") or c.find(".//{*}img") or c.find(".//{*}image"))
+            slika = (c.get("image") or c.get("img") or
+                     (img_node.get("src") if img_node is not None else "") or
+                     (img_node.get("href") if img_node is not None else "") or "")
+
+            # 3a) Primarno: word id
+            if wid and wid in word_map:
+                wm = word_map[wid]
+                key = (wm["x0"], wm["y0"], wm["dir"])
+                g = g_by_key.get(key)
+                if g:
+                    if opis: g["opis"] = opis
+                    if slika: g["slika"] = slika
+                    # številka naj ostane tista iz mreže, razen če manjka
+                    if not g.get("stevilka") and num:
+                        g["stevilka"] = num
+                    hits_word += 1
+                continue
+
+            # 3b) Fallback: number-match
+            if num:
+                if smer_grp:
+                    clue_map_by_dir[smer_grp][num] = (opis, slika)
+                else:
+                    any_by_num[num] = (opis, slika)
+
+    # 4) Fallback merge po številkah (za tiste brez word id)
+    hits_num = 0
+    for g in (gesla or []):
+        if g.get("opis"):
+            continue  # že zapolnjeno z 'word' merge
+
+        smer_raw = _lower(g.get("smer"))
+        smer_g = "down" if smer_raw == "down" else "across"
+
+        num_g = str(g.get("stevilka") or g.get("number") or "").strip()
+        if not num_g:
+            continue
+
+        op_im = (clue_map_by_dir.get(smer_g, {}) or {}).get(num_g)
+        if not op_im:
+            op_im = any_by_num.get(num_g)
+
+        if op_im:
+            op, im = op_im
+            if op:
+                g["opis"] = op
+            if im:
+                g["slika"] = im
+            hits_num += 1
+
+    print(f"[CLUES] groups={len(clue_groups)} merged_by_word={hits_word} merged_by_number={hits_num}")
+
+    # --- RESULT: vedno vrni DICT -----------------------------------------------
+    out["width"] = w
+    out["height"] = h
+    out["crna_polja"] = crna
+    out["gesla_opisi"] = gesla
+    out["sol_by_xy"] = sol_by_xy
+
+    # numbers_xy: "x,y" -> "n" (če obstaja number_at)
+    try:
+        out["numbers_xy"] = {f"{x},{y}": n for (x, y), n in number_at.items()}
+    except Exception:
+        out["numbers_xy"] = {}
+
+    print("[PARSER] done",
+          "size=", out["width"], "x", out["height"],
+          "crna=", len(out["crna_polja"]),
+          "gesla=", len(out["gesla_opisi"]),
+          "nums=", len(out.get("numbers_xy", {})))
+
+    return out
+
+# ---- /krizanka -------------------------------------------------------------
+
+@app.get("/krizanka", endpoint="prikazi_krizanko", strict_slashes=False)
+def prikazi_krizanko():
+    print("[ROUTE] /krizanka enter")
+
+    # 1) ?d=YYYY-MM-DD
+    d = None
+    d_str = (request.args.get("d") or "").strip()
+    if d_str:
+        try:
+            d = datetime.strptime(d_str, "%Y-%m-%d").date()
+        except Exception:
+            print("[ROUTE] bad ?d=", d_str)
+
+    # 2) URL-ji + datum
+    js_url, xml_url, resolved_date = _cc_urls(d)
+    print("[ROUTE] resolved_date =", resolved_date, "urls:", bool(js_url), bool(xml_url))
+
+    # 3) lokalni path-i
+    js_p, xml_p = _cc_paths_for_date(resolved_date)
+    print("[ROUTE] paths:", js_p, xml_p)
+
+    empty_cc = {"width": 0, "height": 0, "crna_polja": [], "gesla_opisi": [], "sol_by_xy": {}, "numbers_xy": {}}
+    cc = None
+    used = "EMPTY"
+
+    # (A) stari parser + adapter
+    if xml_p and xml_p.exists():
+        try:
+            old_res = pridobi_podatke_iz_xml(xml_p)
+            cc_adapt = _adapt_old_parser_res(old_res)
+            if cc_adapt.get("gesla_opisi"):
+                cc = cc_adapt
+                used = "OLD"
+                print("[ROUTE] using OLD parser (with clues)")
+        except Exception as e:
+            print("[KRIZ] stari parser padel:", e)
+
+    # (B) opcijski novi parser (trenutno preskočen)
+    # if cc is None and xml_p and xml_p.exists():
+    #     try:
+    #         cc = _parse_cc_xml_local(xml_p)
+    #         used = "NEW"
+    #         print("[ROUTE] using NEW parser")
+    #     except Exception as e:
+    #         print("[KRIZ] novi parser padel:", e)
+    #         cc = None
+
+    if not isinstance(cc, dict):
+        cc = empty_cc
+        used = "EMPTY"
+        print("[ROUTE] fallback to empty_cc")
+
+    # --- ▶️ DODANO: napolni sol_by_xy iz XML, če manjka ali je prazno
+    try:
+        need_solutions = not cc.get("sol_by_xy")
+        if need_solutions and xml_p and xml_p.exists():
+            import xml.etree.ElementTree as ET
+            root = ET.parse(xml_p).getroot()
+            ns = {'r': 'http://crossword.info/xml/crossword-compiler'}
+            sol_by_xy = {}
+
+            # 1) <cell x="" y="" solution="">
+            cells = root.findall(".//r:cell", ns) or root.findall(".//cell")
+            for c in cells:
+                try:
+                    # CC je 1-based -> pretvori v 0-based
+                    x = int(c.get("x")) - 1
+                    y = int(c.get("y")) - 1
+                except (TypeError, ValueError):
+                    continue
+                ch = (c.get("solution") or c.get("letter") or "").strip()
+                if ch:
+                    sol_by_xy[f"{x},{y}"] = ch.upper()
+
+            # 2) fallback: <grid><row>…</row></grid> (npr. ".#A..")
+            if not sol_by_xy:
+                rows = root.findall(".//r:grid/r:row", ns) or root.findall(".//grid/row") or []
+                for y, row in enumerate(rows):
+                    line = (row.text or "")
+                    for x, ch in enumerate(line):
+                        if ch and ch not in ("#", ".", "·", "∙", " "):
+                            sol_by_xy[f"{x},{y}"] = ch.upper()
+
+            # vgradi v cc pod obema ključema
+            cc["sol_by_xy"] = sol_by_xy
+            cc["sol_xy"] = sol_by_xy
+            print("[ROUTE] sol_by_xy count =", len(sol_by_xy))
+    except Exception as e:
+        print("[ROUTE] solution-extract error:", e)
+
+    print("[ROUTE] which:", used)
+    print("[ROUTE] cc sizes:", cc.get("width"), "x", cc.get("height"))
+    print("[ROUTE] counts:",
+          "crna=", len(cc.get("crna_polja", []) or []),
+          "gesla_opisi=", len(cc.get("gesla_opisi", []) or []),
+          "sol_xy=", len(cc.get("sol_by_xy", {}) or {}))
+
+    return render_template(
+        "krizanka.html",
+        datum=resolved_date.isoformat(),
+        js_url=js_url, xml_url=xml_url,
+        cc=cc
+    )
+
+
+# === ALIAS POD GLAVNO ROUTE (izven funkcije!) ================================
+@app.get("/krizanka/<datum>", endpoint="krizanka_by_path", strict_slashes=False)
+def krizanka_by_path(datum):
+    return redirect(url_for("prikazi_krizanko", d=datum), code=302)
+
+@app.get("/favicon.ico")
+def favicon():
+    return send_from_directory(os.path.join(app.root_path, "static"),
+                               "favicon.ico", mimetype="image/x-icon")
+
+# --- minimalna /images (nikoli 500) ---
+import os
+from pathlib import Path
+from flask import send_file, Response
+
+IMAGES_DIR = Path(app.root_path) / "static" / "Images"
+ALLOWED_EXTS = {".jpg", ".jpeg", ".png", ".webp"}
+
+@app.get("/images/<path:filename>", endpoint="images_serve")
+def images_serve(filename: str):
+    try:
+        base = Path(filename)
+        # 0) normaliziraj in prepreči ../
+        target = (IMAGES_DIR / base).resolve()
+        if not str(target).startswith(str(IMAGES_DIR.resolve())):
+            return Response("", status=404)
+
+        # 1) točno ime
+        if target.is_file():
+            return send_file(str(target), conditional=True)
+
+        # 2) če ni končnice ali ne obstaja: prefix match (case-insensitive) po dovoljenih končnicah
+        stem = base.stem.lower()
+        for p in IMAGES_DIR.rglob("*"):
+            if not p.is_file():
+                continue
+            if p.suffix.lower() not in ALLOWED_EXTS:
+                continue
+            if p.stem.lower().startswith(stem):
+                return send_file(str(p), conditional=True)
+
+        # nič najdeno → čisti 404 (brez abort in brez templata)
+        return Response("", status=404)
+
+    except Exception as e:
+        # tudi v napaki vrni tih 404, da frontend sliko samo skrije
+        print("[/images] ERROR:", e)
+        return Response("", status=404)
+
+
 # ===== Sudoku (embedding & arhiv) ============================================
+
 DATE_RE_SUDOKU = re.compile(r"^Sudoku_(?P<code>[a-z_]+)_(?P<y>\d{4})-(?P<m>\d{2})-(?P<d>\d{2})\.html$")
 
 def _deaccent(s: str) -> str:
@@ -981,6 +1882,7 @@ def arhiv_sudoku_v2(tezavnost):
     return render_template("arhiv.html", months_sorted=months_sorted, meseci=meseci, tip="sudoku", tezavnost=tezavnost)
 
 # ===== Uvoz / utility =========================================================
+
 def generiraj_ime_slike(opis, resitev):
     def norm(txt):
         txt = unicodedata.normalize('NFD', txt)
@@ -1040,6 +1942,7 @@ def prenesi_slike_zip():
     )
 
 # ===== Iskanje ================================================================
+
 @app.post('/preveri')
 def preveri():
     payload = request.get_json(silent=True) or {}
@@ -1147,9 +2050,7 @@ def isci_opis():
     return render_template('isci_opis.html')
 
 # ===== Prispevaj / števci ====================================================
-# ==== PRISPEVAJ (view) =======================================================
-
-from flask import render_template  # (na vrhu datoteke naj bo ta import)
+#from flask import render_template  # (na vrhu datoteke naj bo ta import)
 
 @app.get("/prispevaj", endpoint="prispevaj_view")
 def prispevaj_view():
@@ -1241,6 +2142,15 @@ def stevec_count_json():
 
 
 # ===== MAIN ===================================================================
+# — pokaži poln traceback v browserju za lažje iskanje 500 —
+from flask import Response
+@app.errorhandler(Exception)
+def _dbg_err(e):
+    import traceback
+    return Response(f"<pre>{traceback.format_exc()}</pre>", 500, mimetype="text/plain")
+
+
+
 if __name__ == "__main__":
     print(f"[VUS] DB_PATH = {DB_PATH}")
     try:

@@ -10,50 +10,55 @@
     />
     <style>
       .cell {
-        width: 40px;
-        height: 40px;
-        border: 1px solid #ccc;
-        position: relative;
-      }
+    width: 40px;
+    height: 40px;
+    border: 1px solid #ccc;
+    position: relative;
+    box-sizing: border-box;
+    transition: background .15s ease, outline-color .15s ease, box-shadow .15s ease;
+  }
 
-      .cell input {
-        width: 100%;
-        height: 100%;
-        text-transform: uppercase;
-        text-align: center;
-        border: none;
-        outline: none;
-        font-size: 20px;
-      }
+  /* če boš kdaj prešel na <input> v celicah, to že čaka */
+  .cell input {
+    width: 100%;
+    height: 100%;
+    text-transform: uppercase;
+    text-align: center;
+    border: none;
+    outline: none;
+    font-size: 20px;
+    background: transparent;
+  }
 
-      .cell.black {
-        background-color: #333;
-      }
+  .cell.black {
+    background-color: #333;
+  }
 
-      .cell-number {
-        position: absolute;
-        top: 2px;
-        left: 4px;
-        font-size: 0.65em;
-        color: #555;
-      }
+  /* naš generator uporablja <span class="num">; dodam podporo še za .cell-number */
+  .cell-number,
+  .num {
+    position: absolute;
+    top: 2px;
+    left: 4px;
+    font-size: 0.65em;
+    color: #555;
+    line-height: 1;
+    opacity: .9;
+  }
 
-      .cell.highlight {
-        background-color: #ffffcc;
-      }
+  /* highlight besede + trenutne celice */
+  .cell.highlight {
+    background-color: #ffffcc;      /* svetlo rumeno ozadje za aktivno besedo */
+    outline: 2px solid #007bff;     /* moder okvir */
+    outline-offset: -1px;           /* da ne štrli ven iz mreže */
+  }
 
-      .cell.highlight {
-        outline: 2px solid #007bff; /* moder okvir */
-        outline-offset: -1px; /* da se ne razširi navzven */
-      }
-
-      .correct {
-        background-color: #d4edda;
-      }
-
-      .incorrect {
-        background-color: #f8d7da;
-      }
+  /* nežno barvanje pravilnosti (že ga imaš v JS, tu samo estetika) */
+  <style>
+  .cell { transition: background .15s ease, box-shadow .15s ease, outline-color .15s ease; }
+  .cell.correct   { background: #e9f7ef !important; } /* nežno zeleno */
+  .cell.incorrect { background: #fdecea !important; } /* nežno rdeče */
+</style>
 
       body {
         padding-top: 80px;
