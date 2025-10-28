@@ -1142,17 +1142,34 @@ def zberi_pretekle(base: Path):
 
 # ----------------------- Arhiv: kanonične in legacy poti ---------------------
 
+import re
+from flask import redirect, url_for, render_template
+
+def _dedup_sort_meseci(meseci_in):
+    """Dedupliciraj datume v posameznem mesecu in vse sortiraš DESC."""
+    meseci_out = {}
+    for ym, dni in (meseci_in or {}).items():
+        uniq = sorted(set(dni or []), reverse=True)  # set = brez duplikatov
+        meseci_out[ym] = uniq
+    months_sorted = sorted(meseci_out.keys(), reverse=True)
+    return months_sorted, meseci_out
+
 @app.get("/arhiv/krizanke", endpoint="arhiv_krizanke")
 def arhiv_krizanke():
-    months_sorted, meseci = zberi_pretekle(CC_BASE)
-    return render_template("arhiv.html", months_sorted=months_sorted, meseci=meseci, tip="krizanke")
+    months_sorted_raw, meseci_raw = zberi_pretekle(CC_BASE)
+    months_sorted, meseci = _dedup_sort_meseci(meseci_raw)
+    return render_template("arhiv.html",
+                           months_sorted=months_sorted,
+                           meseci=meseci,
+                           tip="krizanke")
 
 @app.get("/arhiv/krizanke/<mesec>", endpoint="arhiv_krizanke_mesec")
 def arhiv_krizanke_mesec(mesec):
     if not re.match(r"^\d{4}-\d{2}$", mesec):
         return render_template("napaka.html", sporocilo="Napačen format meseca."), 400
-    _, meseci = zberi_pretekle(CC_BASE)
-    datumi = sorted(meseci.get(mesec, []), reverse=True)
+    _, meseci_raw = zberi_pretekle(CC_BASE)
+    _, meseci = _dedup_sort_meseci(meseci_raw)
+    datumi = meseci.get(mesec, [])
     return render_template("arhiv_mesec.html", mesec=mesec, datumi=datumi)
 
 # legacy preusmeritve (ostanejo, a vodijo na kanonične poti)
@@ -1666,20 +1683,22 @@ def prikazi_krizanko():
         used = "EMPTY"
         print("[ROUTE] fallback to empty_cc")
 
-    # --- ▶️ DODANO: napolni sol_by_xy iz XML, če manjka ali je prazno
+    # =====================  ⬇⬇⬇  TUKAJ PRILEPI  ⬇⬇⬇  =====================
+    # Napolni sol_by_xy iz XML (pravilen namespace rectangular-puzzle)
     try:
         need_solutions = not cc.get("sol_by_xy")
         if need_solutions and xml_p and xml_p.exists():
             import xml.etree.ElementTree as ET
             root = ET.parse(xml_p).getroot()
-            ns = {'r': 'http://crossword.info/xml/crossword-compiler'}
+
+            # Namespace, kjer so <cell> elementi v tvojem XML:
+            NS_RP = {'rp': 'http://crossword.info/xml/rectangular-puzzle'}
+
             sol_by_xy = {}
 
-            # 1) <cell x="" y="" solution="">
-            cells = root.findall(".//r:cell", ns) or root.findall(".//cell")
-            for c in cells:
+            # 1) <rp:cell x="1" y="1" solution="K" .../>  (1-based → 0-based)
+            for c in root.findall(".//rp:cell", NS_RP):
                 try:
-                    # CC je 1-based -> pretvori v 0-based
                     x = int(c.get("x")) - 1
                     y = int(c.get("y")) - 1
                 except (TypeError, ValueError):
@@ -1688,21 +1707,20 @@ def prikazi_krizanko():
                 if ch:
                     sol_by_xy[f"{x},{y}"] = ch.upper()
 
-            # 2) fallback: <grid><row>…</row></grid> (npr. ".#A..")
+            # 2) Fallback: <rp:grid><rp:row>…</rp:row></rp:grid>
             if not sol_by_xy:
-                rows = root.findall(".//r:grid/r:row", ns) or root.findall(".//grid/row") or []
-                for y, row in enumerate(rows):
+                for y, row in enumerate(root.findall(".//rp:grid/rp:row", NS_RP)):
                     line = (row.text or "")
                     for x, ch in enumerate(line):
                         if ch and ch not in ("#", ".", "·", "∙", " "):
                             sol_by_xy[f"{x},{y}"] = ch.upper()
 
-            # vgradi v cc pod obema ključema
             cc["sol_by_xy"] = sol_by_xy
-            cc["sol_xy"] = sol_by_xy
+            cc["sol_xy"] = sol_by_xy  # tvoj logger bere to ime
             print("[ROUTE] sol_by_xy count =", len(sol_by_xy))
     except Exception as e:
         print("[ROUTE] solution-extract error:", e)
+    # =====================  ⬆⬆⬆  KONEC VLOŽKA  ⬆⬆⬆  =====================
 
     print("[ROUTE] which:", used)
     print("[ROUTE] cc sizes:", cc.get("width"), "x", cc.get("height"))
@@ -1719,7 +1737,9 @@ def prikazi_krizanko():
     )
 
 
+
 # === ALIAS POD GLAVNO ROUTE (izven funkcije!) ================================
+
 @app.get("/krizanka/<datum>", endpoint="krizanka_by_path", strict_slashes=False)
 def krizanka_by_path(datum):
     return redirect(url_for("prikazi_krizanko", d=datum), code=302)
