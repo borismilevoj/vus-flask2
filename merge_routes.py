@@ -1,7 +1,7 @@
 ﻿import re, io, sys
 
 OLD = "app_old.py"
-CUR = "app.py"
+CUR = "app_BIG_backup.DISABLED"
 OUT = "app_merged.py"
 
 old = io.open(OLD, "r", encoding="utf-8", errors="ignore").read()
@@ -46,6 +46,6 @@ elif zagon in cur:
 else:
     cur_new = cur + "\n\n# ==== Routes (merged from git) ====\n" + routes + "\n"
 
-io.open("app.py.bak","w",encoding="utf-8").write(cur)
+io.open("Stare_skripte/app.py.bak", "w", encoding="utf-8").write(cur)
 io.open(OUT,"w",encoding="utf-8").write(cur_new)
-print("✅ Vstavljeno v", OUT, "| Backup:", "app.py.bak")
+print("✅ Vstavljeno v", OUT, "| Backup:", "app_BIG_backup.DISABLED.bak")

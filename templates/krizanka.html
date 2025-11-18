@@ -4,10 +4,17 @@
 
 {% block content %}
 <div class="container py-3">
-  <h1 class="h4 mb-3">
-    Današnja križanka {{ datum }}
-    <small class="text-muted"> · opisov: {{ (cc.gesla_opisi|length) if cc else 0 }}</small>
-  </h1>
+  <h1 class="h4 mb-2">
+  Križanka za {{ datum.strftime('%Y-%m-%d') }}
+  <small class="text-muted"> · opisov: {{ (cc.gesla_opisi|length) if cc else 0 }}</small>
+</h1>
+
+<nav class="mb-3" style="display:flex; gap:1rem; align-items:center;">
+  <a href="{{ prev_url }}">&laquo; Prejšnja</a>
+  <a href="{{ next_url }}">Naslednja &raquo;</a>
+  <a href="{{ back_url }}">Nazaj na to križanko</a>
+</nav>
+
 
   <!-- okvir + mreža -->
   <div id="gridFrame" class="vus-wrap">
@@ -188,8 +195,15 @@ window.addEventListener('DOMContentLoaded', function () {
     }
 
     // ===== 4) FUNKCIJE =====
-    var dir = 'across';
-    window.cursor = null;
+var dir = 'across';
+window.cursor = null;
+
+function updateFrameBorder() {
+  if (!frame) return;
+  // modro za vodoravno, zeleno za navpično
+  frame.style.borderColor = (dir === 'across') ? '#2563eb' : '#16a34a';
+}
+
 
     function isBlack(x,y){ return !!blackSet[x + "," + y]; }
     function hasLetter(x,y){ var c=cellRefs[y][x]; return !!(c && c.dataset && c.dataset.letter); }
@@ -205,7 +219,7 @@ window.addEventListener('DOMContentLoaded', function () {
       return {sx:sx,sy:sy,cells:cells};
     }
 
-    // --- BARVANJE CELIC (razredi .correct / .incorrect) ---
+        // --- BARVANJE CELIC (razredi .correct / .incorrect) ---
     function repaintCell(x, y) {
       var cell = (cellRefs[y] || [])[x];
       if (!cell || cell.classList.contains('black')) return;
@@ -221,7 +235,8 @@ window.addEventListener('DOMContentLoaded', function () {
       for (var j=0;j<active.length;j++){
         var el = active[j];
         el.classList.remove('active','cursor');
-        el.style.outline=''; el.style.boxShadow='';
+        el.style.outline='';
+        el.style.boxShadow='';
         var x = +el.dataset.x, y = +el.dataset.y;
         repaintCell(x,y);
       }
@@ -229,20 +244,29 @@ window.addEventListener('DOMContentLoaded', function () {
 
     function highlight(cells, cur){
       clearActive();
+
+      // barva glede na smer: across = modro, down = zeleno
+      var col = (dir === 'across') ? '#2563eb' : '#16a34a';
+      var shadow = (dir === 'across')
+        ? 'inset 0 0 0 2px rgba(37,99,235,.25)'
+        : 'inset 0 0 0 2px rgba(22,163,74,.25)';
+
       for (var j = 0; j < cells.length; j++) {
         var xy = cells[j];
         var c = cellRefs[xy[1]][xy[0]];
         c.classList.add('active');
-        c.style.outline = '2px solid #007bff';
-        c.style.boxShadow = 'inset 0 0 0 2px rgba(0,123,255,.2)';
+        c.style.outline = '2px solid ' + col;
+        c.style.boxShadow = shadow;
         repaintCell(xy[0], xy[1]);
       }
+
       var curCell = cellRefs[cur.y][cur.x];
       curCell.classList.add('cursor');
       curCell.style.outline = '2px solid #ff8800';
       curCell.style.boxShadow = 'inset 0 0 0 2px rgba(255,136,0,.25)';
       repaintCell(cur.x, cur.y);
     }
+
 
     var badge = document.getElementById('clueBadge');
     var title = document.getElementById('clueTitle');
@@ -261,7 +285,7 @@ window.addEventListener('DOMContentLoaded', function () {
         if (!meta) meta = {};
       }
       var num  = numberAt.get(key) || meta.stevilka || '—';
-      var opis = (meta.opis || '(opis manjka v podatkih)');
+      var opis = (meta.opis || '').trim();
       if (badge) badge.textContent = num;
       if (title) title.textContent = (d==='down'?'Navpično':'Vodoravno');
       if (body)  body.textContent  = opis;
@@ -273,7 +297,6 @@ window.addEventListener('DOMContentLoaded', function () {
           var slug = opis.split(/\s+/).slice(0, 15).join(' ');
           slug = slug.normalize ? slug.normalize('NFD').replace(/[\u0300-\u036f]/g, '') : slug;
           slug = slug.replace(/[^A-Za-z0-9]+/g, '_').replace(/^_+|_+$/g, '').toLowerCase();
-          slug = slug.slice(0, 40);
           url = '/images/' + slug + '.jpg';
         }
         // normalizacija relativnih poti
@@ -301,12 +324,35 @@ window.addEventListener('DOMContentLoaded', function () {
       }
     }
 
-    function focusWordHere(){
+            function focusWordHere(){
       if (!window.cursor) return;
+
+      // Najprej clamp v trenutno smer
       var c = clampWord(window.cursor.x, window.cursor.y, dir);
+      var keyHead = c.sx + "," + c.sy;
+
+      var hasAcross = clueAtHead.has(keyHead + ",across");
+      var hasDown   = clueAtHead.has(keyHead + ",down");
+
+      // Če smo na navpičnem geslu, pa je dir='across' in tam NI across clua,
+      // ampak JE down, samodejno preklopi smer
+      if (dir === "across" && !hasAcross && hasDown) {
+        dir = "down";
+        c = clampWord(window.cursor.x, window.cursor.y, dir);
+        keyHead = c.sx + "," + c.sy;
+      }
+      // Obratno: če je dir='down', pa tam ni navpičnega, je pa vodoravno
+      else if (dir === "down" && !hasDown && hasAcross) {
+        dir = "across";
+        c = clampWord(window.cursor.x, window.cursor.y, dir);
+        keyHead = c.sx + "," + c.sy;
+      }
+
       highlight(c.cells, window.cursor);
       showClueAtHead(c.sx, c.sy, dir);
+      updateFrameBorder();
     }
+
 
     function setLetterAt(x,y,ch){
       var cell = cellRefs[y][x]; if (!cell || cell.classList.contains('black')) return;
@@ -320,20 +366,51 @@ window.addEventListener('DOMContentLoaded', function () {
       repaintCell(x,y);
     }
 
-    function moveWithinWord(forward, skipEmpty){
+       function moveWithinWord(forward, onlyEmpty){
       if (forward == null) forward = true;
-      if (skipEmpty == null) skipEmpty = false;
+      if (onlyEmpty == null) onlyEmpty = false;
       if (!window.cursor) return false;
+
       var c = clampWord(window.cursor.x, window.cursor.y, dir);
       var i0 = -1;
-      for (var i1=0;i1<c.cells.length;i1++) { if (c.cells[i1][0]===window.cursor.x && c.cells[i1][1]===window.cursor.y){ i0=i1; break; } }
-      var step = forward?1:-1;
+      for (var i1=0; i1<c.cells.length; i1++) {
+        if (c.cells[i1][0]===window.cursor.x && c.cells[i1][1]===window.cursor.y){
+          i0=i1; break;
+        }
+      }
+      var step = forward ? 1 : -1;
+
       for (var i2=i0+step; i2>=0 && i2<c.cells.length; i2+=step){
-        var nx=c.cells[i2][0], ny=c.cells[i2][1];
-        if (!skipEmpty || !hasLetter(nx,ny)){ window.cursor={x:nx,y:ny}; highlight(c.cells, window.cursor); return true; }
+        var nx = c.cells[i2][0],
+            ny = c.cells[i2][1];
+        var cell = (cellRefs[ny] || [])[nx];
+        if (!cell || cell.classList.contains('black')) continue;
+
+        if (onlyEmpty) {
+          // hočemo PRVO prazno celico:
+          var letter = (cell.dataset.letter || '').trim();
+          if (letter) continue;  // preskoči že zapolnjene
+        }
+
+        window.cursor = {x:nx, y:ny};
+        highlight(c.cells, window.cursor);
+        return true;
       }
       return false;
     }
+
+function narediSlug(opis) {
+  const s = (opis || '');
+  return s
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')   // odstrani šumnike
+    .replace(/[-–—−]/g, ' ')                            // vezaji -> presledek
+    .replace(/[().,;:!?]/g, '')                         // brišemo (), . , ; : ! ?
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, '')                        // KARKOLI ni črka/števka/presledek -> ven
+    .trim()
+    .split(/\s+/).slice(0, 15).join('_');               // max 15 “besed”, join z _
+}
+
 
     // ===== 5) NAPOLNI data-correct IN PREBARVAJ =====
     for (var yy=0; yy<height; yy++) {

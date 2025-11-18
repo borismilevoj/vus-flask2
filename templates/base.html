@@ -2,96 +2,76 @@
 <html lang="sl">
   <head>
     <meta charset="UTF-8" />
-    <title>{% block title %}VUS – Veliki ugankarski slovar{% endblock %}</title>
+    <title>{% block title %}VUS – Veliki ugankarski slovar{% endblock title %}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
       rel="stylesheet"
     />
+
+    {# dodatki v <head> iz child templata (npr. admin.html) #}
+    {% block head %}{% endblock head %}
+
     <style>
       .cell {
-    width: 40px;
-    height: 40px;
-    border: 1px solid #ccc;
-    position: relative;
-    box-sizing: border-box;
-    transition: background .15s ease, outline-color .15s ease, box-shadow .15s ease;
-  }
-
-  /* če boš kdaj prešel na <input> v celicah, to že čaka */
-  .cell input {
-    width: 100%;
-    height: 100%;
-    text-transform: uppercase;
-    text-align: center;
-    border: none;
-    outline: none;
-    font-size: 20px;
-    background: transparent;
-  }
-
-  .cell.black {
-    background-color: #333;
-  }
-
-  /* naš generator uporablja <span class="num">; dodam podporo še za .cell-number */
-  .cell-number,
-  .num {
-    position: absolute;
-    top: 2px;
-    left: 4px;
-    font-size: 0.65em;
-    color: #555;
-    line-height: 1;
-    opacity: .9;
-  }
-
-  /* highlight besede + trenutne celice */
-  .cell.highlight {
-    background-color: #ffffcc;      /* svetlo rumeno ozadje za aktivno besedo */
-    outline: 2px solid #007bff;     /* moder okvir */
-    outline-offset: -1px;           /* da ne štrli ven iz mreže */
-  }
-
-  /* nežno barvanje pravilnosti (že ga imaš v JS, tu samo estetika) */
-  <style>
-  .cell { transition: background .15s ease, box-shadow .15s ease, outline-color .15s ease; }
-  .cell.correct   { background: #e9f7ef !important; } /* nežno zeleno */
-  .cell.incorrect { background: #fdecea !important; } /* nežno rdeče */
-</style>
-
-      body {
-        padding-top: 80px;
+        width: 40px;
+        height: 40px;
+        border: 1px solid #ccc;
+        position: relative;
+        box-sizing: border-box;
+        transition: background .15s ease, outline-color .15s ease, box-shadow .15s ease;
       }
+      .cell input {
+        width: 100%;
+        height: 100%;
+        text-transform: uppercase;
+        text-align: center;
+        border: none;
+        outline: none;
+        font-size: 20px;
+        background: transparent;
+      }
+      .cell.black { background-color: #333; }
+      .cell-number, .num {
+        position: absolute;
+        top: 2px;
+        left: 4px;
+        font-size: 0.65em;
+        color: #555;
+        line-height: 1;
+        opacity: .9;
+      }
+      .cell.highlight {
+        background-color: #ffffcc;
+        outline: 2px solid #007bff;
+        outline-offset: -1px;
+      }
+      .cell.correct   { background: #e9f7ef !important; }
+      .cell.incorrect { background: #fdecea !important; }
 
+      body { padding-top: 80px; }
       footer {
         margin-top: 40px;
         text-align: center;
         font-size: 0.9em;
         color: #666;
       }
+      /* sem lahko child doda še dodatne stile prek blocka spodaj */
     </style>
-    ... {% block styles %}{% endblock %}
-    <!-- GA4 -->
+
+    {% block styles %}{% endblock styles %}
+
     <!-- GA4 -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-YB9MEPL26P"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
-      function gtag() {
-        dataLayer.push(arguments);
-      }
-
+      function gtag(){ dataLayer.push(arguments); }
       gtag('js', new Date());
-      // produkcijska konfiguracija (brez debug_mode)
-      gtag('config', 'G-YB9MEPL26P', {
-        transport_type: 'beacon',
-      });
+      gtag('config', 'G-YB9MEPL26P', { transport_type: 'beacon' });
 
-      // varen helper – kliči gtagEvent('ime', {…})
-      window.gtagEvent = function (name, params) {
-        try {
-          gtag('event', name, params || {});
-        } catch (e) {}
+      // helper za dogodke
+      window.gtagEvent = function(name, params){
+        try { gtag('event', name, params || {}); } catch(e) {}
       };
     </script>
   </head>
@@ -117,12 +97,11 @@
               <a class="nav-link" href="{{ url_for('isci_vzorec') }}">Iskanje po vzorcu</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="{{ url_for('prikazi_krizanko') }}">Današnja križanka</a>
+              <a class="nav-link" href="{{ url_for('krizanka') }}">Današnja križanka</a>
+              {# če imaš endpoint="prikazi_krizanko", pa zamenjaj v 'prikazi_krizanko' #}
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="{{ url_for('arhiv_krizanke_legacy_redirect') }}"
-                >Arhiv križank</a
-              >
+              <a class="nav-link" href="{{ url_for('arhiv_krizanke_legacy_redirect') }}">Arhiv križank</a>
             </li>
             <li class="nav-item">
               <a class="nav-link" href="{{ url_for('arhiv_sudoku_pregled') }}">Arhiv sudoku</a>
@@ -138,16 +117,18 @@
       </div>
     </nav>
 
-    <!-- odmik, ker je navbar fixed-top -->
-    <div class="container" style="padding-top: 4.5rem;">{% block content %}{% endblock %}</div>
+    <!-- vsebina -->
+    <div class="container" style="padding-top: 4.5rem;">
+      {% block content %}{% endblock content %}
+    </div>
 
     <footer class="text-center py-4">
       <p class="mb-0">&copy; 2025 VUS – Veliki ugankarski slovar</p>
     </footer>
 
-    <!-- JavaScript: Bootstrap, jQuery -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- JavaScript: Bootstrap; jQuery ni nujen, pustiš če ga res rabiš -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    {% block scripts %}{% endblock %}
+
+    {% block scripts %}{% endblock scripts %}
   </body>
 </html>

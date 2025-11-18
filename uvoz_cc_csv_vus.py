@@ -163,9 +163,10 @@ def upsert_row(conn: sqlite3.Connection, geslo: str, opis: str, overwrite: bool)
 def run(csv_path: str, db_path: str, word_col: str = None, clue_col: str = None,
         encoding: str = None, overwrite: bool = True, dry_run: bool = False,
         commit_every: int = 1000, verbose: bool = False,
-        only_citation_contains: str | None = None,  # privzeto brez filtra
-        import_all: bool = True,                    # privzeto ALL
-        refresh_sortiran: bool = True):             # ⟵ NOVO
+        only_citation_contains: str | None = None,  # privzeto "vpis" bomo nastavili v argparse
+        import_all: bool = False,                   # privzeto NI ALL, ampak filter
+        refresh_sortiran: bool = True):
+
 
 
     db_existed = os.path.exists(db_path)
@@ -207,7 +208,8 @@ def run(csv_path: str, db_path: str, word_col: str = None, clue_col: str = None,
                 citation_idx = 3
 
         # --all prevlada nad --only-citation-contains
-        if (only_citation_contains is not None) and import_all:
+        # Če je --all, ignoriraj Citation filter
+        if import_all:
             only_citation_contains = None
         if (only_citation_contains is not None) and (citation_idx is None):
             print("❌ Zahtevan je filter po Citation, a stolpec 'Citation' v CSV ne obstaja.")
@@ -329,6 +331,27 @@ def run(csv_path: str, db_path: str, word_col: str = None, clue_col: str = None,
     print(f"⏭️  Preskočenih:   {skipped}")
     print(f"🔁 Overwrite:  {'DA' if overwrite else 'NE'}")
     print("──────────────────────────")
+    print("──────── Povzetek ────────")
+    print(f"📄 CSV:        {csv_path}  (encoding: {used_enc}, delimiter: {delim})")
+    print(f"🗄️  Baza:       {db_path}  ({'obstajala' if db_existed else 'nova'})")
+    if only_citation_contains is not None:
+        print(f"🔎 Filter:     Citation contains \"{only_citation_contains}\"")
+        print(f"🚫 Preskočenih zaradi filtra: {filtered_out}")
+    else:
+        print(f"🔎 Filter:     (brez) — uvožene vse vrstice")
+    print(f"➕ Dodanih:    {inserted}")
+    print(f"✏️  Posodobljenih: {updated}")
+    print(f"⏭️  Preskočenih:   {skipped}")
+    print(f"🔁 Overwrite:  {'DA' if overwrite else 'NE'}")
+    print("──────────────────────────")
+    return {
+        "inserted": inserted,
+        "updated": updated,
+        "skipped": skipped,
+        "filtered_out": filtered_out,
+        "import_all": import_all,
+        "only_citation_contains": only_citation_contains,
+    }
 
 def refresh_slovar_sortiran(db_path: str):
     """Po uvozu poravna slovar_sortiran iz slovar, z abecednim redom po delu za ' - '."""
@@ -365,11 +388,21 @@ def main():
     ap.add_argument("--commit-every", type=int, default=1000, help="Commit na N vrstic (privzeto 1000).")
     ap.add_argument("--verbose", action="store_true", help="Vmesni izpisi napredka.")
 
-    # FILTER PO CITATION (privzeto ALL)
-    ap.add_argument("--only-citation-contains", default=None,
-                    help="Uvozi samo vrstice, kjer Citation vsebuje to vrednost (npr. 'vpis'). Če je --all aktiven, se ignorira.")
-    ap.add_argument("--all", dest="import_all", action="store_true", default=True,
-                    help="Ignoriraj Citation filter (privzeto: vklopljeno – uvozi vse vrstice).")
+    # privzeto: filtriramo po "vpis"
+    ap.add_argument(
+        "--only-citation-contains",
+        default="vpis",
+        help="Uvozi samo vrstice, kjer Citation vsebuje to vrednost (npr. 'vpis')."
+    )
+
+    # --all = uvozi VSE, ignoriraj Citation filter
+    ap.add_argument(
+        "--all",
+        dest="import_all",
+        action="store_true",
+        default=False,
+        help="Ignoriraj Citation filter in uvozi vse vrstice (ALL mode)."
+    )
 
     # REFRESH slovar_sortiran po uvozu (privzeto vklopljeno)
     ap.add_argument("--refresh-sortiran", dest="refresh_sortiran",

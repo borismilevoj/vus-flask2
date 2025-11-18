@@ -1,0 +1,1591 @@
+# ===== Imports ================================================================
+from __future__ import annotations
+
+import os
+import re
+import html
+import io
+import glob
+import ssl
+import zipfile
+import sqlite3
+import tempfile
+import shutil
+import logging
+import unicodedata
+import urllib.request
+from pathlib import Path
+import flask as fl
+from datetime import datetime, date
+from functools import wraps
+from urllib.parse import urlparse, parse_qs
+import datetime as dt
+from flask import request, render_template, url_for
+from flask import abort as flask_abort
+import requests
+import xml.etree.ElementTree as ET
+from flask import request, abort
+from datetime import datetime, date
+from flask import (
+    Flask,
+    abort,
+    flash,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    send_file,
+    send_from_directory,
+    session,
+    url_for,
+)
+
+# ===== Env (.env ne prepiše ročnih env spremenljivk) ==========================
+try:
+    from dotenv import load_dotenv
+    load_dotenv(override=False)
+except Exception:
+    pass
+
+if __name__ != "__main__":
+    raise SystemExit("Ne importaj app_BIG_backup.py")
+
+
+# ===== DB CONFIG (Path + optional URI) =======================================
+VUS_DB_URL = (os.getenv("VUS_DB_URL") or "").strip()
+
+def _resolve_db() -> tuple[Path, str | None]:
+    """
+    Vrne:
+      - DB_PATH: pathlib.Path do .db (za .parent, .exists, backup …)
+      - DB_URI:  'file:…' če želimo odpirati prek URI (mode=ro/immutable), sicer None
+    Prednost: VUS_DB_URL (če je 'file:…'), nato VUS_DB_PATH/DB_PATH, nato Documents/VUS/VUS.db.
+    """
+    url = VUS_DB_URL
+    if url.startswith("file:"):
+        path_part = url[5:].split("?", 1)[0]
+        return Path(path_part), url
+
+    for k in ("VUS_DB_PATH", "DB_PATH"):
+        v = (os.getenv(k) or "").strip()
+        if v:
+            return Path(v), None
+
+    return (Path.home() / "Documents" / "VUS" / "VUS.db"), None
+
+DB_PATH, DB_URI = _resolve_db()
+print(f"[VUS] DB_PATH = {DB_PATH}")  # vedno Path
+
+# --- SAFE DB connect ---------------------------------------------------------
+def get_conn(readonly: bool = False) -> sqlite3.Connection:
+    db_path = DB_PATH.as_posix() if hasattr(DB_PATH, "as_posix") else str(DB_PATH)
+    if DB_URI:
+        conn_str, is_uri = DB_URI, True
+    else:
+        if readonly:
+            conn_str, is_uri = f"file:{db_path}?mode=ro&cache=shared", True
+        else:
+            conn_str, is_uri = db_path, False
+
+    con = sqlite3.connect(conn_str, uri=is_uri, timeout=10.0,
+                          check_same_thread=False, isolation_level=None)
+    con.execute("PRAGMA foreign_keys = ON;")
+    con.execute("PRAGMA busy_timeout = 5000;")
+    return con
+
+# -----------------------------------------------------------------------------
+
+
+
+# ===== Optionalni moduli (ne podre app-a, če manjka) =========================
+try:
+    from scripts.krizanka import pridobi_podatke_iz_xml  # type: ignore
+except Exception as e:
+    print(f"[VUS] OPOZORILO: scripts.krizanka ni na voljo ({e})")
+    pridobi_podatke_iz_xml = None
+
+try:
+    from Stare_skripte.uvoz_datotek import premakni_krizanke, premakni_sudoku  # type: ignore
+except Exception as e:
+    print(f"[VUS] OPOZORILO: Stare_skripte.uvoz_datotek ni na voljo ({e})")
+    premakni_krizanke = premakni_sudoku = None
+
+try:
+    from scripts.arhiviranje_util import arhiviraj_danes  # type: ignore
+except Exception as e:
+    print(f"[VUS] OPOZORILO: scripts.arhiviranje_util ni na voljo ({e})")
+    arhiviraj_danes = None
+
+# ===== Helperji za normalizacijo / DB =======================================
+def _strip_diacritics(s: str) -> str:
+    if not s:
+        return ""
+    s = unicodedata.normalize("NFKD", s)
+    return "".join(ch for ch in s if unicodedata.category(ch) != "Mn")
+
+def _norm_token(s: str) -> str:
+    s = (s or "").upper().replace(" ", "").replace("-", "").replace("_", "")
+    s = _strip_diacritics(s)
+    return s
+
+_FIRST_EQ = {"C": ("C", "Č", "Ć"), "S": ("S", "Š"), "Z": ("Z", "Ž")}
+
+def normalize_ascii(s: str) -> str:
+    t = unicodedata.normalize("NFKD", s or "")
+    return "".join(ch for ch in t if not unicodedata.combining(ch)).lower()
+
+def norm_geslo_key(s: str) -> str:
+    if not s:
+        return ""
+    t = unicodedata.normalize("NFKD", s)
+    t = "".join(ch for ch in t if not unicodedata.combining(ch))
+    t = t.upper()
+    t = re.sub(r"[ \-_]", "", t)
+    return t
+
+def ime_za_sort(opis: str) -> str:
+    left, sep, right = (opis or "").rpartition(" - ")
+    blok = (right if sep else opis or "").strip()
+    i = blok.find("(")
+    if i != -1:
+        blok = blok[:i].strip()
+    i = blok.find(",")
+    if i != -1:
+        blok = blok[:i].strip()
+    ime = blok.split()[0] if blok else ""
+    return normalize_ascii(ime)
+
+def sort_key_opis(opis: str):
+    je_oseba = 0 if (" - " in (opis or "")) else 1
+    return (je_oseba, ime_za_sort(opis), normalize_ascii(opis))
+
+def normalize_search(text: str) -> str:
+    if not text:
+        return ""
+    s = unicodedata.normalize('NFD', text)
+    s = ''.join(c for c in s if not unicodedata.combining(c))
+    s = re.sub(r'[^a-zA-Z0-9\s]', ' ', s)
+    s = re.sub(r'\s+', ' ', s).strip().lower()
+    return s
+
+def parse_tokens(q: str):
+    if not q:
+        return [], []
+    parts = re.findall(r'"([^"]+)"|(\S+)', q)
+    inc, exc = [], []
+    for quoted, plain in parts:
+        tok = normalize_search(quoted or plain)
+        if not tok:
+            continue
+        if plain and plain.startswith('-'):
+            exc.append(normalize_search(plain[1:]))
+        else:
+            inc.append(tok)
+    return inc, exc
+
+def get_db():
+    con = get_conn()
+    con.row_factory = sqlite3.Row
+    return con
+
+# --- schema: enostavno + varovalo pred rekurzijo -----------------------------
+_SCHEMA_INIT = False
+
+def ensure_schema() -> None:
+    global _SCHEMA_INIT
+    if _SCHEMA_INIT:
+        return
+    _SCHEMA_INIT = True
+
+    # NAMERNO brez get_conn() → direkten sqlite3.connect
+    con = sqlite3.connect(str(DB_PATH))
+    try:
+        cur = con.cursor()
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS slovar (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                geslo       TEXT NOT NULL,
+                razlaga     TEXT,
+                vrsta       TEXT,
+                izvor       TEXT,
+                tags        TEXT,
+                created_at  TEXT NOT NULL,
+                updated_at  TEXT NOT NULL
+            );
+        """)
+        cur.execute("CREATE INDEX IF NOT EXISTS idx_slovar_geslo ON slovar(geslo);")
+        con.commit()
+    finally:
+        con.close()
+
+def assert_baza_ok() -> None:
+    if not DB_PATH.exists() or DB_PATH.stat().st_size == 0:
+        raise RuntimeError(f"[VUS] Baza ne obstaja ali je prazna: {DB_PATH}")
+    with get_conn() as c:
+        ok = c.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='slovar'").fetchone()
+        if not ok:
+            tabele = [r[0] for r in c.execute("SELECT name FROM sqlite_master WHERE type='table'")]
+            raise RuntimeError(f"[VUS] V bazi {DB_PATH} ni tabele 'slovar'. Najdene: {tabele or '—'}")
+    print(f"[VUS] OK baza: {DB_PATH}")
+
+def ensure_indexes() -> None:
+    with get_conn() as conn:
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_slovar_geslo ON slovar(geslo)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_slovar_razlaga ON slovar(razlaga)")
+        conn.execute("""
+            CREATE INDEX IF NOT EXISTS idx_slovar_norm_expr
+            ON slovar (replace(replace(replace(upper(geslo),' ',''),'-',''),'_',''))
+        """)
+        conn.execute("""
+            CREATE INDEX IF NOT EXISTS idx_slovar_norm_len
+            ON slovar (length(replace(replace(replace(geslo,' ',''),'-',''),'_','')))
+        """)
+        print("[VUS] Indeksi OK.")
+
+# --- SYNC DB helperji --------------------------------------------------------
+def _normalize_sync_url(url: str) -> str:
+    """
+    Popravi znane 'share' linke v direktne prenose.
+    Podpira: dropbox.com, dl.dropboxusercontent.com, drive.google.com.
+    Ostale vrne nespremenjene.
+    """
+    if not url:
+        return url
+    u = urlparse(url)
+    host = (u.netloc or "").lower()
+
+    if "dropbox.com" in host or "dropboxusercontent.com" in host:
+        q = parse_qs(u.query)
+        if q.get("dl", ["0"])[0] != "1":
+            sep = "&" if u.query else "?"
+            return url + f"{sep}dl=1"
+        return url
+
+    if "drive.google.com" in host or host.endswith(".google.com"):
+        parts = [p for p in (u.path or "").split("/") if p]
+        if "file" in parts and "d" in parts:
+            try:
+                file_id = parts[parts.index("d") + 1]
+                return f"https://drive.google.com/uc?export=download&id={file_id}"
+            except Exception:
+                pass
+    return url
+
+def _is_probably_html(resp, peek: bytes = b"") -> bool:
+    ct = (resp.headers.get("content-type") or "").lower()
+    if "text/html" in ct:
+        return True
+    if peek:
+        s = peek[:512].lower()
+        if b"<html" in s or b"<!doctype html" in s:
+            return True
+    return False
+
+def _download_and_swap_db(src_url_or_path: str, dst_path: str | Path) -> tuple[bool, str]:
+    """
+    Prenese .db (ali kopira iz lokalne poti), preveri SQLite header in jo
+    varno zamenja (ustvari .bak). Vrne (ok: bool, msg: str).
+    """
+    try:
+        dst = Path(dst_path).resolve()
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        tmp = Path(tempfile.gettempdir()) / f"{dst.name}.download.tmp"
+        bak = dst.with_suffix(".bak")
+
+        if os.path.isfile(src_url_or_path):
+            shutil.copy2(src_url_or_path, tmp)
+        elif isinstance(src_url_or_path, str) and src_url_or_path.lower().startswith("file://"):
+            local = src_url_or_path.replace("file://", "")
+            if local.startswith("/"):
+                local = local.lstrip("/")
+            if not os.path.isfile(local):
+                return False, f"Ne najdem lokalne datoteke: {local}"
+            shutil.copy2(local, tmp)
+        elif isinstance(src_url_or_path, str) and src_url_or_path.lower().startswith(("http://", "https://")):
+            url = _normalize_sync_url(src_url_or_path)
+            with requests.get(url, stream=True, timeout=(10, 600), headers={"User-Agent": "VUS-Sync/1.1"}) as r:
+                try:
+                    r.raise_for_status()
+                except Exception as e:
+                    return False, f"HTTP napaka ({e}); URL: {url}"
+
+                it = r.iter_content(chunk_size=256 * 1024)
+                first = next(it, b"")
+                if _is_probably_html(r, first):
+                    return False, "URL vrača HTML. Potreben je direkten .db prenos."
+
+                with open(tmp, "wb") as f:
+                    if first:
+                        f.write(first)
+                    for chunk in it:
+                        if chunk:
+                            f.write(chunk)
+        else:
+            return False, "VUS_DB_URL ni veljaven: uporabi pot, file:// ali http(s) URL."
+
+        with open(tmp, "rb") as f:
+            magic = f.read(16)
+        if magic != b"SQLite format 3\x00":
+            return False, "Prenesena datoteka ni SQLite (manjka 'SQLite format 3\\0' header)."
+
+        if dst.exists():
+            shutil.copy2(dst, bak)
+        os.replace(tmp, dst)
+
+        try:
+            ensure_indexes()
+        except Exception as e:
+            print(f"[VUS] OPOZORILO: ensure_indexes po syncu: {e}")
+
+        size_mb = round(dst.stat().st_size / (1024 * 1024), 2)
+        bak_info = bak.name if bak.exists() else "—"
+        return True, f"DB zamenjana na {dst.name} (≈{size_mb} MB). Backup: {bak_info}"
+
+    except Exception as ex:
+        try:
+            if 'tmp' in locals() and Path(tmp).exists():
+                Path(tmp).unlink(missing_ok=True)
+        except Exception:
+            pass
+        return False, f"Napaka pri sinhronizaciji: {ex}"
+
+# ===== Flask app ==============================================================
+
+GESLO = "Tifumannam1_vus-flask2.onrender.com"
+
+app = Flask(__name__, static_folder="static", static_url_path="/static")
+app.url_map.strict_slashes = False
+
+# --- Compat za @app.get / @app.post, če jih Flask ne pozna -------------------
+if not hasattr(app, "get"):
+    def _mk(method):
+        def _decor(rule, **options):
+            options.setdefault("methods", [method])
+            return app.route(rule, **options)
+        return _decor
+    app.get    = _mk("GET")
+    app.post   = _mk("POST")
+    app.put    = _mk("PUT")
+    app.delete = _mk("DELETE")
+    app.patch  = _mk("PATCH")
+
+@app.route("/_routes")
+def show_routes():
+    rules = []
+    for r in app.url_map.iter_rules():
+        methods = ",".join(sorted(m for m in r.methods if m not in {"HEAD","OPTIONS"}))
+        rules.append({"rule": str(r.rule), "endpoint": r.endpoint, "methods": methods})
+    return jsonify(routes=sorted(rules, key=lambda x: x["rule"]))
+
+# --- DIAG: pregled baze (POD app!) -------------------------------------------
+@app.route("/diag/tables", methods=["GET"], endpoint="diag_tables")
+def diag_tables():
+    try:
+        with get_conn(readonly=True) as conn:
+            rows = conn.execute(
+                "SELECT name, sql FROM sqlite_master WHERE type='table' ORDER BY name;"
+            ).fetchall()
+        return jsonify(ok=True, tables=[{"name": r[0], "sql": r[1]} for r in rows])
+    except Exception as e:
+        return jsonify(ok=False, error=str(e)), 500
+
+@app.route("/diag/count", methods=["GET"], endpoint="diag_count")
+def diag_count():
+    try:
+        with get_conn(readonly=True) as conn:
+            row = conn.execute("SELECT COUNT(1) FROM slovar;").fetchone()
+        cnt = int(row[0]) if row and row[0] is not None else 0
+        return jsonify(ok=True, count=cnt)
+    except Exception as e:
+        return jsonify(ok=False, error=str(e)), 500
+
+@app.route("/diag/sample", methods=["GET"], endpoint="diag_sample")
+def diag_sample():
+    try:
+        with get_conn(readonly=True) as conn:
+            cols = conn.execute("PRAGMA table_info(slovar);").fetchall()
+            names = [c[1] for c in cols]
+            sample = conn.execute("SELECT * FROM slovar LIMIT 5;").fetchall()
+        sample_rows = [dict(zip(names, row)) for row in sample]
+        return jsonify(
+            ok=True,
+            columns=[{"name": c[1], "type": c[2]} for c in cols],
+            sample=sample_rows
+        )
+    except Exception as e:
+        return jsonify(ok=False, error=str(e)), 500
+
+# --- API: števec gesel (BREZ get_conn – direkt na sqlite3) -------------------
+@app.route("/api/stevec", methods=["GET"], endpoint="api_stevec")
+def api_stevec():
+    try:
+        con = sqlite3.connect(str(DB_PATH), timeout=5.0, check_same_thread=False)
+        try:
+            row = con.execute("SELECT COUNT(1) FROM slovar;").fetchone()
+            count = int(row[0]) if row and row[0] is not None else 0
+        finally:
+            con.close()
+        return jsonify(ok=True, count=count, db=str(DB_PATH))
+    except Exception as e:
+        return jsonify(ok=False, count=0, msg=str(e), db=str(DB_PATH)), 500
+
+def slovar_columns(conn):
+    """Vrne množico imen stolpcev v tabeli 'slovar' (lowercase)."""
+    rows = conn.execute("PRAGMA table_info(slovar)").fetchall()
+    cols = set()
+    for r in rows:
+        name = r["name"] if isinstance(r, sqlite3.Row) else r[1]
+        cols.add(str(name).lower())
+    return cols
+
+# --- API: dodaj geslo --------------------------------------------------------
+@app.post("/api/dodaj_geslo")
+def api_dodaj_geslo():
+    data = request.get_json(silent=True) or request.form or {}
+    geslo   = (data.get("geslo")    or "").strip()
+    razlaga = (data.get("razlaga")  or data.get("opis")   or "").strip()
+    vrsta   = (data.get("vrsta")    or "").strip()
+    izvor   = (data.get("izvor")    or "").strip()
+    tags    = (data.get("tags")     or data.get("oznake") or "").strip()
+
+    if not geslo:
+        return jsonify(ok=False, msg="Manjka geslo"), 400
+
+    now = datetime.utcnow().isoformat(timespec="seconds")
+    try:
+        with get_conn() as conn:
+            conn.execute(
+                """
+                INSERT INTO slovar (geslo, razlaga, vrsta, izvor, tags, created_at, updated_at)
+                VALUES (?,?,?,?,?,?,?)
+                """,
+                (geslo, razlaga, vrsta, izvor, tags, now, now),
+            )
+        return jsonify(ok=True)
+    except Exception as e:
+        return jsonify(ok=False, msg=str(e)), 500
+500
+
+# --- Legacy POST preusmeritve (stari gumbi) ----------------------------------
+@app.post("/dodaj_geslo")
+@app.post("/admin/dodaj")
+@app.post("/api/dodaj")
+def _legacy_post_redirect():
+    return redirect(url_for("api_dodaj_geslo"), code=307)
+
+
+# === PREVERI: vrni vse duplikate istega gesla (case-insensitive) =============
+@app.get("/api/preveri")
+def api_preveri():
+    import sqlite3
+    q = (request.args.get("geslo") or "").strip()
+    if not q:
+        return jsonify(ok=True, exists=False, rows=[])
+
+    try:
+        with get_conn(readonly=True) as con:
+            cols_rows = con.execute("PRAGMA table_info(slovar)").fetchall()
+            cols = { (r["name"] if isinstance(r, sqlite3.Row) else r[1]).lower() for r in cols_rows }
+
+            fields = ["id", "geslo"]
+            if "razlaga" in cols:
+                fields.append("razlaga")
+            elif "opis" in cols:
+                fields.append("opis AS razlaga")
+            else:
+                fields.append("'' AS razlaga")
+
+            # Ostali morebitni stolpci – dodamo, če obstajajo
+            fields.append("vrsta" if "vrsta" in cols else "'' AS vrsta")
+            fields.append("izvor" if "izvor" in cols else "'' AS izvor")
+            fields.append("tags"  if "tags"  in cols else "'' AS tags")
+
+            sql = f"""
+                SELECT {', '.join(fields)}
+                FROM slovar
+                WHERE LOWER(TRIM(geslo)) = LOWER(TRIM(?))
+                ORDER BY id ASC
+            """
+            rows = con.execute(sql, (q,)).fetchall()
+
+        out = []
+        for r in rows:
+            if isinstance(r, sqlite3.Row):
+                out.append({
+                    "id": r["id"],
+                    "geslo": r["geslo"],
+                    "razlaga": r["razlaga"],
+                    "vrsta": r["vrsta"],
+                    "izvor": r["izvor"],
+                    "tags": r["tags"],
+                })
+            else:
+                out.append({
+                    "id": r[0],
+                    "geslo": r[1],
+                    "razlaga": r[2],
+                    "vrsta": r[3],
+                    "izvor": r[4],
+                    "tags": r[5],
+                })
+
+        return jsonify(ok=True, exists=bool(out), rows=out)
+    except Exception as e:
+        return jsonify(ok=False, exists=False, rows=[], msg=str(e)), 500
+
+
+# --- ZAMENJAJ IZRAZ V BAZI ---------------------------------------------------
+@app.post("/api/zamenjaj", endpoint="api_zamenjaj")
+def api_zamenjaj():
+    d = request.get_json(force=True) or {}
+    find = (d.get("find") or "").strip()
+    repl = (d.get("replace") or "").strip()
+    scope = (d.get("scope") or "opis").lower()      # 'geslo' | 'opis' | 'oboje'
+    mode  = (d.get("mode") or "substring").lower()  # 'substring' | 'exact' | 'word'
+    dry   = bool(d.get("dry"))
+
+    if not find:
+        return jsonify(ok=False, msg="Manjka 'find'."), 400
+
+    # mapa 'opis' -> 'razlaga' (poenotenje sheme)
+    def _map_field(x: str) -> str:
+        return "razlaga" if x == "opis" else x
+
+    changed = 0
+    with get_conn() as con:
+        cur = con.cursor()
+
+        def upd_field(field: str):
+            nonlocal changed
+            field = _map_field(field)
+            if mode == "substring":
+                # REPLACE v SQLite – hitro
+                cur.execute(f"UPDATE slovar SET {field}=REPLACE({field}, ?, ?)", (find, repl))
+                changed += con.total_changes
+            elif mode == "exact":
+                cur.execute(f"UPDATE slovar SET {field}=? WHERE {field}=?", (repl, find))
+                changed += con.total_changes
+            else:
+                # 'word' način – Python regex po vrsticah
+                import re
+                rx = re.compile(rf"(?<!\w){re.escape(find)}(?!\w)", re.IGNORECASE)
+                rows = cur.execute(
+                    f"SELECT id, {field} FROM slovar WHERE {field} LIKE ?",
+                    (f"%{find}%",)
+                ).fetchall()
+                for rid, val in rows:
+                    old = val or ""
+                    nv = rx.sub(repl, old)
+                    if nv != old:
+                        cur.execute(f"UPDATE slovar SET {field}=?, updated_at=datetime('now') WHERE id=?", (nv, rid))
+                        changed += 1
+
+        con.execute("BEGIN")
+        try:
+            if scope in ("opis", "oboje"):
+                upd_field("razlaga")
+            if scope in ("geslo", "oboje"):
+                upd_field("geslo")
+            if dry:
+                con.rollback()
+            else:
+                con.commit()
+        except Exception as e:
+            con.rollback()
+            return jsonify(ok=False, msg=str(e))
+    return jsonify(ok=True, changed=changed, dry=dry)
+
+
+# --- VELIKE/MALE ČRKE ---------------------------------------------------------
+@app.post("/api/velike_male", endpoint="api_velike_male")
+def api_velike_male():
+    d = request.get_json(force=True) or {}
+    target = (d.get("target") or "geslo").lower()   # 'geslo' | 'opis' | 'oboje'
+    mode   = (d.get("mode") or "upper").lower()     # 'upper' | 'lower' | 'title' | 'capitalize'
+    changed = 0
+
+    def transform(s: str) -> str:
+        s = s or ""
+        if mode == "upper": return s.upper()
+        if mode == "lower": return s.lower()
+        if mode == "capitalize": return s[:1].upper() + s[1:].lower() if s else s
+        # 'title' – enostavna varianta po presledkih
+        return " ".join([w[:1].upper() + w[1:].lower() for w in s.split(" ")])
+
+    with get_conn() as con:
+        cur = con.cursor()
+        fields = []
+        if target in ("geslo", "oboje"): fields.append("geslo")
+        if target in ("opis", "oboje"):  fields.append("razlaga")  # usklajeno
+
+        rows = cur.execute("SELECT id, geslo, razlaga FROM slovar").fetchall()
+        con.execute("BEGIN")
+        try:
+            for rid, g, r in rows:
+                newg, newr = g, r
+                if "geslo" in fields:
+                    t = transform(g)
+                    if t != g:
+                        newg = t
+                if "razlaga" in fields:
+                    t = transform(r)
+                    if t != r:
+                        newr = t
+                if newg != g or newr != r:
+                    cur.execute(
+                        "UPDATE slovar SET geslo=?, razlaga=?, updated_at=datetime('now') WHERE id=?",
+                        (newg, newr, rid)
+                    )
+                    changed += 1
+            con.commit()
+        except Exception as e:
+            con.rollback()
+            return jsonify(ok=False, msg=str(e))
+    return jsonify(ok=True, changed=changed)
+
+
+# --- ARHIVIRAJ MESEC (križanka/sudoku) ---------------------------------------
+@app.post("/admin/arhiviraj", endpoint="sprozi_arhiviranje")
+def sprozi_arhiviranje():
+    data = request.get_json(silent=True) or {}
+    year  = int(str(data.get("year") or 0))
+    month = int(str(data.get("month") or 0))
+    if not year or not (1 <= month <= 12):
+        return jsonify(ok=False, msg="Napačen year/month.")
+
+    try:
+        base = Path(app.root_path) / "static"
+        moved = []
+
+        def mv_dir(src_rel: Path, dst_rel: Path):
+            src = base / src_rel
+            dst = base / "Arhiv" / dst_rel
+            if not src.exists():
+                return
+            dst.mkdir(parents=True, exist_ok=True)
+            for p in src.glob("*"):
+                shutil.move(str(p), str(dst / p.name))
+                moved.append(str(p.name))
+
+        ym = f"{year:04d}-{month:02d}"
+
+        # Križanke
+        mv_dir(Path("CrosswordCompilerApp") / ym, Path("CrosswordCompilerApp") / ym)
+
+        # Sudoku (če uporabljaš strukturo po težavnostih)
+        for lvl in ("Sudoku_easy", "Sudoku_medium", "Sudoku_hard"):
+            mv_dir(Path(lvl) / ym, Path(lvl) / ym)
+
+        return jsonify(ok=True, moved=len(moved))
+    except Exception as e:
+        return jsonify(ok=False, msg=str(e)), 500
+
+
+# === UREDI (UPDATE) ==========================================================
+@app.post("/api/uredi_geslo")
+def api_uredi_geslo():
+    data = request.get_json(silent=True) or request.form or {}
+    try:
+        rid = int(data.get("id", 0))
+    except Exception:
+        rid = 0
+    if rid <= 0:
+        return jsonify(ok=False, msg="Manjka veljaven ID"), 400
+
+    geslo   = (data.get("geslo")   or "").strip()
+    razlaga = (data.get("razlaga") or "").strip()
+    vrsta   = (data.get("vrsta")   or "").strip()
+    izvor   = (data.get("izvor")   or "").strip()
+    tags    = (data.get("tags")    or "").strip()
+
+    if not geslo:
+        return jsonify(ok=False, msg="Geslo je obvezno"), 400
+
+    try:
+        now = datetime.utcnow().isoformat(timespec="seconds")
+        with get_conn() as conn:
+            conn.execute(
+                """
+                UPDATE slovar
+                   SET geslo=?, razlaga=?, vrsta=?, izvor=?, tags=?, updated_at=?
+                 WHERE id=?
+                """,
+                (geslo, razlaga, vrsta, izvor, tags, now, rid),
+            )
+        return jsonify(ok=True)
+    except Exception as e:
+        return jsonify(ok=False, msg=str(e)), 500
+
+
+# === BRIŠI (DELETE) ==========================================================
+@app.post("/api/brisi_geslo")
+def api_brisi_geslo():
+    data = request.get_json(silent=True) or request.form or {}
+    try:
+        rid = int(data.get("id", 0))
+    except Exception:
+        rid = 0
+    if rid <= 0:
+        return jsonify(ok=False, msg="Manjka veljaven ID"), 400
+    try:
+        with get_conn() as conn:
+            conn.execute("DELETE FROM slovar WHERE id=?", (rid,))
+        return jsonify(ok=True)
+    except Exception as e:
+        return jsonify(ok=False, msg=str(e)), 500
+
+
+# === Home & basic setup ======================================================
+@app.get("/", endpoint="index")
+def index():
+    return render_template("home.html")
+
+@app.get("/home", endpoint="home")
+def home_redirect():
+    return redirect(url_for("index"), code=302)
+
+@app.after_request
+def _no_cache_html(resp):
+    if resp.content_type and 'text/html' in resp.content_type:
+        resp.headers['Cache-Control'] = 'no-store'
+    return resp
+
+app.config['TEMPLATES_AUTO_RELOAD'] = True
+app.secret_key = "Tifumannam1_vus-flask2.onrender.com"
+app.config['UPLOAD_FOLDER'] = 'static/uploads'
+app.config['PROPAGATE_EXCEPTIONS'] = True
+app.url_map.strict_slashes = False
+app.config["JSON_AS_ASCII"] = False
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
+# (opcijsko) mapa za backupe
+BACKUP_DIR = os.environ.get("BACKUP_DIR", str(DB_PATH.parent / "backups"))
+os.makedirs(BACKUP_DIR, exist_ok=True)
+
+# === Auth (minimal) ==========================================================
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not session.get('prijavljen'):
+            return redirect(url_for('login', next=request.path))
+        return f(*args, **kwargs)
+    return decorated_function
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    napaka = None
+    if request.method == 'POST':
+        if request.form.get('geslo') == GESLO:
+            session['prijavljen'] = True
+            next_url = request.args.get('next') or url_for('index')
+            return redirect(next_url)
+        else:
+            napaka = "Napačno geslo."
+    return render_template('login.html', napaka=napaka)
+
+@app.get('/logout')
+def logout():
+    session.pop('prijavljen', None)
+    return redirect(url_for('login'))
+
+# === Admin view ==============================================================
+@app.route("/admin", methods=["GET"], endpoint="admin")
+@login_required
+def admin():
+    napaka, stevec = None, 0
+    try:
+        with get_conn(readonly=True) as conn:
+            row = conn.execute("SELECT COUNT(1) FROM slovar;").fetchone()
+            stevec = int(row[0]) if row and row[0] is not None else 0
+    except Exception as e:
+        napaka = str(e)
+    return render_template("admin.html", stevec=stevec, napaka=napaka, DB_PATH=DB_PATH)
+
+# ====== ADMIN API: števec in preveri =========================================
+def _db_count_slovar(con) -> int:
+    cur = con.execute("SELECT COUNT(*) FROM slovar;")
+    return int(cur.fetchone()[0] or 0)
+
+@app.get("/api/stevec")
+def api_stevec():
+    try:
+        con = get_conn(readonly=True)   # ✅
+        n = _db_count_slovar(con)
+        con.close()
+        return jsonify({"ok": True, "count": n})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+@app.post("/api/preveri_geslo")
+def api_preveri_geslo():
+    """
+    Vhod: JSON {"geslo": "Brezovica"}.
+    Išče samo po STOLPCU 'geslo' (brez opisov), case-insensitive.
+    Vrne: {"ok": true, "exists": bool, "exact": ["...","..."], "count": N}
+    """
+    try:
+        data = request.get_json(silent=True) or {}
+        q = (data.get("geslo") or "").strip()
+        if not q:
+            return jsonify({"ok": False, "error": "Prazen vnos."}), 400
+
+        con = get_conn(readonly=True)  # ✅
+        # EXAKTNO ujemanje po 'geslo' (brez opisov), neobčutljivo na velike/male
+        rows = con.execute(
+            "SELECT geslo FROM slovar WHERE geslo = ? COLLATE NOCASE LIMIT 50;",
+            (q,)
+        ).fetchall()
+        con.close()
+
+        hits = [r[0] for r in rows]
+        return jsonify({
+            "ok": True,
+            "exists": len(hits) > 0,
+            "exact": hits,
+            "count": len(hits),
+        })
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
+# =============================================================================
+
+
+# === Helper (poenoten 'preveri' helper, če ga kje rabiš) =====================
+def _preveri_common(q: str):
+    q = (q or "").strip()
+    if not q:
+        return jsonify(ok=True, count=0, results=[], exists=False), 200
+
+    with get_conn(readonly=True) as conn:
+        rows = conn.execute(
+            """
+            SELECT id, geslo, razlaga
+            FROM slovar
+            WHERE LOWER(TRIM(geslo)) = LOWER(TRIM(?))
+            ORDER BY id DESC
+            LIMIT 200
+            """,
+            (q,),
+        ).fetchall()
+
+    results = [
+        {"id": r[0], "geslo": r[1], "razlaga": r[2]}
+        if not isinstance(r, sqlite3.Row) else
+        {"id": r["id"], "geslo": r["geslo"], "razlaga": r["razlaga"]}
+        for r in rows
+    ]
+    exists = bool(results)
+    return jsonify(ok=True, count=len(results), results=results, exists=exists), 200
+
+# ===== Slike (iskanje/pripenjanje) ===========================================
+from functools import lru_cache
+from difflib import SequenceMatcher
+
+EXTS = (".png", ".jpg", ".jpeg", ".webp", ".gif")
+
+def _normalize_stem(s: str) -> str:
+    """NFKD, odstrani diakritike in posebne narekovaje; dovoli [a-z0-9]."""
+    if not s:
+        return ""
+    t = unicodedata.normalize("NFKD", s)
+    t = "".join(c for c in t if not unicodedata.combining(c))
+    t = t.replace("’", "'").replace("`", "'").replace("“", '"').replace("”", '"')
+    allowed = "abcdefghijklmnopqrstuvwxyz0123456789"
+    return "".join(ch for ch in t.lower() if ch in allowed)
+
+def _rel_static(p: Path) -> str:
+    """Pot relativno na app.static_folder kot posix (za url_for)."""
+    return p.relative_to(app.static_folder).as_posix()
+
+def _score(candidate_norm: str, target_norm: str) -> tuple[int, float]:
+    """
+    Manjši rank je boljši.
+      0: exact norm     1: prefix     2: substring     3: fuzzy (ratio)
+    """
+    if candidate_norm == target_norm:
+        return (0, 1.0)
+    if candidate_norm.startswith(target_norm):
+        return (1, 1.0)
+    if target_norm in candidate_norm:
+        return (2, 1.0)
+    return (3, SequenceMatcher(None, candidate_norm, target_norm).ratio())
+
+@lru_cache(maxsize=1)
+def _scan_index(base_path_str: str, mtime: float):
+    """Vrni indeks [(path, stem, norm)] za vse slike. Cache invalidira mtime mape."""
+    base = Path(base_path_str)
+    items = []
+    for p in base.rglob("*"):
+        if p.is_file() and p.suffix.lower() in EXTS:
+            stem = p.stem
+            norm = _normalize_stem(stem)
+            items.append((p, stem, norm))
+    # determinističen vrstni red za enake score: najprej krajši stem, nato abecedno
+    items.sort(key=lambda t: (len(t[1]), t[1].lower()))
+    return items
+
+@app.get("/preveri_slika")
+def preveri_slika():
+    raw = (request.args.get("opis") or request.args.get("ime") or "").strip()
+    if not raw:
+        return jsonify(ok=False, error="manjka parameter ?opis ali ?ime"), 400
+
+    base = Path(app.static_folder) / "images"
+    if not base.exists():
+        return jsonify(ok=False, error=f"manjka mapa {base}"), 500
+
+    # 0) hiter poskus: točno ime datoteke (case-insensitive variacije) + vse EXTS
+    for s in dict.fromkeys([raw, raw.upper(), raw.lower(), raw.title()]):
+        if not s:
+            continue
+        for ext in EXTS:
+            cand = base / f"{s}{ext}"
+            if cand.exists():
+                rel = _rel_static(cand)
+                return jsonify(
+                    ok=True,
+                    url=url_for("static", filename=rel),
+                    filename=cand.name,
+                    rule="filename_exact"
+                ), 200
+
+    # 1) indeksiraj slike (cache po mtime mape → invalidira se ob spremembi)
+    mtime = base.stat().st_mtime
+    items = _scan_index(str(base), mtime)
+
+    target_norm = _normalize_stem(raw)
+    if not target_norm:
+        return jsonify(ok=False, error="po normalizaciji ni ostalo nič (dovoli [a-z0-9])"), 400
+
+    # 2) izberi najboljšega po (rank, ratio), nato (len(stem), stem)
+    best = None
+    best_key = None
+    for p, stem, norm in items:
+        key = _score(norm, target_norm)
+        if best_key is None or key < best_key or (key == best_key and (len(stem), stem.lower()) < (len(best[1]), best[1].lower())):
+            best = (p, stem, norm)
+            best_key = key
+        if best_key and best_key[0] == 0:  # exact → kratkostično
+            break
+
+    if not best:
+        return jsonify(ok=True, url=None), 200
+
+    p, stem, norm = best
+    rank, ratio = best_key
+    rel = _rel_static(p)
+    rule = {0: "norm_exact", 1: "norm_prefix", 2: "norm_substring", 3: "fuzzy"}[rank]
+
+    # 3) ?all=1 → vrni top K kandidatov
+    if request.args.get("all") in ("1", "true", "yes"):
+        scored = []
+        for p2, stem2, norm2 in items:
+            rnk, rat = _score(norm2, target_norm)
+            scored.append((rnk, rat, p2, stem2))
+        scored.sort(key=lambda t: (t[0], -t[1], len(t[3]), t[3].lower()))
+        k = max(1, min(50, int(request.args.get("k") or 10)))
+        out = [{
+            "url": url_for("static", filename=_rel_static(pp)),
+            "filename": pp.name,
+            "stem": st,
+            "rule": {0: "norm_exact", 1: "norm_prefix", 2: "norm_substring", 3: "fuzzy"}[rnk],
+            "ratio": round(float(rat), 4),
+        } for rnk, rat, pp, st in scored[:k]]
+        return jsonify(ok=True, query=raw, target_norm=target_norm, results=out), 200
+
+    # 4) default: en najboljši + diagnostika
+    return jsonify(
+        ok=True,
+        url=url_for("static", filename=rel),
+        filename=p.name,
+        stem=stem,
+        rule=rule,
+        ratio=round(float(ratio), 4),
+        target_norm=target_norm
+    ), 200
+
+
+@app.get("/diag/images")
+def diag_images():
+    base = Path(app.static_folder) / "images"
+    if not base.exists():
+        return jsonify(ok=False, error=f"Ne najdem mape: {base.as_posix()}"), 500
+    q = (request.args.get("q") or "").lower()
+    files = []
+    for p in base.rglob("*"):
+        if p.is_file() and p.suffix.lower() in EXTS:
+            name = p.name
+            if not q or q in name.lower():
+                files.append(str(p.relative_to(base).as_posix()))
+    return jsonify(ok=True, base=str(base), count=len(files), files=sorted(files))
+
+
+# ===== Križanka (poti/URL-ji in prikaz) ======================================
+CC_DIR = Path(app.static_folder) / "Krizanke" / "CrosswordCompilerApp"
+
+def _cc_paths(d: date) -> tuple[Path, Path]:
+    return (
+        CC_DIR / f"{d:%Y-%m-%d}.js",
+        CC_DIR / f"{d:%Y-%m-%d}.xml",
+    )
+
+def _cc_urls(d: date) -> tuple[str, str]:
+    return (
+        url_for("static", filename=f"Krizanke/CrosswordCompilerApp/{d:%Y-%m-%d}.js"),
+        url_for("static", filename=f"Krizanke/CrosswordCompilerApp/{d:%Y-%m-%d}.xml"),
+    )
+# === Helperji za /krizanka ====================================================
+
+# ==== PO app = Flask(__name__) prilepi od tu naprej ==========================
+# Primer datotek: static/CrosswordCompilerApp/2025-11/2025-11-20.{js,xml}
+CC_BASE = Path(app.static_folder) / "CrosswordCompilerApp"
+
+def _cc_paths_for_date(d: date) -> tuple[Path, Path]:
+    """Vrni absolutni poti do .js in .xml za dani datum."""
+    ym  = d.strftime("%Y-%m")
+    ymd = d.strftime("%Y-%m-%d")
+    stem = CC_BASE / ym / ymd
+    return stem.with_suffix(".js"), stem.with_suffix(".xml")
+
+# --- aliasi/stubi, da linter utihne in runtime ne pade ----------------------
+# Če imaš kje staro ime _cc_urls(d), ga prevežemo:
+try:
+    _cc_urls  # obstaja?
+except NameError:
+    def _cc_urls(d: date):
+        # vrni isto kot _cc_paths_for_date, + resolved_date
+        p_js, p_xml = _cc_paths_for_date(d)
+        return str(p_js), str(p_xml), d
+
+# Poskrbi, da _adapt_old_parser_res vedno obstaja:
+try:
+    _adapt_old_parser_res  # type: ignore[name-defined]
+except NameError:
+    def _adapt_old_parser_res(res: dict) -> dict:
+        return {
+            "width":       (res or {}).get("width"),
+            "height":      (res or {}).get("height"),
+            "crna_polja":  (res or {}).get("crna_polja") or (res or {}).get("black_cells") or [],
+            "gesla_opisi": (res or {}).get("gesla_opisi") or (res or {}).get("entries") or [],
+            "sol_by_xy":   (res or {}).get("sol_by_xy") or {},
+        }
+
+def adapt_old_parser_res(res):
+    """Vedno kliči underscored verzijo; res normaliziramo v dict."""
+    return _adapt_old_parser_res(res if isinstance(res, dict) else {})
+
+# =========================== ROUTE /krizanka =================================
+@app.get("/krizanka")
+def krizanka():
+    # ?d=YYYY-MM-DD (optional)
+    d_str = fl.request.args.get("d")
+    if d_str:
+        try:
+            d = dt.datetime.strptime(d_str, "%Y-%m-%d").date()
+        except ValueError:
+            flask_abort(400, "Napačen format datuma. Uporabi YYYY-MM-DD.")
+    else:
+        d = dt.date.today()
+
+    p_js, p_xml = _cc_paths_for_date(d)
+
+    if not (p_js.exists() and p_xml.exists()):
+        flask_abort(404, f"Za {d:%Y-%m-%d} ni najdenih .js/.xml v {CC_BASE}.")
+
+    rel_js  = str(p_js.relative_to(app.static_folder)).replace("\\", "/")
+    rel_xml = str(p_xml.relative_to(app.static_folder)).replace("\\", "/")
+    js_url = fl.url_for("static", filename=rel_js)
+    xml_url = fl.url_for("static", filename=rel_xml)
+
+    cc_adapt = None
+    try:
+        if 'pridobi_podatke_iz_xml' in globals() and callable(pridobi_podatke_iz_xml):
+            old_res  = pridobi_podatke_iz_xml(p_xml)
+            cc_adapt = adapt_old_parser_res(old_res)
+    except Exception as e:
+        print("[krizanka] XML parse/adapt fail:", e)
+        cc_adapt = None
+
+    return render_template("krizanka.html",
+                           js_url=js_url,
+                           xml_url=xml_url,
+                           datum=d,
+                           cc_adapt=cc_adapt)
+
+# ==== konec bloka ============================================================
+    # ===== Crossword Compiler: parser XML + diagnostika ==========================
+    import json
+    import html
+    import re
+    import xml.etree.ElementTree as ET
+    from pathlib import Path
+    from datetime import date, datetime
+    from flask import jsonify, abort, request, url_for
+
+    # Pričakujemo, da sta iz 3/6 že definirana:
+    #   CC_DIR = Path(app.static_folder) / "Krizanke" / "CrosswordCompilerApp"
+    #   _cc_paths(d: date) -> (Path js, Path xml)
+    #   _cc_urls(d: date|None) -> (js_url, xml_url, resolved_date)
+    #   /krizanka (GET) – NE redefiniramo
+
+    DATE_RE_ANY = re.compile(r"^(20\d{2})-(\d{2})-(\d{2})\.(js|xml)$")
+
+    def _parse_range(s: str):
+        """Razbere 'A-B' ali 'N' v (A,B) (1-based koordinate v CC)."""
+        s = (s or "").strip()
+        if "-" in s:
+            a, b = s.split("-", 1)
+            try:
+                return int(a), int(b)
+            except Exception:
+                return None
+        if s.isdigit():
+            v = int(s)
+            return v, v
+        return None
+
+    # ===== Crossword Compiler: parser XML + diagnostika ==========================
+    import json
+    import html
+    import re
+    import xml.etree.ElementTree as ET
+    from pathlib import Path
+    from datetime import date, datetime
+    from flask import jsonify, abort, request, url_for
+
+    # Pričakujemo, da sta iz 3/6 že definirana:
+    #   CC_DIR = Path(app.static_folder) / "Krizanke" / "CrosswordCompilerApp"
+    #   _cc_paths(d: date) -> (Path js, Path xml)
+    #   _cc_urls(d: date|None) -> (js_url, xml_url, resolved_date)
+    #   /krizanka (GET) – NE redefiniramo
+
+    DATE_RE_ANY = re.compile(r"^(20\d{2})-(\d{2})-(\d{2})\.(js|xml)$")
+
+    def _parse_range(s: str):
+        """Razbere 'A-B' ali 'N' v (A,B) (1-based koordinate v CC)."""
+        s = (s or "").strip()
+        if "-" in s:
+            a, b = s.split("-", 1)
+            try:
+                return int(a), int(b)
+            except Exception:
+                return None
+        if s.isdigit():
+            v = int(s)
+            return v, v
+        return None
+
+    def _text_with_br(node: ET.Element) -> str:
+        """Zbere besedilo clue-ja z ohranjanjem <br> kot '\n'."""
+        parts = []
+
+        def walk(n: ET.Element):
+            if n.text:
+                parts.append(n.text)
+            for ch in list(n):
+                tag = ch.tag.split('}')[-1].lower()
+                if tag == "br":
+                    parts.append("\n")
+                walk(ch)
+                if ch.tail:
+                    parts.append(ch.tail)
+
+        walk(node)
+        return html.unescape("".join(parts)).strip()
+
+    def parse_cc_xml(xml_path: Path) -> dict:
+        """
+        Vrne unificiran dict:
+          {
+            "width": int, "height": int,
+            "crna_polja": [[x,y], ...],          # 0-based
+            "gesla_opisi": [
+                {"x":int,"y":int,"smer":"across|down","stevilka":str,
+                 "opis":str,"slika":str,"dolzina":int,"solution":str}
+            ],
+            "sol_by_xy": {"x,y": "Č", ...}       # rešitve po poljih (0-based)
+          }
+        """
+        out = {"width": 0, "height": 0, "crna_polja": [], "gesla_opisi": [], "sol_by_xy": {}}
+
+        if not xml_path or not xml_path.exists():
+            return out
+
+        try:
+            root = ET.parse(xml_path).getroot()
+        except Exception:
+            return out
+
+        # --- namespaces (tolerantno) ---
+        NS_R = "http://crossword.info/xml/rectangular-puzzle"
+        ns = {"r": NS_R}
+
+        # --- mere ---
+        grid = root.find(".//r:grid", ns) or root.find(".//grid")
+        if grid is not None:
+            try:
+                w = int(grid.get("width") or grid.get("columns") or grid.get("cols") or 0)
+                h = int(grid.get("height") or grid.get("rows") or 0)
+            except Exception:
+                w = h = 0
+        else:
+            w = h = 0
+        out["width"], out["height"] = w, h
+
+        # --- celice: črna polja + že vpisane rešitve ---
+        crna = []
+        sol_by_xy = {}
+        cells = root.findall(".//r:cell", ns) or root.findall(".//cell")
+        if cells:
+            xs = []
+            for c in cells:
+                xv = (c.get("x") or c.get("col") or c.get("column"))
+                if xv and str(xv).isdigit():
+                    xs.append(int(xv))
+            one_based = bool(xs and min(xs) == 1)
+
+            for c in cells:
+                try:
+                    x_raw = int(c.get("x") or c.get("col") or c.get("column") or 0)
+                    y_raw = int(c.get("y") or c.get("row") or 0)
+                except Exception:
+                    continue
+
+                x = x_raw - 1 if one_based else x_raw
+                y = y_raw - 1 if one_based else y_raw
+                if w and h and not (0 <= x < w and 0 <= y < h):
+                    continue
+
+                t = (c.get("type") or "").lower()
+                ch = (c.get("ch") or c.get("letter") or "") or None
+                if t in {"block", "black", "bar"}:
+                    crna.append([x, y])
+                else:
+                    if ch:
+                        sol_by_xy[f"{x},{y}"] = str(ch).upper()
+
+        out["crna_polja"] = crna
+        out["sol_by_xy"] = sol_by_xy
+
+        # --- word map (koordinate in dolžine) ---
+        word_map = {}  # id -> {x0, y0, smer, dolzina, solution}
+        for wnode in (root.findall(".//{*}word") or root.findall(".//word")):
+            wid = (wnode.get("id") or wnode.get("{http://www.w3.org/XML/1998/namespace}id") or "").strip()
+            if not wid:
+                continue
+            rx = _parse_range(wnode.get("x") or "")
+            ry = _parse_range(wnode.get("y") or "")
+            if not rx or not ry:
+                continue
+            (xa, xb), (ya, yb) = rx, ry
+
+            if xa != xb and ya == yb:
+                x0, y0, smer, ln = xa - 1, ya - 1, "across", (xb - xa + 1)
+            elif ya != yb and xa == xb:
+                x0, y0, smer, ln = xa - 1, ya - 1, "down", (yb - ya + 1)
+            else:
+                continue
+
+            sol = (wnode.get("solution") or "").strip()
+            word_map[wid] = {"x0": x0, "y0": y0, "smer": smer, "dolzina": ln, "solution": sol}
+
+        # --- inicialni seznami gesel (brez opisov/slik) ---
+        gesla = []
+        g_by_key = {}
+        for wid, info in word_map.items():
+            g = {
+                "x": info["x0"], "y": info["y0"], "smer": info["smer"],
+                "stevilka": "", "opis": "", "slika": "",
+                "dolzina": info["dolzina"], "solution": info["solution"],
+            }
+            g_by_key[(g["x"], g["y"], g["smer"])] = len(gesla)
+            gesla.append(g)
+
+        # --- clues: zapiši številke/opise/slike po (smer + številka) ---
+        def _lower(s):
+            return (s or "").strip().lower()
+
+        clue_groups = root.findall(".//{*}clues") or root.findall(".//clues")
+
+        for grp in clue_groups:
+            title_el = grp.find(".//{*}title") or grp.find("title")
+            t = "".join(title_el.itertext()) if title_el is not None else (grp.attrib.get("title") or "")
+            smer = "down" if ("navpi" in _lower(t) or "down" in _lower(t)) else "across"
+
+            for c in (grp.findall(".//{*}clue") + grp.findall(".//clue")):
+                wid = (c.get("word") or "").strip()
+                num = (c.get("number") or c.get("n") or c.get("num") or "").strip()
+                if not num:
+                    m = re.match(r"\s*(\d+)[\.)]?\s+", "".join(c.itertext() or ""))
+                    if m:
+                        num = m.group(1)
+
+                opis = _text_with_br(c)
+                img_node = (c.find(".//img") or c.find(".//image") or
+                            c.find(".//{*}img") or c.find(".//{*}image"))
+                slika = (c.get("image") or c.get("img") or
+                         (img_node.get("src") if img_node is not None else "") or
+                         (img_node.get("href") if img_node is not None else "") or "")
+
+                if wid and wid in word_map:
+                    info = word_map[wid]
+                    key = (info["x0"], info["y0"], info["smer"])
+                    idx = g_by_key.get(key)
+                    if idx is not None:
+                        if num:
+                            gesla[idx]["stevilka"] = str(num)
+                        if opis:
+                            gesla[idx]["opis"] = opis
+                        if slika:
+                            gesla[idx]["slika"] = slika
+
+        out["gesla_opisi"] = gesla
+
+        # fallback: če w×h manjkata, poskusi oceniti iz crnih polj + dolžin besed
+        if not out["width"] or not out["height"]:
+            maxx = max([c[0] for c in crna] + [0])
+            maxy = max([c[1] for c in crna] + [0])
+            for g in gesla:
+                maxx = max(maxx, g["x"])
+                maxy = max(maxy, g["y"])
+                ln = int(g.get("dolzina") or 0)
+                if ln > 0:
+                    if g["smer"] == "across":
+                        maxx = max(maxx, g["x"] + ln - 1)
+                    else:
+                        maxy = max(maxy, g["y"] + ln - 1)
+            out["width"] = max(out["width"], maxx + 1)
+            out["height"] = max(out["height"], maxy + 1)
+
+        return out
+
+    # ---------------------- DIAGNOSTIKA: /diag/krizanka_dbg ----------------------
+    @app.get("/diag/krizanka_dbg")
+    def diag_krizanka_dbg():
+        """Hiter status za dani datum (ali današnji/zadnji, skladno z 3/6 _cc_urls)."""
+        d_str = request.args.get("d")
+        d = None
+        if d_str:
+            try:
+                d = datetime.strptime(d_str.strip(), "%Y-%m-%d").date()
+            except ValueError:
+                d = None
+
+        js_url, xml_url, resolved = _cc_urls(d)  # uporabi 3/6 različico
+        if not resolved:
+            return jsonify(ok=False, msg="Ni najdenih JS/XML datotek."), 404
+
+        # Poskusi še prebrati XML lokalno
+        js_p, xml_p = _cc_paths(resolved)
+        parsed = parse_cc_xml(xml_p) if xml_p.exists() else {"width": 0, "height": 0, "crna_polja": [],
+                                                             "gesla_opisi": []}
+
+        return jsonify({
+            "ok": True,
+            "resolved_date": resolved.isoformat(),
+            "xml_path": str(xml_p),
+            "xml_exists": xml_p.exists(),
+            "width": parsed.get("width", 0),
+            "height": parsed.get("height", 0),
+            "crna_polja_len": len(parsed.get("crna_polja", [])),
+            "gesla_opisi_len": len(parsed.get("gesla_opisi", [])),
+            "js_url": js_url,
+            "xml_url": xml_url,
+        })
+
+
+# ---- /krizanka -------------------------------------------------------------
+
+@app.get("/krizanka", endpoint="prikazi_krizanko", strict_slashes=False)
+def prikazi_krizanko():
+    print("[ROUTE] /krizanka enter")
+
+    # 1) ?d=YYYY-MM-DD
+    d = None
+    d_str = (request.args.get("d") or "").strip()
+    if d_str:
+        try:
+            d = datetime.strptime(d_str, "%Y-%m-%d").date()
+        except Exception:
+            print("[ROUTE] bad ?d=", d_str)
+
+    # 2) URL-ji + datum
+    js_url, xml_url, resolved_date = _cc_urls(d)
+    print("[ROUTE] resolved_date =", resolved_date, "urls:", bool(js_url), bool(xml_url))
+
+    # 3) lokalni path-i
+    js_p, xml_p = _cc_paths_for_date(resolved_date)
+    print("[ROUTE] paths:", js_p, xml_p)
+
+    empty_cc = {"width": 0, "height": 0, "crna_polja": [], "gesla_opisi": [], "sol_by_xy": {}, "numbers_xy": {}}
+    cc = None
+    used = "EMPTY"
+
+    # (A) stari parser + adapter
+    if xml_p and xml_p.exists():
+        try:
+            old_res = pridobi_podatke_iz_xml(xml_p)
+            cc_adapt = _adapt_old_parser_res(old_res)
+            if cc_adapt.get("gesla_opisi"):
+                cc = cc_adapt
+                used = "OLD"
+                print("[ROUTE] using OLD parser (with clues)")
+        except Exception as e:
+            print("[KRIZ] stari parser padel:", e)
+
+    # (B) opcijski novi parser (trenutno preskočen)
+    # if cc is None and xml_p and xml_p.exists():
+    #     try:
+    #         cc = _parse_cc_xml_local(xml_p)
+    #         used = "NEW"
+    #         print("[ROUTE] using NEW parser")
+    #     except Exception as e:
+    #         print("[KRIZ] novi parser padel:", e)
+    #         cc = None
+
+    if not isinstance(cc, dict):
+        cc = empty_cc
+        used = "EMPTY"
+        print("[ROUTE] fallback to empty_cc")
+
+    # =====================  ⬇⬇⬇  TUKAJ PRILEPI  ⬇⬇⬇  =====================
+    # Napolni sol_by_xy iz XML (pravilen namespace rectangular-puzzle)
+    try:
+        need_solutions = not cc.get("sol_by_xy")
+        if need_solutions and xml_p and xml_p.exists():
+            import xml.etree.ElementTree as ET
+            root = ET.parse(xml_p).getroot()
+
+            # Namespace, kjer so <cell> elementi v tvojem XML:
+            NS_RP = {'rp': 'http://crossword.info/xml/rectangular-puzzle'}
+
+            sol_by_xy = {}
+
+            # 1) <rp:cell x="1" y="1" solution="K" .../>  (1-based → 0-based)
+            for c in root.findall(".//rp:cell", NS_RP):
+                try:
+                    x = int(c.get("x")) - 1
+                    y = int(c.get("y")) - 1
+                except (TypeError, ValueError):
+                    continue
+                ch = (c.get("solution") or c.get("letter") or "").strip()
+                if ch:
+                    sol_by_xy[f"{x},{y}"] = ch.upper()
+
+            # 2) Fallback: <rp:grid><rp:row>…</rp:row></rp:grid>
+            if not sol_by_xy:
+                for y, row in enumerate(root.findall(".//rp:grid/rp:row", NS_RP)):
+                    line = (row.text or "")
+                    for x, ch in enumerate(line):
+                        if ch and ch not in ("#", ".", "·", "∙", " "):
+                            sol_by_xy[f"{x},{y}"] = ch.upper()
+
+            cc["sol_by_xy"] = sol_by_xy
+            cc["sol_xy"] = sol_by_xy  # tvoj logger bere to ime
+            print("[ROUTE] sol_by_xy count =", len(sol_by_xy))
+    except Exception as e:
+        print("[ROUTE] solution-extract error:", e)
+
+
+
+    # =====================  ⬆⬆⬆  KONEC VLOŽKA  ⬆⬆⬆  =====================
+
+    print("[ROUTE] which:", used)
+    print("[ROUTE] cc sizes:", cc.get("width"), "x", cc.get("height"))
+    print("[ROUTE] counts:",
+          "crna=", len(cc.get("crna_polja", []) or []),
+          "gesla_opisi=", len(cc.get("gesla_opisi", []) or []),
+          "sol_xy=", len(cc.get("sol_by_xy", {}) or {}))
+
+    return render_template(
+        "krizanka.html",
+        datum=resolved_date.isoformat(),
+        js_url=js_url, xml_url=xml_url,
+        cc=cc
+    )
+
+
+# === ALIAS POD GLAVNO ROUTE (izven funkcije!) ================================
+
+from datetime import datetime, date
+from flask import abort, render_template, request, url_for
+
+@app.get("/krizanka", endpoint="prikazi_krizanko")
+def prikazi_krizanko():
+    d_str = request.args.get("d")
+    d = None
+    if d_str:
+        try:
+            d = datetime.strptime(d_str.strip(), "%Y-%m-%d").date()
+        except ValueError:
+            abort(400, "Napačen format datuma. Uporabi YYYY-MM-DD.")
+
+    js_url, xml_url, resolved_date = _cc_urls(d)
+
+    js_p, xml_p = _cc_paths_for_date(resolved_date)
+
+    cc_adapt = None
+    try:
+        if 'pridobi_podatke_iz_xml' in globals() and pridobi_podatke_iz_xml:
+            old_res = pridobi_podatke_iz_xml(xml_p)
+            cc_adapt = adapt_old_parser_res(old_res)
+    except Exception as e:
+        print("[krizanka] XML parse/adapt fail:", e)
+        cc_adapt = None
+
+    return render_template(
+        "krizanka.html",
+        js_url=js_url,
+        xml_url=xml_url,
+        datum=resolved_date,
+        cc_adapt=cc_adapt,
+    )
+
+
+# === PREVERI SLIKO (stran orodja) ============================================
+@app.get("/orodja/preveri-sliko", endpoint="preveri_sliko_page", strict_slashes=False)
+def preveri_sliko_page():
+    return render_template("preveri_sliko.html")
+
+# (neobvezno) alias: /preveri_sliko  ->  /orodja/preveri-sliko
+@app.get("/preveri_sliko", endpoint="preveri_sliko_alias", strict_slashes=False)
+def preveri_sliko_alias():
+    return redirect(url_for("preveri_sliko_page"), code=302)
+
+
+# --- minimalna /images (nikoli 500) ---
+from pathlib import Path
+from flask import send_file, Response
+
+IMAGES_DIR = Path(app.root_path) / "static" / "images"   # << skladno z drugimi deli
+ALLOWED_EXTS = {".jpg", ".jpeg", ".png", ".webp"}
+
+@app.get("/images/<path:filename>", endpoint="images_serve")
+def images_serve(filename: str):
+    try:
+        base = Path(filename)
+        # 0) normaliziraj in prepreči ../
+        target = (IMAGES_DIR / base).resolve()
+        if not str(target).startswith(str(IMAGES_DIR.resolve())):
+            return Response("", status=404)
+
+        # 1) točno ime
+        if target.is_file():
+            return send_file(str(target), conditional=True)
+
+        # 2) če ni končnice ali ne obstaja: prefix match (case-insensitive) po dovoljenih končnicah
+        stem = base.stem.lower()
+        for p in IMAGES_DIR.rglob("*"):
+            if not p.is_file():
+                continue
+            if p.suffix.lower() not in ALLOWED_EXTS:
+                continue
+            if p.stem.lower().startswith(stem):
+                return send_file(str(p), conditional=True)
+
+        # nič najdeno → čisti 404 (brez abort in brez templata)
+        return Response("", status=404)
+
+    except Exception as e:
+        # tudi v napaki vrni tih 404, da frontend sliko samo skrije
+        print("[/images] ERROR:", e)
+        return Response("", status=404)

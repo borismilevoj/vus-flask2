@@ -32,7 +32,7 @@ def preveri_manjkajoci(ime_baze, mapa_slik):
         print(f"... in še {len(manjkajoce) - 50} drugih")
 
     # Zapis v datoteko
-    with open("../manjkajoce_slike.txt", "w", encoding="utf-8") as f:
+    with open("../Stare_skripte/manjkajoce_slike.txt", "w", encoding="utf-8") as f:
         f.write(f"Manjkajoče slike ({len(manjkajoce)}):\n\n")
         for opis, ime in manjkajoce:
             f.write(f"{opis} → {ime}\n")

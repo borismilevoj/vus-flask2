@@ -58,8 +58,8 @@ out_routes = f"routes_from_{SHA}.py"
 io.open(out_routes, "w", encoding="utf-8").write(routes)
 print(f"✅ Najdene rute zapisane v {out_routes} (skupaj blokov: {len(all_chunks)})")
 
-# 2) vstavi v trenutni app.py pod marker ali pred zagon
-cur = io.open("app.py","r",encoding="utf-8").read()
+# 2) vstavi v trenutni app_BIG_backup.DISABLED pod marker ali pred zagon
+cur = io.open("Stare_skripte/app_BIG_backup.DISABLED", "r", encoding="utf-8").read()
 marker = "# ====== Tvoje obstoječe rute"
 zagon  = "# ====== Zagon"
 insert = "\n# ==== Routes (harvested from commit {SHA}) ====\n" + routes + "\n"
@@ -74,6 +74,6 @@ elif zagon in cur:
 else:
     merged = cur + "\n" + insert
 
-io.open("app.py.bak","w",encoding="utf-8").write(cur)
+io.open("Stare_skripte/app.py.bak", "w", encoding="utf-8").write(cur)
 io.open("app_merged.py","w",encoding="utf-8").write(merged)
-print(f"✅ Vstavljeno v app_merged.py | Backup: app.py.bak")
+print(f"✅ Vstavljeno v app_merged.py | Backup: app_BIG_backup.DISABLED.bak")

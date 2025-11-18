@@ -3,446 +3,426 @@
 
 {% block head %}
 <style>
-  .card-title { font-weight: 600; }
-  .form-text { color: #6c757d; }
-  .btn-dark { background:#1f2937; border-color:#1f2937; }
-  .btn-dark:hover { filter: brightness(1.08); }
-  .card.h-100 { height: 100%; }
-
-  /* izolacija rezultatov, da nič ne prekriva */
-  #rezCard { position: relative; z-index: 5; clear: both; }
-  #rezCard .table-responsive { overflow: visible; }
-
-  /* lepši table vibes */
-  #rezCard thead th { position: sticky; top: 0; background: #fff; z-index: 1; }
-  #rezCard tbody tr:nth-child(odd) { background: #fafafa; }
-  #rezCard tbody tr:hover { background: #f3f7ff; }
-  #rezCard .btn { padding: .25rem .5rem; }
-  mark { padding: 0 .15rem; border-radius: .2rem; }
-
-  /* malo tesnejša tabela na večjih zaslonih */
-  @media (min-width: 992px) {
-    .card .form-control, .card .btn { font-size: 0.95rem; }
-    table.table td, table.table th { vertical-align: top; }
-  }
+  .admin-wrap { max-width: 1180px; margin: 0 auto; }
+  .card + .card { margin-top: 14px; }
+  .fs-counter { font-size: clamp(2rem, 5vw, 3rem); line-height: 1; font-weight: 650; }
+  #chkResults table td { vertical-align: middle; }
+  .chip{display:inline-block;padding:.15rem .45rem;border:1px solid #e1e5ea;border-radius:.5rem;background:#f8f9fb;font-size:.75rem;color:#333}
+  .status-exists{color:#157347;font-weight:600}
+  .status-missing{color:#dc3545;font-weight:600}
+  .w-85 { width: 85% }
+  textarea.form-control.smallarea { min-height: 42px; }
+  .card-compact .btn{ padding:.15rem .4rem; font-size:.8rem; }
+  .card-compact .small, .card-compact code{ font-size:.85rem; }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container py-4">
-  <div class="d-flex align-items-center justify-content-between mb-3">
-    <h1 class="h4 m-0">Administracija VUS</h1>
-    <div class="text-muted small">
-      Gesel v bazi: <span id="stevecHome">—</span>
+<div class="admin-wrap py-3">
+
+      <h1 class="h5 mb-3">Administracija · VUS</h1>
+
+  <div class="mb-3 d-flex flex-wrap align-items-center gap-2">
+
+    <!-- GUMB: samo "vpis" -->
+    <form method="post" action="{{ url_for('admin_uvoz_cc') }}">
+      <button type="submit" class="btn btn-dark btn-sm">
+        Uvozi iz CC (CSV) – VPIS
+      </button>
+    </form>
+
+    <!-- GUMB: ALL -->
+    <form method="post" action="{{ url_for('admin_uvoz_cc_all') }}">
+      <button type="submit" class="btn btn-outline-danger btn-sm"
+              onclick="return confirm('Res želiš uvoziti VSE vrstice iz CSV (ALL)?');">
+        Uvozi iz CC (CSV) – ALL
+      </button>
+    </form>
+
+    <small class="form-text text-muted ms-2">
+      VPIS = samo vrstice, kjer je v Citation označeno "vpis"; ALL = brez filtra (vse vrstice).
+    </small>
+
+    <!-- MINI ŠTEVEC -->
+    <div class="ms-auto d-flex align-items-center gap-2">
+      <span class="badge bg-light text-dark border">
+        Gesel: <span id="stevecAdmin">…</span>
+      </span>
+      <button id="btnRefresh" class="btn btn-outline-secondary btn-sm" type="button">
+        Osveži
+      </button>
     </div>
   </div>
 
+
+
+  {% if napaka %}
+    <div class="alert alert-warning">Napaka pri dostopu do baze: {{ napaka }}</div>
+  {% endif %}
+
   <div class="row g-3">
-    <!-- LEVA: PREVERI + DODAJ -->
-    <div class="col-lg-4">
+
+    <!-- LEVO: PREVERI + DODAJ -->
+    <div class="col-12 col-lg-6">
+
       <!-- PREVERI -->
-      <div class="card mb-3">
+      <div class="card">
         <div class="card-body">
-          <h2 class="card-title h6 mb-3">Preveri geslo</h2>
-          <div class="mb-2">
-            <label for="inpPreveri" class="form-label">Geslo</label>
-            <input type="text" class="form-control" id="inpPreveri" placeholder="npr. ZAGORJE OB SAVI">
-            <div class="form-text">Preveri, če geslo že obstaja v bazi. Enter ali gumb spodaj.</div>
+          <h5 class="card-title">Preveri geslo</h5>
+          <div class="input-group">
+            <input id="chkWord" class="form-control" placeholder="npr. taylor">
+            <button id="btnCheck" class="btn btn-primary" type="button">Preveri</button>
           </div>
-          <div class="d-flex align-items-center">
-            <button class="btn btn-primary" id="btnPreveri">PREVERI</button>
-            <span class="ms-3 small" id="preveriMsg"></span>
+          <div class="mt-2 small text-muted">
+            Iskanje ne razlikuje velikih/malih črk (NOCASE). Za natančnejšo obdelavo uporabite Napredno ↓
           </div>
+
+          <!-- Rezultati PREVERI gredo sem -->
+          <div id="chkResults" class="mt-3"></div>
         </div>
       </div>
 
       <!-- DODAJ -->
-      <div class="card">
+      <div class="card mt-3">
         <div class="card-body">
-          <h2 class="card-title h6 mb-3">Dodaj geslo</h2>
-          <div class="mb-2">
-            <label for="inpNovo" class="form-label">Geslo</label>
-            <input type="text" class="form-control" id="inpNovo" placeholder="novo geslo">
+          <h5 class="card-title">Dodaj geslo</h5>
+          <div class="row g-2">
+            <div class="col-12">
+              <label class="form-label">Geslo *</label>
+              <input id="addGeslo" class="form-control" placeholder="obvezno">
+            </div>
+            <div class="col-12">
+              <label class="form-label">Razlaga / opis</label>
+              <input id="addRazlaga" class="form-control">
+            </div>
+            <div class="col-6 col-md-4">
+              <label class="form-label">Vrsta</label>
+              <input id="addVrsta" class="form-control">
+            </div>
+            <div class="col-6 col-md-4">
+              <label class="form-label">Izvor</label>
+              <input id="addIzvor" class="form-control">
+            </div>
+            <div class="col-12 col-md-4">
+              <label class="form-label">Tags</label>
+              <input id="addTags" class="form-control" placeholder="npr. oseba, kraj">
+            </div>
           </div>
-          <div class="mb-2">
-            <label for="inpOpis" class="form-label">Opis</label>
-            <textarea class="form-control" id="inpOpis" rows="4" placeholder="opis gesla"></textarea>
-            <div class="form-text">Po dodajanju se opis počisti, geslo ostane – da takoj vidiš zadetek.</div>
-          </div>
-          <div class="d-flex align-items-center">
-            <button class="btn btn-success" id="btnDodaj">DODAJ</button>
-            <span class="ms-3 small" id="dodajMsg"></span>
+          <div class="mt-3 d-flex align-items-center gap-2">
+            <button id="btnAdd" class="btn btn-success" type="button">Dodaj</button>
+            <span id="addMsg" class="small text-muted"></span>
           </div>
         </div>
       </div>
+
     </div>
 
-    <!-- DESNA: REZULTATI -->
-    <div class="col-lg-8">
-      <div class="card h-100" id="rezCard">
-        <div class="card-body d-flex flex-column">
-          <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
-            <div class="d-flex align-items-center gap-3">
-              <h2 class="card-title h6 m-0">Rezultati</h2>
-              <div class="form-check m-0">
-                <input class="form-check-input" type="checkbox" id="cbExact" checked>
-                <label class="form-check-label" for="cbExact">Natančno ujemanje</label>
+
+    <!-- NAPREDNO (celotna širina) -->
+    <div class="col-12">
+      <div class="card mt-3">
+        <div class="card-body">
+          <h5 class="card-title mb-3">Napredno</h5>
+
+          <div class="row g-3">
+
+            <!-- ZAMENJAJ -->
+            <div class="col-12 col-xl-4">
+              <div class="border rounded p-3 h-100">
+                <div class="fw-semibold mb-2">Zamenjaj izraz</div>
+                <div class="mb-2">
+                  <input id="zamenjajFind" class="form-control" placeholder="Najdi (npr. fotograf)">
+                </div>
+                <div class="mb-2">
+                  <input id="zamenjajRepl" class="form-control" placeholder="Zamenjaj z (npr. igralec golfa)">
+                </div>
+                <div class="mb-2">
+                  <select id="zamenjajScope" class="form-select">
+                    <option value="opis">Samo opis/razlaga</option>
+                    <option value="geslo">Samo geslo</option>
+                    <option value="oboje">Oboje</option>
+                  </select>
+                </div>
+                <div class="mb-3">
+                  <select id="zamenjajMode" class="form-select">
+                    <option value="substring">Navadno (substring)</option>
+                    <option value="exact">Točno ujemanje</option>
+                    <option value="word">Cele besede (regex)</option>
+                  </select>
+                </div>
+                <button id="btnZamenjaj" class="btn btn-warning w-100" type="button">Zamenjaj</button>
+                <div id="repMsg" class="small text-muted mt-2"></div>
               </div>
             </div>
-            <div class="d-flex align-items-center gap-2">
-              <button class="btn btn-outline-secondary btn-sm" id="btnPonastavi" title="Počisti rezultate">PONASTAVI</button>
-              <div class="small text-muted" id="rezMsg"></div>
-            </div>
-          </div>
 
-          <div class="table-responsive">
-            <table class="table table-sm align-middle mb-0">
-              <thead>
-                <tr>
-                  <th style="width: 1%">ID</th>
-                  <th style="width: 20%">Geslo</th>
-                  <th>Opis</th>
-                  <th class="text-end" style="width: 1%">Akcije</th>
-                </tr>
-              </thead>
-              <tbody id="rezBody">
-                <!-- tukaj JS riše vrstice -->
-              </tbody>
-            </table>
-          </div>
+            <!-- VELIKE / MALE -->
+            <div class="col-12 col-xl-4">
+              <div class="border rounded p-3 h-100">
+                <div class="fw-semibold mb-2">Velike / male črke</div>
+                <div class="mb-2">
+                  <select id="vmTarget" class="form-select">
+                    <option value="geslo">Geslo</option>
+                    <option value="opis">Opis/razlaga</option>
+                    <option value="oboje">Oboje</option>
+                  </select>
+                </div>
+                <div class="mb-3">
+                  <select id="vmMode" class="form-select">
+                    <option value="upper">Vse velike</option>
+                    <option value="lower">Vse male</option>
+                    <option value="title">Naslovi (Title Case)</option>
+                    <option value="capitalize">Prva velika</option>
+                  </select>
+                </div>
+                <button id="btnPretvori" class="btn btn-secondary w-100" type="button">
+                  Pretvori
+                </button>
+                <div id="caseMsg" class="small text-muted mt-2"></div>
+              </div>
+            </div>
+
+            <!-- ARHIVIRAJ MESEC -->
+            <div class="col-12 col-xl-4">
+              <div class="border rounded p-3 h-100">
+                <div class="fw-semibold mb-2">Arhiviraj mesec</div>
+                <div class="row g-2">
+                  <div class="col-6">
+                    <input id="arhYear" class="form-control" type="number" placeholder="Leto (YYYY)">
+                  </div>
+                  <div class="col-6">
+                    <select id="arhMonth" class="form-select">
+                      <option value="1">1</option><option value="2">2</option><option value="3">3</option>
+                      <option value="4">4</option><option value="5">5</option><option value="6">6</option>
+                      <option value="7">7</option><option value="8">8</option><option value="9">9</option>
+                      <option value="10">10</option><option value="11">11</option><option value="12">12</option>
+                    </select>
+                  </div>
+                </div>
+                <button id="btnArhiviraj" class="btn btn-outline-dark w-100 mt-2" type="button">
+                  Arhiviraj
+                </button>
+                <div id="archMsg" class="small text-muted mt-2"></div>
+              </div>
+            </div>
+
+          </div> <!-- /.row g-3 -->
         </div>
       </div>
     </div>
 
-  </div><!-- /row -->
-</div><!-- /container -->
+  </div> <!-- /.row g-3 -->
+
+</div> <!-- /.admin-wrap -->
 {% endblock %}
 
 {% block scripts %}
-{% raw %}
+{{ super() }}
 <script>
-(() => {
-  // ===== helpers =====
-  const $ = (x) => document.getElementById(x);
-  const esc = (s) => { const d=document.createElement('div'); d.innerText=s ?? ''; return d.innerHTML; };
-
-  async function httpGet(url) {
-    const r = await fetch(url, { cache: 'no-store' });
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    return r.json();
-  }
-  async function httpPost(url, data) {
-    const r = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type':'application/json' },
-      body: JSON.stringify(data || {}),
-      cache: 'no-store'
-    });
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    return r.json();
-  }
-  async function trySequence(steps) {
-    const errors = [];
-    for (const step of steps) {
-      const { method, url, payload } = step;
-      try {
-        const data = method === 'POST' ? await httpPost(url, payload) : await httpGet(url);
-        return { url, method, data };
-      } catch (e) {
-        errors.push(`• ${method} ${url}: ${e.message}`);
-      }
-    }
-    throw new Error(`Noben endpoint ni uspel:\n${errors.join('\n')}`);
-  }
-  function setText(el, txt, cls) {
-    if (!el) return;
-    el.textContent = txt;
-    el.classList.remove('text-success','text-danger','text-muted');
-    if (cls) el.classList.add(cls);
-  }
-
-  // ===== sort utils =====
-  function normalizeStr(s) {
-    return (s ?? '')
-      .toString()
-      .trim()
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/\p{Diacritic}/gu, '');
-  }
-  function afterLastHyphen(s) {
-    const t = (s ?? '').toString();
-    const i = t.lastIndexOf('-');
-    return i >= 0 ? t.slice(i + 1).trim() : t.trim();
-  }
-  function cmp(a, b) {
-    const aG = a.geslo ?? a.GESLO ?? '';
-    const bG = b.geslo ?? b.GESLO ?? '';
-    const aHasHyphen = /-/.test(aG);
-    const bHasHyphen = /-/.test(bG);
-    if (aHasHyphen !== bHasHyphen) return aHasHyphen ? -1 : 1;
-
-    if (aHasHyphen && bHasHyphen) {
-      const aKey = normalizeStr(afterLastHyphen(a.opis ?? a.OPIS ?? aG));
-      const bKey = normalizeStr(afterLastHyphen(b.opis ?? b.OPIS ?? bG));
-      if (aKey !== bKey) return aKey.localeCompare(bKey, 'sl', { sensitivity:'base' });
-    }
-
-    const aN = normalizeStr(aG);
-    const bN = normalizeStr(bG);
-    if (aN !== bN) return aN.localeCompare(bN, 'sl', { sensitivity:'base' });
-
-    const aId = +((a.id ?? a.ID ?? '') || 0);
-    const bId = +((b.id ?? b.ID ?? '') || 0);
-    return aId - bId;
-  }
-
-  // ===== DOM refs =====
-  const inpPreveri = $('inpPreveri');
-  const btnPreveri = $('btnPreveri');
-  const preveriMsg = $('preveriMsg');
-
-  const inpNovo  = $('inpNovo');
-  const inpOpis  = $('inpOpis');
-  const btnDodaj = $('btnDodaj');
-  const dodajMsg = $('dodajMsg');
-
-  const rezBody  = $('rezBody');
-  const rezMsg   = $('rezMsg');
-
-  const cbExact = $('cbExact');
-  const btnPonastavi = $('btnPonastavi');
-
-  // ===== highlight helper (3A) =====
-  function highlight(text, query) {
-    const t = (text ?? '').toString();
-    const q = (query ?? '').toString().trim();
-    if (!q) return esc(t);
-    const re = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
-    return esc(t).replace(re, (m) => `<mark>${esc(m)}</mark>`);
-  }
-
-  // ===== rendering z vgrajenim sortom + highlight (3C) =====
-  function renderResults(arr) {
-    if (!rezBody) return;
-    const sorted = (arr || []).slice().sort(cmp);
-    const qMark = (inpPreveri?.value || inpNovo?.value || '').trim();
-
-    const rows = sorted.map(r => {
-      const id = esc(r.id ?? r.ID ?? '');
-      const g  = r.geslo ?? r.GESLO ?? '';
-      const o  = r.opis  ?? r.OPIS  ?? '';
-      return `<tr data-id="${id}">
-        <td class="text-nowrap">${id}</td>
-        <td class="fw-semibold">${highlight(g, qMark)}</td>
-        <td class="opis-cell">${highlight(o, qMark)}</td>
-        <td class="text-end">
-          <button class="btn btn-sm btn-outline-primary" data-action="uredi">UREDI</button>
-          <button class="btn btn-sm btn-outline-danger ms-1" data-action="brisi">BRIŠI</button>
-        </td>
-      </tr>`;
-    }).join('');
-    rezBody.innerHTML = rows;
-    if (rezMsg) { rezMsg.textContent = `${sorted.length} zadetkov`; rezMsg.classList.add('text-muted'); }
-  }
-
-  // ===== exact fetch z možnostjo nenatančnega (3D) =====
-  async function fetchExact(geslo, exactOnly = true) {
-    const q = encodeURIComponent(geslo);
-    const steps = [
-      { method:'GET', url:`/preveri_geslo?t=${q}` },
-      { method:'GET', url:`/admin/preveri?t=${q}` },
-      { method:'GET', url:`/preveri?t=${q}` },
-      { method:'POST', url:'/preveri_geslo', payload:{ t:geslo, geslo } },
-      { method:'POST', url:'/admin/preveri', payload:{ t:geslo, geslo } },
-      { method:'POST', url:'/preveri',      payload:{ t:geslo, geslo } },
-    ];
-    const { data } = await trySequence(steps);
-    const results = data.results ?? data.zadetki ?? data.matches ?? data.items ?? [];
-    if (!exactOnly) return results;
-
-    const norm = (s) => (s ?? '').toString().trim();
-    const exact = results.filter(r => norm(r.geslo ?? r.GESLO) === norm(geslo));
-    return exact.length ? exact : results;
-  }
-
-  // ===== PREVERI (3E) =====
-
-async function preveri() {
-  const q = (inpPreveri?.value || '').trim();
-  if (!q) return setText(preveriMsg, 'Vnesi geslo za preverjanje.', 'text-danger');
-  setText(preveriMsg, 'Preverjam …', 'text-muted');
-
-  try {
-    const resp = await fetch(`/preveri_geslo?t=${encodeURIComponent(q)}`);
-    const data = await resp.json();
-    console.log('🟢 PODATKI IZ BACKENDA:', data);
-
-    alert(`Prejeto ${data.count} rezultatov.`); // <- to boš VIDEL takoj v brskalniku
-  } catch (e) {
-    console.error('Napaka:', e);
-    alert(`Napaka: ${e.message}`);
-  }
+// ---------- helpers ----------
+async function jget(url) {
+  const r = await fetch(url, { cache: 'no-store' });
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  return r.json();
+}
+async function jpost(url, data) {
+  const r = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data || {})
+  });
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  return r.json();
+}
+function esc(s){
+  const d = document.createElement('div');
+  d.innerText = s ?? '';
+  return d.innerHTML;
 }
 
+// ---------- PREVERI: render + UREDI/BRIŠI ----------
+function renderChkResults(rows) {
+  const host = document.getElementById('chkResults');
+  if (!host) return;
 
-
-  // ===== DODAJ (3F ostane – refresh + highlight že dela) =====
-  async function dodaj() {
-    const g = (inpNovo?.value || '').trim();
-    const o = (inpOpis?.value || '').trim();
-    if (!g) return setText(dodajMsg, 'Vnesi geslo.', 'text-danger');
-    if (!o) return setText(dodajMsg, 'Vnesi opis.', 'text-danger');
-
-    setText(dodajMsg, 'Dodajam …', 'text-muted');
-    btnDodaj && (btnDodaj.disabled = true);
-    try {
-      const payload = { geslo: g, opis: o };
-      const steps = [
-        { method:'POST', url:'/dodaj_geslo', payload },
-        { method:'POST', url:'/admin/dodaj', payload },
-        { method:'POST', url:'/api/dodaj_geslo', payload },
-      ];
-      await trySequence(steps);
-
-      const res = await fetchExact(g, true);
-      renderResults(res);
-
-      setText(dodajMsg, `✅ Dodano: "${g}"`, 'text-success');
-      if (inpNovo) inpNovo.value = g;   // pusti geslo
-      if (inpOpis) inpOpis.value = '';  // opis počisti
-      refreshStevec();
-    } catch (e) {
-      console.error('DODAJ napaka:', e);
-      setText(dodajMsg, `⚠ ${e.message || e}`, 'text-danger');
-    } finally {
-      btnDodaj && (btnDodaj.disabled = false);
-    }
-  }
-  btnDodaj?.addEventListener('click', (ev) => { ev.preventDefault(); dodaj(); });
-
-  // ===== UREDI inline =====
-  async function shraniUrejanje(tr) {
-    const id = tr.getAttribute('data-id');
-    const ta = tr.querySelector('textarea');
-    const novOpis = (ta?.value || '').trim();
-    if (!id) return;
-
-    const btns = tr.querySelectorAll('button'); btns.forEach(b => b.disabled = true);
-    try {
-      const payload = { id, opis: novOpis };
-      const steps = [
-        { method:'POST', url:'/uredi_geslo', payload },
-        { method:'POST', url:'/admin/uredi', payload },
-        { method:'POST', url:'/api/uredi_geslo', payload },
-      ];
-      await trySequence(steps);
-
-      const cell = tr.querySelector('.opis-cell');
-      if (cell) cell.innerHTML = esc(novOpis);
-      tr.querySelector('[data-action="preklic"]')?.remove();
-      tr.querySelector('[data-action="shrani"]')?.remove();
-      const actions = tr.querySelector('td.text-end');
-      if (actions) {
-        actions.innerHTML =
-          '<button class="btn btn-sm btn-outline-primary" data-action="uredi">UREDI</button>' +
-          '<button class="btn btn-sm btn-outline-danger ms-1" data-action="brisi">BRIŠI</button>';
-      }
-    } catch (e) {
-      alert('Napaka pri shranjevanju: ' + (e.message || e));
-    } finally {
-      btns.forEach(b => b.disabled = false);
-    }
-  }
-  function zacniUrejanje(tr) {
-    const cell = tr.querySelector('.opis-cell'); if (!cell) return;
-    const stari = cell.textContent;
-    cell.innerHTML = `<textarea class="form-control form-control-sm" rows="3">${esc(stari)}</textarea>`;
-    const actions = tr.querySelector('td.text-end');
-    if (actions) {
-      actions.innerHTML =
-        '<button class="btn btn-sm btn-success" data-action="shrani">SHRANI</button>' +
-        '<button class="btn btn-sm btn-secondary ms-1" data-action="preklic">PREKLIČI</button>';
-    }
-  }
-  function preklicUrejanja(tr) {
-    const cell = tr.querySelector('.opis-cell'); if (!cell) return;
-    const ta = tr.querySelector('textarea');
-    const backup = ta ? ta.defaultValue : cell.textContent;
-    cell.textContent = backup;
-    const actions = tr.querySelector('td.text-end');
-    if (actions) {
-      actions.innerHTML =
-        '<button class="btn btn-sm btn-outline-primary" data-action="uredi">UREDI</button>' +
-        '<button class="btn btn-sm btn-outline-danger ms-1" data-action="brisi">BRIŠI</button>';
-    }
+  if (!rows || rows.length === 0) {
+    host.innerHTML = '<div class="text-muted">Ni zadetkov.</div>';
+    return;
   }
 
-  // ===== BRIŠI =====
-  async function brisi(tr) {
-    const id = tr.getAttribute('data-id'); if (!id) return;
-    if (!confirm('Res izbrišem zapis #' + id + '?')) return;
+  const html = [
+    '<div class="table-responsive">',
+    '<table class="table table-sm align-middle">',
+    '<thead><tr><th style="width:1%">#</th><th>Geslo</th><th>Razlaga</th><th class="text-nowrap">Akcije</th></tr></thead><tbody>'
+  ];
 
-    const btns = tr.querySelectorAll('button'); btns.forEach(b => b.disabled = true);
-    try {
-      const payload = { id };
-      const steps = [
-        { method:'POST', url:'/brisi_geslo', payload },
-        { method:'POST', url:'/admin/brisi', payload },
-        { method:'POST', url:'/api/brisi_geslo', payload },
-      ];
-      await trySequence(steps);
-      tr.remove();
-      if (rezMsg) rezMsg.textContent = `${document.querySelectorAll('#rezBody tr').length} zadetkov`;
-      refreshStevec();
-    } catch (e) {
-      alert('Napaka pri brisanju: ' + (e.message || e));
-      btns.forEach(b => b.disabled = false);
-    }
+  for (const r of rows) {
+    html.push(
+      `<tr data-id="${r.id}">
+         <td class="text-muted">${r.id}</td>
+         <td class="w-25">
+           <input class="form-control form-control-sm js-g" value="${esc(r.geslo || '')}">
+         </td>
+         <td>
+           <textarea class="form-control form-control-sm smallarea js-r">${esc(r.razlaga || '')}</textarea>
+         </td>
+         <td class="text-nowrap">
+           <button class="btn btn-sm btn-outline-primary me-1 js-save">UREDI</button>
+           <button class="btn btn-sm btn-outline-danger js-del">BRIŠI</button>
+         </td>
+       </tr>`
+    );
   }
+  html.push('</tbody></table></div>');
+  host.innerHTML = html.join('');
 
-  // ===== delegacija klikov =====
-  $('rezBody')?.addEventListener('click', (ev) => {
-    const btn = ev.target.closest('button[data-action]');
-    if (!btn) return;
-    const tr = btn.closest('tr');
-    const act = btn.getAttribute('data-action');
-    if (act === 'uredi')   zacniUrejanje(tr);
-    if (act === 'shrani')  shraniUrejanje(tr);
-    if (act === 'preklic') preklicUrejanja(tr);
-    if (act === 'brisi')   brisi(tr);
+  // UREDI
+  host.querySelectorAll('.js-save').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      const tr = e.target.closest('tr');
+      const id = Number(tr.dataset.id);
+      const g  = tr.querySelector('.js-g').value.trim();
+      const r  = tr.querySelector('.js-r').value;
+      try {
+        const res = await jpost('/api/uredi_geslo', { id, geslo: g, razlaga: r });
+        if (!res.ok) throw new Error(res.msg || 'Napaka pri shranjevanju');
+        tr.classList.add('table-success');
+        setTimeout(() => tr.classList.remove('table-success'), 900);
+      } catch(err) { alert(err.message || err); }
+    });
   });
 
-  // ===== PONASTAVI (3G) =====
-  function ponastavi() {
-    if (rezBody) rezBody.innerHTML = '';
-    if (rezMsg) rezMsg.textContent = '';
-    setText(preveriMsg, '', null);
-    setText(dodajMsg, '', null);
-    if (inpPreveri) inpPreveri.value = '';
-    // inpNovo pustimo, opis se čisti ob dodajanju
-  }
-  btnPonastavi?.addEventListener('click', (ev) => { ev.preventDefault(); ponastavi(); });
-
-  // ===== števec =====
-  async function refreshStevec() {
-    const el = $('stevecHome'); if (!el) return;
-    try {
-      const r = await fetch('/stevec_gesel.txt', { cache: 'no-store' });
-      if (r.ok) { el.textContent = (await r.text()).trim() || '—'; return; }
-      throw new Error('TXT ni dosegljiv');
-    } catch {
+  // BRIŠI
+  host.querySelectorAll('.js-del').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      const tr = e.target.closest('tr');
+      const id = Number(tr.dataset.id);
+      if (!confirm('Res želiš izbrisati zapis #' + id + '?')) return;
       try {
-        const j = await httpGet('/stevec_gesel');
-        el.textContent = (j.count ?? j.stevec ?? '—');
-      } catch {
-        el.textContent = '—';
+        const res = await jpost('/api/brisi_geslo', { id });
+        if (!res.ok) throw new Error(res.msg || 'Napaka pri brisanju');
+        tr.remove();
+      } catch(err) { alert(err.message || err); }
+    });
+  });
+}
+
+// ---------- PREVERI: klik + Enter ----------
+(function () {
+  const input = document.getElementById('chkWord');
+  const btn   = document.getElementById('btnCheck');
+  const host  = document.getElementById('chkResults');
+
+  async function doCheck() {
+    const q = (input?.value || '').trim();
+    if (!q) {
+      host.innerHTML = '<div class="text-muted">Vpiši geslo.</div>';
+      return;
+    }
+
+    try {
+      const resp = await fetch('/api/preveri?geslo=' + encodeURIComponent(q), { cache: 'no-store' });
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      const r = await resp.json();
+      if (r.ok === false) throw new Error(r.error || r.msg || 'Napaka');
+
+      const exact = r.exact ?? (Array.isArray(r.results) ? r.results : (r.exists ? [q] : []));
+      const rows  = (exact || []).map((g, i) => ({ id: i + 1, geslo: g, razlaga: '' }));
+
+      let status = document.getElementById('chkStatus');
+      if (!status) {
+        status = document.createElement('div');
+        status.id = 'chkStatus';
+        status.className = 'mt-2 small';
+        host.before(status);
       }
+
+      if (!rows.length) {
+        status.className = 'mt-2 small text-danger';
+        status.textContent = 'Ni natančnega zadetka.';
+        host.innerHTML = '<div class="text-muted">Ni zadetkov.</div>';
+        return;
+      }
+
+      status.className = 'mt-2 small text-success';
+      status.textContent = 'Najdeno (exact match).';
+      renderChkResults(rows);
+    } catch (e) {
+      host.innerHTML = '<div class="text-danger">Napaka: ' + (e.message || e) + '</div>';
     }
   }
-  refreshStevec();
 
+  btn?.addEventListener('click', doCheck);
+  input?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      doCheck();
+    }
+  });
 })();
+
+// ---------- ŠTEVEC ----------
+async function loadStevec() {
+  const box = document.getElementById('stevecAdmin');
+  if (!box) return;
+  box.textContent = '…';
+  try {
+    const r1 = await fetch('/stevec_gesel', { cache: 'no-store' });
+    if (r1.ok) {
+      const j = await r1.json();
+      const n = Number(j?.count ?? j?.total ?? j?.n ?? 0);
+      if (!Number.isNaN(n) && n > 0) {
+        box.textContent = n.toLocaleString('sl-SI');
+        return;
+      }
+    }
+    const r2 = await fetch('/stevec_gesel.txt', { cache: 'no-store' });
+    const t = r2.ok ? await r2.text() : '0';
+    const n2 = parseInt(t, 10) || 0;
+    box.textContent = n2.toLocaleString('sl-SI');
+  } catch {
+    box.textContent = '—';
+  }
+}
+document.getElementById('btnRefresh')?.addEventListener('click', (e) => {
+  e.preventDefault();
+  loadStevec();
+});
+document.addEventListener('DOMContentLoaded', loadStevec);
+
+// ---------- NAPREDNO: Velike/male ----------
+document.getElementById('btnPretvori')?.addEventListener('click', async () => {
+  const body = {
+    target: document.getElementById('vmTarget').value,
+    mode:   document.getElementById('vmMode').value
+  };
+  const box = document.getElementById('caseMsg');
+  box.textContent = 'Delam…';
+  try {
+    const r = await jpost('/api/velike_male', body);
+    if (r.ok) box.textContent = `Spremenjeno ${r.changed} zapisov.`;
+    else      box.textContent = 'Napaka: ' + (r.msg || '?');
+  } catch(e){
+    box.textContent = 'Napaka: ' + (e.message || e);
+  }
+});
+
+// ---------- NAPREDNO: Arhiviraj ----------
+document.getElementById('btnArhiviraj')?.addEventListener('click', async () => {
+  const year  = document.getElementById('arhYear').value.trim();
+  const month = parseInt(document.getElementById('arhMonth').value, 10);
+  const box = document.getElementById('archMsg');
+  if (!/^\d{4}$/.test(year) || !(month >= 1 && month <= 12)) {
+    box.textContent = 'Vnesi pravilno leto (YYYY) in mesec (1–12).';
+    return;
+  }
+  box.textContent = 'Premikam datoteke…';
+  try {
+    const r = await jpost('/admin/arhiviraj', { year, month });
+    if (r.ok) box.textContent = `Arhivirano datotek: ${r.moved}.`;
+    else      box.textContent = 'Napaka: ' + (r.msg || '?');
+  } catch(e){
+    box.textContent = 'Napaka: ' + (e.message || e);
+  }
+});
 </script>
-{% endraw %}
 {% endblock %}
