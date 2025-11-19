@@ -357,6 +357,7 @@ def krizanka():
         cc = pridobi_podatke_iz_xml(xml_path)
     except Exception as e:
         print("[KRIZANKA] napaka pri branju XML:", e)
+    print("[KRIZANKA CC]", type(cc), cc)
 
     # prejšnja / naslednja
     prev_url = url_for("krizanka", d=(d - timedelta(days=1)).strftime("%Y-%m-%d"))

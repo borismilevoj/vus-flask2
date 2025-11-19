@@ -45,7 +45,6 @@
 {% block scripts %}
 <script>
 window.addEventListener('DOMContentLoaded', function () {
-  try {
     // ===== 0) PODATKI IZ BACKENDA =====
     var CC = {{ (cc or {'width':0,'height':0,'crna_polja':[],'gesla_opisi':[],'sol_by_xy':{},'numbers_xy':{}}) | tojson }};
     var width  = Number((CC && (CC.width != null ? CC.width : CC.sirina)) || 0);
@@ -273,7 +272,7 @@ function updateFrameBorder() {
     var body  = document.getElementById('clueBody');
     var img   = document.getElementById('clueImg');
 
-    function showClueAtHead(x,y,d){
+        function showClueAtHead(x,y,d){
       var key = x + "," + y;
       var meta = (clueAtHead.get(key + "," + d)) || null;
 
@@ -291,48 +290,47 @@ function updateFrameBorder() {
       if (body)  body.textContent  = opis;
 
       // fallback iz opisa → /images/<slug>.jpg
-if (img) {
-  // 1) Če je meta.slika nastavljena v CC, jo uporabimo direkt
-  var url = (meta && meta.slika) ? meta.slika : '';
+      if (img) {
+        // 1) Če je meta.slika nastavljena v CC, jo uporabimo direkt
+        var url = (meta && meta.slika) ? meta.slika : '';
 
-  // 2) Fallback iz opisa → /images/<slug>.jpg
-  if (!url && opis) {
-    var slug = narediSlug(opis);   // ⚠️ tukaj kličemo novo funkcijo
-    url = '/images/' + slug + '.jpg';
-  }
+        // 2) Fallback iz opisa → /images/<slug>.jpg
+        if (!url && opis) {
+          var slug = narediSlug(opis);
+          url = '/images/' + slug + '.jpg';
+        }
 
-  // 3) Normalizacija relativnih poti (pusti isto logiko kot prej)
-  if (url && !/^https?:\/\//i.test(url)) {
-    if (!url.startsWith('/')) {
-      if (url.startsWith('images/')) url = '/' + url;
-      else if (url.startsWith('static/Images/')) url = '/' + url;
-      else url = '/images/' + url;
-    }
-  }
+        // 3) Normalizacija relativnih poti ...
+        if (url && !/^https?:\/\//i.test(url)) {
+          if (!url.startsWith('/')) {
+            if (url.startsWith('images/')) url = '/' + url;
+            else if (url.startsWith('static/Images/')) url = '/' + url;
+            else url = '/images/' + url;
+          }
+        }
 
-  // 4) Funkcija show – JPG → PNG → WEBP fallback
-  var show = function (u, triedPng, triedWebp) {
-    img.onload = function () { img.style.display = 'block'; img.classList.remove('hidden'); };
-    img.onerror = function () {
-      if (!triedPng && /\.jpg$/i.test(u)) {
-        show(u.replace(/\.jpg$/i, '.png'), true, false);
-      } else if (!triedWebp && /\.(jpg|png)$/i.test(u)) {
-        show(u.replace(/\.(jpg|png)$/i, '.webp'), true, true);
-      } else {
-        img.removeAttribute('src'); img.style.display = 'none'; img.classList.add('hidden');
+        var show = function (u, triedPng, triedWebp) {
+          img.onload = function () { img.style.display = 'block'; img.classList.remove('hidden'); };
+          img.onerror = function () {
+            if (!triedPng && /\.jpg$/i.test(u)) {
+              show(u.replace(/\.jpg$/i, '.png'), true, false);
+            } else if (!triedWebp && /\.(jpg|png)$/i.test(u)) {
+              show(u.replace(/\.(jpg|png)$/i, '.webp'), true, true);
+            } else {
+              img.removeAttribute('src'); img.style.display = 'none'; img.classList.add('hidden');
+            }
+          };
+          img.src = u;
+        };
+
+        if (url) show(url);
+        else {
+          img.removeAttribute('src');
+          img.style.display = 'none';
+          img.classList.add('hidden');
+        }
       }
-    };
-    img.src = u;
-  };
-
-  if (url) show(url);
-  else {
-    img.removeAttribute('src');
-    img.style.display = 'none';
-    img.classList.add('hidden');
-  }
-}
-
+    }   // <--- TA ZAKLJUČNI OKLEPAJ MANJKA
 
 
             function focusWordHere(){
@@ -449,12 +447,13 @@ function narediSlug(opis, dodatno) {
       }
     }
 
-    // ===== 6) INTERAKCIJE =====
+        // ===== 6) INTERAKCIJE =====
     grid.addEventListener('click', function(e){
       var t = e.target.closest ? e.target.closest('.cell') : e.target;
       if (!t || !t.classList || t.classList.contains('black')) return;
       window.cursor = {x:+t.dataset.x, y:+t.dataset.y};
-      focusWordHere(); grid.focus();
+      focusWordHere();
+      grid.focus();
     });
 
     window.addEventListener('keydown', function(e){
@@ -462,19 +461,47 @@ function narediSlug(opis, dodatno) {
       if (tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT') return;
       if (!window.cursor) return;
       var k=e.key;
-      if (k && k.length===1 && /\S/.test(k)){ setLetterAt(window.cursor.x,window.cursor.y,k); moveWithinWord(true,true); e.preventDefault(); return; }
-      if (k==='Backspace'){ if (hasLetter(window.cursor.x,window.cursor.y)) setLetterAt(window.cursor.x,window.cursor.y,''); else if (moveWithinWord(false,false)) setLetterAt(window.cursor.x,window.cursor.y,''); e.preventDefault(); return; }
-      if (k==='Delete'){ setLetterAt(window.cursor.x,window.cursor.y,''); moveWithinWord(true,true); e.preventDefault(); return; }
-      if (k==='ArrowRight'){ dir='across'; moveWithinWord(true,true); e.preventDefault(); return; }
+      if (k && k.length===1 && /\S/.test(k)){
+        setLetterAt(window.cursor.x,window.cursor.y,k);
+        moveWithinWord(true,true);
+        e.preventDefault();
+        return;
+      }
+      if (k==='Backspace'){
+        if (hasLetter(window.cursor.x,window.cursor.y))
+          setLetterAt(window.cursor.x,window.cursor.y,'');
+        else if (moveWithinWord(false,false))
+          setLetterAt(window.cursor.x,window.cursor.y,'');
+        e.preventDefault();
+        return;
+      }
+      if (k==='Delete'){
+        setLetterAt(window.cursor.x,window.cursor.y,'');
+        moveWithinWord(true,true);
+        e.preventDefault();
+        return;
+      }
+      if (k==='ArrowRight'){ dir='across'; moveWithinWord(true,true);  e.preventDefault(); return; }
       if (k==='ArrowLeft'){  dir='across'; moveWithinWord(false,true); e.preventDefault(); return; }
-      if (k==='ArrowDown'){  dir='down';   moveWithinWord(true,true); e.preventDefault(); return; }
+      if (k==='ArrowDown'){  dir='down';   moveWithinWord(true,true);  e.preventDefault(); return; }
       if (k==='ArrowUp'){    dir='down';   moveWithinWord(false,true); e.preventDefault(); return; }
-      if (k==='Enter'){ dir = (dir==='across') ? 'down' : 'across'; focusWordHere(); e.preventDefault(); return; }
+      if (k==='Enter'){
+        dir = (dir==='across') ? 'down' : 'across';
+        focusWordHere();
+        e.preventDefault();
+        return;
+      }
     }, true);
 
     if (btn) {
-      if (btn.parentElement !== document.body) document.body.appendChild(btn);
-      Object.assign(btn.style, { position:'fixed', right:'20px', bottom:'24px', zIndex:'10000' });
+      if (btn.parentElement !== document.body)
+        document.body.appendChild(btn);
+      Object.assign(btn.style, {
+        position:'fixed',
+        right:'20px',
+        bottom:'24px',
+        zIndex:'10000'
+      });
       btn.addEventListener('click', function(){
         dir = (dir==='across') ? 'down' : 'across';
         btn.textContent = (dir==='across') ? '↔︎' : '↕︎';
@@ -484,36 +511,41 @@ function narediSlug(opis, dodatno) {
     }
 
     // ===== 7) AUTO-OPEN =====
-    function firstWhiteCell(){ for (var yy2=0; yy2<height; yy2++) for (var xx2=0; xx2<width; xx2++) if (!blackSet[xx2 + "," + yy2]) return {x:xx2,y:yy2}; return {x:0,y:0}; }
-    (function(){
-      try{
-        var first = null;
-        for (var q=0;q<gesla_opisi.length;q++){ if ((gesla_opisi[q].smer||'').toLowerCase().charAt(0)==='a'){ first = gesla_opisi[q]; break; } }
-        if (!first) first = gesla_opisi[0];
-        var cx,cy;
-        if (first && isFinite(first.x) && isFinite(first.y)){ cx=first.x; cy=first.y; dir = (first.smer==='down')?'down':'across'; }
-        else { var p=firstWhiteCell(); cx=p.x; cy=p.y; dir='across'; }
-        window.cursor={x:cx,y:cy}; focusWordHere(); grid.focus();
-      } catch(_){
-        var p2=firstWhiteCell(); window.cursor={x:p2.x,y:p2.y}; dir='across'; focusWordHere(); grid.focus();
+    // fokusiraj prvo vodoravno geslo, da ne začneš na random kvadratku
+    (function () {
+      if (!gesla_opisi || !gesla_opisi.length) {
+        return;
+      }
+
+      // najdi prvo "across" geslo, če ga ni, vzemi kar prvega
+      var first = null;
+      for (var i = 0; i < gesla_opisi.length; i++) {
+        var g = gesla_opisi[i];
+        if ((g.smer || "").toLowerCase() === "across") {
+          first = g;
+          break;
+        }
+      }
+      if (!first) {
+        first = gesla_opisi[0];
+      }
+
+      var cx = first.x;
+      var cy = first.y;
+
+      window.cursor = { x: cx, y: cy };
+      dir = first.smer || "across";
+      focusWordHere();
+      if (grid) {
+        grid.focus();
       }
     })();
 
-    console.log('[KRIZANKA] render OK, cells=', grid.children.length);
-
-  } catch (e) {
-    console.error('[KRIZANKA] global error:', e);
-    // fallback 5x5, da vsaj nekaj vidiš
-    var grid2 = document.getElementById('grid');
-    if (grid2){
-      grid2.innerHTML=''; grid2.style.display='grid'; grid2.style.gridTemplateColumns='repeat(5,40px)'; grid2.style.gap='2px';
-      for (var ii=0; ii<25; ii++){ var c=document.createElement('div'); c.style.width='40px'; c.style.height='40px'; c.style.border='1px solid #ddd'; c.style.background='#fff'; grid2.appendChild(c); }
-      console.warn('[KRIZANKA] fallback 5x5 narisan');
-    }
-  }
 });
 </script>
 {% endblock %}
+
+
 
 
 
