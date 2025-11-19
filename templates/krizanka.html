@@ -290,39 +290,50 @@ function updateFrameBorder() {
       if (title) title.textContent = (d==='down'?'Navpično':'Vodoravno');
       if (body)  body.textContent  = opis;
 
-      if (img) {
-        var url = meta.slika || '';
-        // fallback iz opisa → /images/<slug>.jpg
-        if (!url && opis) {
-          var slug = opis.split(/\s+/).slice(0, 15).join(' ');
-          slug = slug.normalize ? slug.normalize('NFD').replace(/[\u0300-\u036f]/g, '') : slug;
-          slug = slug.replace(/[^A-Za-z0-9]+/g, '_').replace(/^_+|_+$/g, '').toLowerCase();
-          url = '/images/' + slug + '.jpg';
-        }
-        // normalizacija relativnih poti
-        if (url && !/^https?:\/\//i.test(url)) {
-          if (!url.startsWith('/')) {
-            if (url.startsWith('images/')) url = '/' + url;
-            else if (url.startsWith('static/Images/')) url = '/' + url;
-            else url = '/images/' + url;
-          }
-        }
-        var show = function(u, triedPng, triedWebp){
-          img.onload = function(){ img.style.display='block'; img.classList.remove('hidden'); };
-          img.onerror = function(){
-            if (!triedPng && /\.jpg$/i.test(u)) {
-              show(u.replace(/\.jpg$/i, '.png'), true, false);
-            } else if (!triedWebp && /\.(jpg|png)$/i.test(u)) {
-              show(u.replace(/\.(jpg|png)$/i, '.webp'), true, true);
-            } else {
-              img.removeAttribute('src'); img.style.display='none'; img.classList.add('hidden');
-            }
-          };
-          img.src = u;
-        };
-        if (url) show(url); else { img.removeAttribute('src'); img.style.display='none'; img.classList.add('hidden'); }
-      }
+      // fallback iz opisa → /images/<slug>.jpg
+if (img) {
+  // 1) Če je meta.slika nastavljena v CC, jo uporabimo direkt
+  var url = (meta && meta.slika) ? meta.slika : '';
+
+  // 2) Fallback iz opisa → /images/<slug>.jpg
+  if (!url && opis) {
+    var slug = narediSlug(opis);   // ⚠️ tukaj kličemo novo funkcijo
+    url = '/images/' + slug + '.jpg';
+  }
+
+  // 3) Normalizacija relativnih poti (pusti isto logiko kot prej)
+  if (url && !/^https?:\/\//i.test(url)) {
+    if (!url.startsWith('/')) {
+      if (url.startsWith('images/')) url = '/' + url;
+      else if (url.startsWith('static/Images/')) url = '/' + url;
+      else url = '/images/' + url;
     }
+  }
+
+  // 4) Funkcija show – JPG → PNG → WEBP fallback
+  var show = function (u, triedPng, triedWebp) {
+    img.onload = function () { img.style.display = 'block'; img.classList.remove('hidden'); };
+    img.onerror = function () {
+      if (!triedPng && /\.jpg$/i.test(u)) {
+        show(u.replace(/\.jpg$/i, '.png'), true, false);
+      } else if (!triedWebp && /\.(jpg|png)$/i.test(u)) {
+        show(u.replace(/\.(jpg|png)$/i, '.webp'), true, true);
+      } else {
+        img.removeAttribute('src'); img.style.display = 'none'; img.classList.add('hidden');
+      }
+    };
+    img.src = u;
+  };
+
+  if (url) show(url);
+  else {
+    img.removeAttribute('src');
+    img.style.display = 'none';
+    img.classList.add('hidden');
+  }
+}
+
+
 
             function focusWordHere(){
       if (!window.cursor) return;
@@ -399,17 +410,31 @@ function updateFrameBorder() {
       return false;
     }
 
-function narediSlug(opis) {
-  const s = (opis || '');
-  return s
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')   // odstrani šumnike
-    .replace(/[-–—−]/g, ' ')                            // vezaji -> presledek
-    .replace(/[().,;:!?]/g, '')                         // brišemo (), . , ; : ! ?
-    .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, '')                        // KARKOLI ni črka/števka/presledek -> ven
-    .trim()
-    .split(/\s+/).slice(0, 15).join('_');               // max 15 “besed”, join z _
+function narediSlug(opis, dodatno) {
+  let text = ((opis || '') + ' ' + (dodatno || '')).trim();
+  if (!text) return 'slika';
+
+  // max 15 "besed"
+  let words = text.split(/\s+/).slice(0, 15);
+  let s = words.join(' ');
+
+  // odstrani šumnike / aksente
+  if (s.normalize) {
+    s = s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  }
+
+  s = s.toLowerCase();
+
+  // VSE, kar ni [a-z0-9] -> '_'
+  s = s.replace(/[^a-z0-9]+/g, '_');
+
+  // stisni več '_' v enega in odreži z začetka/konca
+  s = s.replace(/_+/g, '_').replace(/^_+|_+$/g, '');
+
+  return s || 'slika';
 }
+
+
 
 
     // ===== 5) NAPOLNI data-correct IN PREBARVAJ =====

@@ -525,40 +525,48 @@ import re
 from werkzeug.utils import secure_filename
 
 def make_image_basename_from_opis(opis: str, dodatno: str = "") -> str:
-    import unicodedata, re
+    """
+    Generira osnovo imena slike na enak način kot JS v križanki:
 
-    opis = (opis or "").strip()
-    dodatno = (dodatno or "").strip()
+    - opis (+ dodatno besedilo) -> tekst
+    - vzamemo max 15 "besed"
+    - odstranimo šumnike/naglas
+    - vse v lower()
+    - VSE, kar ni [a-z0-9], zamenjamo z '_'
+    - stisnemo več '_' v enega, odrežemo z začetka/konca
+    """
 
-    text = opis
-    if dodatno:
-        text = (opis + " " + dodatno).strip()
+    import unicodedata
+    import re
 
-    # šumniki ven
-    s = unicodedata.normalize("NFD", text)
+    # spojimo opis + dodatno (če je)
+    text = " ".join(part for part in [(opis or "").strip(), (dodatno or "").strip()] if part).strip()
+    if not text:
+        return "slika"
+
+    # max 15 "besed"
+    words = text.split()
+    words = words[:15]
+    s = " ".join(words)
+
+    # odstrani šumnike/naglas
+    s = unicodedata.normalize("NFD", s)
     s = "".join(ch for ch in s if not unicodedata.combining(ch))
 
-    # vezaji -> presledki
-    s = re.sub(r"[-–—−]", " ", s)
-
-    # pobrišemo () . , ; : ! ?
-    s = re.sub(r"[().,;:!?]", "", s)
-
+    # lower
     s = s.lower()
 
-    # vse kar ni črka/števka/presledek ven
-    s = re.sub(r"[^a-z0-9\s]", "", s)
+    # VSE, kar ni črka ali cifra -> '_'
+    s = re.sub(r"[^a-z0-9]+", "_", s)
 
-    # trim + max 15 “besed”
-    parts = s.strip().split()
-    parts = parts[:15]
+    # stisni več '_' v enega in odreži robove
+    s = re.sub(r"_+", "_", s).strip("_")
 
-    base = "_".join(parts)
+    if not s:
+        s = "slika"
 
-    if not base:
-        base = "slika"
+    return s
 
-    return base
 
 
 @app.get("/preveri_slika")
