@@ -500,6 +500,7 @@ def arhiv_sudoku_pregled():
     """
     Arhiv sudoku – isti template arhiv.html, tip='sudoku'.
     Privzeta težavnost: 'easy' (lahko).
+    Bere tudi iz podmap YYYY-MM.
     """
     tezavnost = "easy"  # če hočeš kaj drugega, zamenjaj
 
@@ -514,12 +515,14 @@ def arhiv_sudoku_pregled():
 
     datumi = []
     if root.exists():
-        for p in root.glob("*.js"):
-            stem = p.stem  # npr. 2025-11-25
+        # IMPORTANT: rglob, da pobere tudi 2025-05/2025-05-01.js itd.
+        for p in root.rglob("*.js"):
+            stem = p.stem  # npr. 2025-05-01
             try:
                 dt = datetime.strptime(stem, "%Y-%m-%d").date()
                 datumi.append(dt)
             except ValueError:
+                # če ni prav formatiran, ga ignoriramo
                 continue
 
     months_sorted, meseci = razbij_po_mesecih(datumi)
@@ -531,6 +534,7 @@ def arhiv_sudoku_pregled():
         months_sorted=months_sorted,
         meseci=meseci,
     )
+
 
 @app.get("/sudoku/<tezavnost>/<datum>", endpoint="prikazi_sudoku")
 def sudoku_page(tezavnost, datum):
