@@ -19,8 +19,20 @@
 
 {% block content %}
 <div class="admin-wrap py-3">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="mt-3">
+        {% for category, msg in messages %}
+          <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+            {{ msg }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Zapri"></button>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
 
-      <h1 class="h5 mb-3">Administracija · VUS</h1>
+  <h1 class="h5 mb-3">Administracija · VUS</h1>
 
   <div class="mb-3 d-flex flex-wrap align-items-center gap-2">
 
@@ -30,6 +42,7 @@
         Uvozi iz CC (CSV) – VPIS
       </button>
     </form>
+
 
     <!-- GUMB: ALL -->
     <form method="post" action="{{ url_for('admin_uvoz_cc_all') }}">
@@ -53,8 +66,6 @@
       </button>
     </div>
   </div>
-
-
 
   {% if napaka %}
     <div class="alert alert-warning">Napaka pri dostopu do baze: {{ napaka }}</div>
@@ -83,39 +94,45 @@
       </div>
 
       <!-- DODAJ -->
-      <div class="card mt-3">
-        <div class="card-body">
-          <h5 class="card-title">Dodaj geslo</h5>
-          <div class="row g-2">
-            <div class="col-12">
-              <label class="form-label">Geslo *</label>
-              <input id="addGeslo" class="form-control" placeholder="obvezno">
-            </div>
-            <div class="col-12">
-              <label class="form-label">Razlaga / opis</label>
-              <input id="addRazlaga" class="form-control">
-            </div>
-            <div class="col-6 col-md-4">
-              <label class="form-label">Vrsta</label>
-              <input id="addVrsta" class="form-control">
-            </div>
-            <div class="col-6 col-md-4">
-              <label class="form-label">Izvor</label>
-              <input id="addIzvor" class="form-control">
-            </div>
-            <div class="col-12 col-md-4">
-              <label class="form-label">Tags</label>
-              <input id="addTags" class="form-control" placeholder="npr. oseba, kraj">
-            </div>
-          </div>
-          <div class="mt-3 d-flex align-items-center gap-2">
-            <button id="btnAdd" class="btn btn-success" type="button">Dodaj</button>
-            <span id="addMsg" class="small text-muted"></span>
-          </div>
-        </div>
+<div class="card mt-3">
+  <div class="card-body">
+    <h5 class="card-title">Dodaj geslo</h5>
+
+    <div class="row g-2">
+      <div class="col-12">
+        <label class="form-label">Geslo *</label>
+        <input id="addGeslo" class="form-control" placeholder="obvezno">
       </div>
 
+      <div class="col-12">
+        <label class="form-label">Razlaga / opis</label>
+        <input id="addRazlaga" class="form-control">
+      </div>
+
+      <div class="col-6 col-md-4">
+        <label class="form-label">Vrsta</label>
+        <input id="addVrsta" class="form-control">
+      </div>
+
+      <div class="col-6 col-md-4">
+        <label class="form-label">Izvor</label>
+        <input id="addIzvor" class="form-control">
+      </div>
+
+      <div class="col-12 col-md-4">
+        <label class="form-label">Tags</label>
+        <input id="addTags" class="form-control" placeholder="npr. oseba, kraj">
+      </div>
     </div>
+
+    <div class="mt-3 d-flex align-items-center gap-2">
+      <!-- ta ID se ujema s skripto (btnAddGeslo || btnAdd) -->
+      <button id="btnAdd" class="btn btn-success" type="button">Dodaj</button>
+      <span id="addMsg" class="small text-muted"></span>
+    </div>
+  </div>
+</div>
+
 
 
     <!-- NAPREDNO (celotna širina) -->
@@ -217,6 +234,7 @@
 
 {% block scripts %}
 {{ super() }}
+
 <script>
 // ---------- helpers ----------
 async function jget(url) {
@@ -320,13 +338,11 @@ function renderChkResults(rows) {
     }
 
     try {
-      const resp = await fetch('/api/preveri?geslo=' + encodeURIComponent(q), { cache: 'no-store' });
-      if (!resp.ok) throw new Error('HTTP ' + resp.status);
-      const r = await resp.json();
-      if (r.ok === false) throw new Error(r.error || r.msg || 'Napaka');
+      // nova logika: uporabimo /api/gesla_admin, ki vrne vse zapise + razlago
+      const data = await jget('/api/gesla_admin?geslo=' + encodeURIComponent(q));
+      if (data.ok === false) throw new Error(data.msg || 'Napaka');
 
-      const exact = r.exact ?? (Array.isArray(r.results) ? r.results : (r.exists ? [q] : []));
-      const rows  = (exact || []).map((g, i) => ({ id: i + 1, geslo: g, razlaga: '' }));
+      const rows = data.results || [];
 
       let status = document.getElementById('chkStatus');
       if (!status) {
@@ -344,7 +360,7 @@ function renderChkResults(rows) {
       }
 
       status.className = 'mt-2 small text-success';
-      status.textContent = 'Najdeno (exact match).';
+      status.textContent = `Najdenih zapisov: ${rows.length}. Iskanje ne razlikuje velikih/malih črk (NOCASE).`;
       renderChkResults(rows);
     } catch (e) {
       host.innerHTML = '<div class="text-danger">Napaka: ' + (e.message || e) + '</div>';
@@ -358,6 +374,9 @@ function renderChkResults(rows) {
       doCheck();
     }
   });
+
+  // expose doCheck globalno, če boš kdaj hotel refreshat po dodajanju
+  window.__adminDoCheck = doCheck;
 })();
 
 // ---------- ŠTEVEC ----------
@@ -424,5 +443,79 @@ document.getElementById('btnArhiviraj')?.addEventListener('click', async () => {
     box.textContent = 'Napaka: ' + (e.message || e);
   }
 });
+
+// ---------- DODAJ GESLO ----------
+(function () {
+  // gumb za dodajanje – prilagodi ID, če imaš drugače
+  const btn = document.getElementById('btnAddGeslo') || document.getElementById('btnAdd');
+  if (!btn) return;
+
+  // polja – podpiramo več možnih imen za geslo
+  const inpG = document.getElementById('addWord') || document.getElementById('addGeslo');
+  const inpR = document.getElementById('addRazlaga');
+  const inpV = document.getElementById('addVrsta');
+  const inpI = document.getElementById('addIzvor');
+  const inpT = document.getElementById('addTags');
+  const msgBox = document.getElementById('addMsg');
+
+      btn.addEventListener('click', async () => {
+    const geslo = (inpG?.value || '').trim();
+    const razl  = (inpR?.value || '').trim();
+    const vrsta = (inpV?.value || '').trim();
+    const izvor = (inpI?.value || '').trim();
+    const tags  = (inpT?.value || '').trim();
+
+    if (!geslo) {
+      alert('Najprej vpiši geslo.');
+      return;
+    }
+
+    if (msgBox) msgBox.textContent = 'Shranjujem…';
+
+    try {
+      const res = await jpost('/api/dodaj_geslo', {
+        geslo: geslo,
+        opis: razl,
+        vrsta: vrsta,
+        izvor: izvor,
+        tags: tags
+      });
+      if (!res.ok) throw new Error(res.msg || 'Napaka pri dodajanju.');
+
+      // 1) obvestilo
+      if (msgBox) msgBox.textContent = `Dodano geslo #${res.id}: ${geslo}`;
+
+      // 2) počisti dodatna polja (geslo pusti, če hočeš podobna dodajat)
+      if (inpR) inpR.value = '';
+      if (inpV) inpV.value = '';
+      if (inpI) inpI.value = '';
+      if (inpT) inpT.value = '';
+
+      // 3) ročno premakni "glavni števec" za +1
+      const counter = document.getElementById('stevecAdmin');
+      if (counter) {
+        const raw = (counter.textContent || '').replace(/\./g, '').replace(/\s/g, '');
+        const cur = parseInt(raw, 10);
+        const next = (Number.isFinite(cur) ? cur + 1 : 1);
+        counter.textContent = next.toLocaleString('sl-SI');
+      }
+
+      // 4) opcijsko še enkrat preberi iz serverja (za sinhronizacijo)
+      if (typeof loadStevec === 'function') {
+        loadStevec();
+      }
+
+      // 5) osveži še PREVERI, da takoj vidiš nov zapis
+      if (window.__adminDoCheck && document.getElementById('chkWord')) {
+        document.getElementById('chkWord').value = geslo;
+        window.__adminDoCheck();
+      }
+    } catch (e) {
+      if (msgBox) msgBox.textContent = 'Napaka: ' + (e.message || e);
+      else alert(e.message || e);
+    }
+  });
+
 </script>
+</div>
 {% endblock %}

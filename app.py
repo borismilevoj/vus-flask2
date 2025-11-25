@@ -218,18 +218,95 @@ def preveri_geslo():
 
     try:
         con = get_conn(readonly=True)
+
+        # 1) preštej vse zadetke (case-insensitive)
         row = con.execute(
-            "SELECT 1 FROM slovar WHERE geslo = ? COLLATE NOCASE LIMIT 1;",
-            (q,)
+            "SELECT COUNT(*) FROM slovar WHERE geslo = ? COLLATE NOCASE;",
+            (q,),
         ).fetchone()
+        count = int(row[0] or 0)
+
+        # 2) opcijsko pobereš še vse natančne zapise (če jih hočeš videt)
+        rows = con.execute(
+            "SELECT geslo FROM slovar WHERE geslo = ? COLLATE NOCASE;",
+            (q,),
+        ).fetchall()
+        exact = [r[0] for r in rows]
+
         con.close()
-        return jsonify(ok=True, exists=bool(row), geslo=q,
-                       exact=([q] if row else []), count=(1 if row else 0))
+
+        return jsonify(
+            ok=True,
+            exists=(count > 0),
+            geslo=q,
+            exact=exact,
+            count=count,
+        )
     except Exception as e:
         return jsonify(ok=False, error=str(e)), 500
 
+
 @app.route("/api/preveri_geslo", methods=["GET", "POST"], endpoint="api_preveri_geslo")
 def api_preveri_geslo():
+    return preveri_geslo()
+
+@app.get("/api/gesla_admin")
+def api_gesla_admin():
+    """
+    Vrne vse vrstice iz tabele 'slovar' za dano geslo (NOCASE),
+    skupaj z opisom/razlago, če ustrezen stolpec obstaja.
+    """
+    q = (request.args.get("geslo") or "").strip()
+    if not q:
+        return jsonify(ok=False, msg="Manjka 'geslo'."), 400
+
+    con = get_conn(readonly=True)
+    cur = con.cursor()
+
+    # preberi stolpce v tabeli slovar
+    cols_raw = list(cur.execute("PRAGMA table_info(slovar);"))
+    name_map = { (row[1] or "").lower(): row[1] for row in cols_raw }
+
+    # poskusi najti stolpec za opis/razlago (case-insensitive)
+    desc_col = None
+    for cand in ("opis", "razlaga", "opis_gesla", "clue"):
+        if cand in name_map:
+            desc_col = name_map[cand]
+            break
+
+    results = []
+
+    if desc_col:
+        sql = f"SELECT id, geslo, {desc_col} FROM slovar WHERE geslo = ? COLLATE NOCASE ORDER BY id;"
+        rows = cur.execute(sql, (q,)).fetchall()
+        for rid, g, desc in rows:
+            results.append({
+                "id": rid,
+                "geslo": g,
+                "razlaga": desc or "",
+            })
+    else:
+        # fallback, če v tabeli sploh ni opisnega stolpca
+        sql = "SELECT id, geslo FROM slovar WHERE geslo = ? COLLATE NOCASE ORDER BY id;"
+        rows = cur.execute(sql, (q,)).fetchall()
+        for rid, g in rows:
+            results.append({
+                "id": rid,
+                "geslo": g,
+                "razlaga": "",
+            })
+
+    con.close()
+
+    return jsonify(ok=True, results=results)
+
+
+@app.route("/api/preveri", methods=["GET", "POST"], endpoint="api_preveri_legacy")
+def api_preveri_legacy():
+    """
+    Legacy endpoint, da stari frontend /api/preveri še vedno dela.
+    Interno samo kliče preveri_geslo().
+    """
     return preveri_geslo()
 
 
@@ -687,6 +764,164 @@ def make_image_basename_from_opis(opis: str, dodatno: str = "") -> str:
         s = "slika"
 
     return s
+
+@app.post("/api/brisi_geslo")
+def api_brisi_geslo():
+    """
+    Briše geslo iz tabele 'slovar' po ID-ju.
+    Pričakuje JSON ali form-data:
+      - id  (ali pk, ali geslo_id)
+    """
+    data = request.get_json(silent=True) or request.form
+
+    raw_id = data.get("id") or data.get("pk") or data.get("geslo_id")
+    if not raw_id:
+        return jsonify(ok=False, msg="Manjka 'id'."), 400
+
+    try:
+        geslo_id = int(raw_id)
+    except ValueError:
+        return jsonify(ok=False, msg="Neveljaven 'id' (ni številka)."), 400
+
+    try:
+        con = get_conn(readonly=False)
+        cur = con.cursor()
+        cur.execute("DELETE FROM slovar WHERE id = ?;", (geslo_id,))
+        n = cur.rowcount
+        con.commit()
+        con.close()
+
+        if n == 0:
+            return jsonify(ok=False, msg=f"Geslo z id={geslo_id} ne obstaja."), 404
+        return jsonify(ok=True, msg=f"Geslo z id={geslo_id} izbrisano.")
+    except Exception as e:
+        return jsonify(ok=False, msg=str(e)), 500
+
+@app.post("/api/uredi_geslo")
+def api_uredi_geslo():
+    """
+    Uredi geslo v tabeli 'slovar' po ID-ju.
+
+    Pričakuje JSON ali form-data:
+      - id
+      - geslo      (novo geslo)
+      - razlaga    (opis/razlaga; ime stolpca v bazi autodetekcija)
+    """
+    data = request.get_json(silent=True) or request.form
+
+    raw_id = data.get("id") or data.get("pk") or data.get("geslo_id")
+    novo_geslo = (data.get("geslo") or "").strip()
+    nova_razlaga = (data.get("razlaga") or data.get("opis") or "").strip()
+
+    if not raw_id:
+        return jsonify(ok=False, msg="Manjka 'id'."), 400
+    if not novo_geslo:
+        return jsonify(ok=False, msg="Manjka novo geslo."), 400
+
+    try:
+        geslo_id = int(raw_id)
+    except ValueError:
+        return jsonify(ok=False, msg="Neveljaven id (ni številka)."), 400
+
+    try:
+        con = get_conn(readonly=False)
+        cur = con.cursor()
+
+        # preberi dejanske stolpce v tabeli slovar
+        cols_raw = list(cur.execute("PRAGMA table_info(slovar);"))
+        # npr. [(0, 'id', ...), (1, 'GESLO', ...), (2, 'OPIS', ...)]
+        name_map = { (row[1] or "").lower(): row[1] for row in cols_raw }
+
+        # poskusi najti stolpec za opis/razlago (case-insensitive)
+        desc_col = None
+        for cand in ("opis", "razlaga", "opis_gesla", "clue"):
+            if cand in name_map:
+                desc_col = name_map[cand]
+                break
+
+        if desc_col:
+            # imamo stolpec za opis → posodobimo oba
+            cur.execute(
+                f"UPDATE slovar SET geslo = ?, {desc_col} = ? WHERE id = ?;",
+                (novo_geslo, nova_razlaga, geslo_id),
+            )
+        else:
+            # nimamo stolpca za opis → posodobimo samo geslo
+            cur.execute(
+                "UPDATE slovar SET geslo = ? WHERE id = ?;",
+                (novo_geslo, geslo_id),
+            )
+
+        n = cur.rowcount
+        con.commit()
+        con.close()
+
+        if n == 0:
+            return jsonify(ok=False, msg=f"Geslo z id={geslo_id} ne obstaja."), 404
+
+        return jsonify(
+            ok=True,
+            msg="Geslo posodobljeno.",
+            geslo=novo_geslo,
+            razlaga=nova_razlaga,
+        )
+    except Exception as e:
+        return jsonify(ok=False, msg=str(e)), 500
+
+@app.post("/api/dodaj_geslo")
+def api_dodaj_geslo():
+    data = request.get_json(silent=True) or request.form
+
+    geslo = (data.get("geslo") or "").strip()
+    if not geslo:
+        return jsonify(ok=False, msg="Manjka 'geslo'."), 400
+
+    opis  = (data.get("opis") or data.get("razlaga") or "").strip()
+    vrsta = (data.get("vrsta") or "").strip()
+    izvor = (data.get("izvor") or "").strip()
+    tags  = (data.get("tags")  or "").strip()
+
+    try:
+        con = get_conn(readonly=False)
+        cur = con.cursor()
+
+        cols_raw = list(cur.execute("PRAGMA table_info(slovar);"))
+        colnames = [row[1] for row in cols_raw]
+
+        insert_cols = ["geslo"]
+        params = [geslo]
+
+        if "opis" in colnames:
+            insert_cols.append("opis")
+            params.append(opis)
+        elif "razlaga" in colnames:
+            insert_cols.append("razlaga")
+            params.append(opis)
+
+        if "vrsta" in colnames:
+            insert_cols.append("vrsta")
+            params.append(vrsta)
+
+        if "izvor" in colnames:
+            insert_cols.append("izvor")
+            params.append(izvor)
+
+        if "tags" in colnames:
+            insert_cols.append("tags")
+            params.append(tags)
+
+        placeholders = ", ".join("?" for _ in insert_cols)
+        sql = f"INSERT INTO slovar ({', '.join(insert_cols)}) VALUES ({placeholders});"
+        cur.execute(sql, params)
+        new_id = cur.lastrowid
+        con.commit()
+        con.close()
+
+        return jsonify(ok=True, id=new_id, msg=f"Geslo '{geslo}' dodano.")
+    except sqlite3.IntegrityError as e:
+        return jsonify(ok=False, msg=f"Napaka (UNIQUE?): {e}"), 409
+    except Exception as e:
+        return jsonify(ok=False, msg=str(e)), 500
 
 
 
