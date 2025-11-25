@@ -175,7 +175,9 @@ def _isci_vzorec_redirect():
 
 @app.get("/arhiv-krizanke", endpoint="arhiv_krizanke_legacy_redirect")
 def _arhiv_krizanke_legacy_redirect():
-    return redirect(url_for("krizanka"))
+    # stari URL samo preusmeri na pravi arhiv
+    return redirect(url_for("arhiv_krizank"))
+
 
 
 # ===== Diag: pregled vseh poti ===============================================
@@ -333,7 +335,6 @@ def _cc_urls(d: date) -> tuple[str, str]:
 
 
 from datetime import date, datetime, timedelta
-from flask import request, render_template, abort, url_for, session
 
 @app.get("/krizanka")
 def krizanka():
@@ -376,10 +377,67 @@ def krizanka():
         next_url=next_url,
         back_url=back_url,
     )
+
 @app.get("/krizanka/<datum>")
 def krizanka_alias(datum):
     # pričakujemo datum v obliki YYYY-MM-DD
     return redirect(url_for("krizanka", d=datum))
+
+
+@app.get("/arhiv-krizank", endpoint="arhiv_krizank")
+def arhiv_krizank():
+    """
+    Arhiv križank – bere vse *.js v static/Krizanke/CrosswordCompilerApp/** (tudi v podmapah YYYY-MM)
+    in servira templatu arhiv.html (tip='krizanke').
+    """
+    root = Path(app.static_folder) / "Krizanke" / "CrosswordCompilerApp"
+
+    datumi = []
+    if root.exists():
+        # rglob => pobere tudi iz podmap (2025-11/2025-11-25.js)
+        for p in root.rglob("*.js"):
+            stem = p.stem  # pričakujemo YYYY-MM-DD
+            try:
+                dt = datetime.strptime(stem, "%Y-%m-%d").date()
+                datumi.append(dt)
+            except ValueError:
+                continue
+
+    months_sorted, meseci = razbij_po_mesecih(datumi)
+
+    return render_template(
+        "arhiv.html",
+        tip="krizanke",
+        tezavnost=None,
+        months_sorted=months_sorted,
+        meseci=meseci,
+    )
+
+
+@app.get("/prikazi-krizanko", endpoint="prikazi_krizanko")
+def prikazi_krizanko_route():
+    # ponovno uporabi obstoječo logiko v krizanka()
+    return krizanka()
+
+def razbij_po_mesecih(datumi):
+    """
+    datumi: seznam datetime.date
+    vrne (months_sorted, meseci),
+    kjer je months_sorted npr. ["2025-11", "2025-10", ...],
+    meseci pa dict: {"2025-11": ["2025-11-25", "2025-11-24", ...], ...}
+    """
+    meseci = {}
+    for d in datumi:
+        ym = d.strftime("%Y-%m")
+        meseci.setdefault(ym, []).append(d.strftime("%Y-%m-%d"))
+
+    # znotraj meseca novejši najprej
+    for ym, lst in meseci.items():
+        lst.sort(reverse=True)
+
+    months_sorted = sorted(meseci.keys(), reverse=True)
+    return months_sorted, meseci
+
 
 
 @app.route("/images/<path:filename>")
@@ -436,17 +494,75 @@ def make_image_filename_from_opis(opis: str, dodatno: str = "") -> str:
 
     return base_norm + ".jpg"
 
-
-from flask import Flask
-
-# ... tu imaš že app = Flask(...)
-
 # --- nekje med routami ---
 @app.get("/arhiv-sudoku", endpoint="arhiv_sudoku_pregled")
 def arhiv_sudoku_pregled():
-    return "Arhiv sudoku še ni implementiran."
+    """
+    Arhiv sudoku – isti template arhiv.html, tip='sudoku'.
+    Privzeta težavnost: 'easy' (lahko).
+    """
+    tezavnost = "easy"  # če hočeš kaj drugega, zamenjaj
 
-from flask import redirect, url_for
+    folder_map = {
+        "easy": "Sudoku_easy",
+        "medium": "Sudoku_medium",
+        "hard": "Sudoku_hard",
+    }
+
+    sub = folder_map[tezavnost]
+    root = Path(app.static_folder) / sub
+
+    datumi = []
+    if root.exists():
+        for p in root.glob("*.js"):
+            stem = p.stem  # npr. 2025-11-25
+            try:
+                dt = datetime.strptime(stem, "%Y-%m-%d").date()
+                datumi.append(dt)
+            except ValueError:
+                continue
+
+    months_sorted, meseci = razbij_po_mesecih(datumi)
+
+    return render_template(
+        "arhiv.html",
+        tip="sudoku",
+        tezavnost=tezavnost,
+        months_sorted=months_sorted,
+        meseci=meseci,
+    )
+
+@app.get("/sudoku/<tezavnost>/<datum>", endpoint="prikazi_sudoku")
+def sudoku_page(tezavnost, datum):
+    """
+    Prikaz konkretnega sudokuja za dano težavnost in datum.
+    Datoteke pričakujemo v:
+      static/Sudoku_easy/2025-11-25.js
+      static/Sudoku_medium/...
+      static/Sudoku_hard/...
+    """
+    folder_map = {
+        "easy": "Sudoku_easy",
+        "medium": "Sudoku_medium",
+        "hard": "Sudoku_hard",
+    }
+
+    sub = folder_map.get(tezavnost)
+    if not sub:
+        abort(404, "Neznana težavnost sudokuja")
+
+    js_path = Path(app.static_folder) / sub / f"{datum}.js"
+    if not js_path.exists():
+        abort(404, f"Za {datum} ni sudokuja ({tezavnost}).")
+
+    js_url = url_for("static", filename=f"{sub}/{datum}.js")
+
+    return render_template(
+        "sudoku.html",   # če imaš drugačno ime template-a, zamenjaj
+        tezavnost=tezavnost,
+        datum=datum,
+        js_url=js_url,
+    )
 
 # ...
 
