@@ -316,17 +316,15 @@ def api_preveri_legacy():
 def admin():
     return render_template("admin.html", DB_PATH=DB_PATH)
 
-# poti do CC CSV in VUS baze – prilagodi po potrebi
-CC_CSV_PATH = r"C:\Users\bormi\Documents\CC\cc_clues_DISPLAY_UTF8.csv"
-
+from pathlib import Path
 from uvoz_cc_csv_vus import run as uvoz_cc_run
 
-CC_CSV_PATH = r"C:\Users\bormi\Documents\CC\cc_clues_DISPLAY_UTF8.csv"
+# baza projekta (kjer je app.py)
+BASE_DIR = Path(__file__).resolve().parent
 
+# CSV bo v mapi var/data/cc_clues_DISPLAY_UTF8.csv
+CC_CSV_PATH = str(BASE_DIR / "var" / "data" / "cc_clues_DISPLAY_UTF8.csv")
 
-from uvoz_cc_csv_vus import run as uvoz_cc_run
-
-CC_CSV_PATH = r"C:\Users\bormi\Documents\CC\cc_clues_DISPLAY_UTF8.csv"
 
 # 1) GUMB: samo Citation vsebuje "vpis"
 @app.post("/admin/uvoz_cc")
