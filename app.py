@@ -319,11 +319,10 @@ def admin():
 from pathlib import Path
 from uvoz_cc_csv_vus import run as uvoz_cc_run
 
-# baza projekta (kjer je app.py)
 BASE_DIR = Path(__file__).resolve().parent
 
-# CSV bo v mapi var/data/cc_clues_DISPLAY_UTF8.csv
-CC_CSV_PATH = str(BASE_DIR / "var" / "data" / "cc_clues_DISPLAY_UTF8.csv")
+# CSV je zdaj v root/data/cc_clues_DISPLAY_UTF8.csv
+CC_CSV_PATH = str(BASE_DIR / "data" / "cc_clues_DISPLAY_UTF8.csv")
 
 
 # 1) GUMB: samo Citation vsebuje "vpis"
