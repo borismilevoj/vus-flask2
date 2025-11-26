@@ -446,11 +446,9 @@ document.getElementById('btnArhiviraj')?.addEventListener('click', async () => {
 
 // ---------- DODAJ GESLO ----------
 (function () {
-  // gumb za dodajanje – prilagodi ID, če imaš drugače
   const btn = document.getElementById('btnAddGeslo') || document.getElementById('btnAdd');
   if (!btn) return;
 
-  // polja – podpiramo več možnih imen za geslo
   const inpG = document.getElementById('addWord') || document.getElementById('addGeslo');
   const inpR = document.getElementById('addRazlaga');
   const inpV = document.getElementById('addVrsta');
@@ -458,7 +456,7 @@ document.getElementById('btnArhiviraj')?.addEventListener('click', async () => {
   const inpT = document.getElementById('addTags');
   const msgBox = document.getElementById('addMsg');
 
-      btn.addEventListener('click', async () => {
+  btn.addEventListener('click', async () => {
     const geslo = (inpG?.value || '').trim();
     const razl  = (inpR?.value || '').trim();
     const vrsta = (inpV?.value || '').trim();
@@ -482,16 +480,13 @@ document.getElementById('btnArhiviraj')?.addEventListener('click', async () => {
       });
       if (!res.ok) throw new Error(res.msg || 'Napaka pri dodajanju.');
 
-      // 1) obvestilo
       if (msgBox) msgBox.textContent = `Dodano geslo #${res.id}: ${geslo}`;
 
-      // 2) počisti dodatna polja (geslo pusti, če hočeš podobna dodajat)
       if (inpR) inpR.value = '';
       if (inpV) inpV.value = '';
       if (inpI) inpI.value = '';
       if (inpT) inpT.value = '';
 
-      // 3) ročno premakni "glavni števec" za +1
       const counter = document.getElementById('stevecAdmin');
       if (counter) {
         const raw = (counter.textContent || '').replace(/\./g, '').replace(/\s/g, '');
@@ -500,12 +495,10 @@ document.getElementById('btnArhiviraj')?.addEventListener('click', async () => {
         counter.textContent = next.toLocaleString('sl-SI');
       }
 
-      // 4) opcijsko še enkrat preberi iz serverja (za sinhronizacijo)
       if (typeof loadStevec === 'function') {
         loadStevec();
       }
 
-      // 5) osveži še PREVERI, da takoj vidiš nov zapis
       if (window.__adminDoCheck && document.getElementById('chkWord')) {
         document.getElementById('chkWord').value = geslo;
         window.__adminDoCheck();
@@ -515,6 +508,7 @@ document.getElementById('btnArhiviraj')?.addEventListener('click', async () => {
       else alert(e.message || e);
     }
   });
+})();   // <--- TOLE JE MANJKALO
 
 </script>
 </div>
