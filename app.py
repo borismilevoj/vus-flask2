@@ -174,11 +174,10 @@ def favicon():
 
 
 # ===== Minimalni legacy end-pointi (da predloge ne padijo) ===================
+# ===== ISKANJE PO VZORCU =====================================================
 @app.get("/isci-vzorec", endpoint="isci_vzorec")
 def isci_vzorec_page():
-    # prikaz strani "Išči po vzorcu"
     return render_template("isci_vzorec.html")
-
 
 
 @app.post("/isci_vzorec")
@@ -188,53 +187,75 @@ def isci_vzorec_api():
     Pričakuje JSON: { vzorec, dolzina, dodatno }
     Vrne seznam: [{ GESLO: ..., OPIS: ... }, ...]
     """
-    data = request.get_json(silent=True) or {}
-    vzorec = (data.get("vzorec") or "").strip().upper()
-    dolzina = int(data.get("dolzina") or 0)
-    dodatno = (data.get("dodatno") or "").strip()
+    try:
+        data = request.get_json(silent=True) or {}
 
-    if not vzorec and not dodatno:
-        return jsonify([])
+        vzorec = (data.get("vzorec") or "").strip().upper()
+        try:
+            dolzina = int(data.get("dolzina") or 0)
+        except (TypeError, ValueError):
+            dolzina = 0
+        dodatno = (data.get("dodatno") or "").strip()
 
-    like = vzorec  # '_' že deluje kot wildcard za en znak v LIKE
+        if not vzorec and not dodatno:
+            return jsonify([])
 
-    con = get_conn(readonly=True)
-    cur = con.cursor()
+        like = vzorec  # '_' je wildcard za 1 znak v LIKE
 
-    # najdi stolpec za opis/razlago (če obstaja)
-    cols_raw = list(cur.execute("PRAGMA table_info(slovar);"))
-    name_map = {(row[1] or "").lower(): row[1] for row in cols_raw}
-    desc_col = None
-    for cand in ("opis", "razlaga", "opis_gesla", "clue"):
-        if cand in name_map:
-            desc_col = name_map[cand]
-            break
+        con = get_conn(readonly=True)
+        cur = con.cursor()
 
-    if desc_col:
-        sql = f"SELECT geslo, {desc_col} FROM slovar WHERE geslo LIKE ? COLLATE NOCASE"
-    else:
-        sql = "SELECT geslo, '' FROM slovar WHERE geslo LIKE ? COLLATE NOCASE"
+        # PRAGMA: najdi stolpec z opisom (če obstaja)
+        cols_raw = list(cur.execute("PRAGMA table_info(slovar);"))
+        name_map = {(row[1] or "").lower(): row[1] for row in cols_raw}
 
-    params = [like]
+        desc_col = None
+        for cand in ("opis", "razlaga", "opis_gesla", "clue"):
+            if cand in name_map:
+                desc_col = name_map[cand]
+                break
 
-    if dolzina > 0:
-        sql += " AND LENGTH(geslo) = ?"
-        params.append(dolzina)
-
-    if dodatno:
         if desc_col:
-            sql += f" AND {desc_col} LIKE ?"
+            sql = f"""
+                SELECT geslo, {desc_col}
+                FROM slovar
+                WHERE geslo LIKE ? COLLATE NOCASE
+            """
         else:
-            sql += " AND geslo LIKE ?"
-        params.append(f"%{dodatno}%")
+            sql = """
+                SELECT geslo, ''
+                FROM slovar
+                WHERE geslo LIKE ? COLLATE NOCASE
+            """
 
-    sql += " ORDER BY geslo LIMIT 500;"
+        params = [like]
 
-    rows = cur.execute(sql, params).fetchall()
-    con.close()
+        if dolzina > 0:
+            sql += " AND LENGTH(geslo) = ?"
+            params.append(dolzina)
 
-    results = [{"GESLO": r[0], "OPIS": r[1] or ""} for r in rows]
-    return jsonify(results)
+        if dodatno:
+            if desc_col:
+                sql += f" AND {desc_col} LIKE ?"
+            else:
+                sql += " AND geslo LIKE ?"
+            params.append(f"%{dodatno}%")
+
+        sql += " ORDER BY geslo LIMIT 500;"
+
+        rows = cur.execute(sql, params).fetchall()
+        con.close()
+
+        results = [{"GESLO": r[0], "OPIS": r[1] or ""} for r in rows]
+        return jsonify(results)
+
+    except Exception as e:
+        import sys, traceback
+        print("isci_vzorec_api ERROR:", e, file=sys.stderr)
+        traceback.print_exc()
+        # na klienta pošljemo razumljiv JSON, ne praznega 500
+        return jsonify({"ok": False, "error": str(e)}), 500
+
 
 
 @app.get("/arhiv-krizanke", endpoint="arhiv_krizanke_legacy_redirect")
