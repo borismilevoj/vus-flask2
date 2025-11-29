@@ -277,9 +277,8 @@ def _arhiv_krizanke_legacy_redirect():
     return redirect(url_for("arhiv_krizank"))
 
 
-
-
 # ===== Diag: pregled vseh poti ===============================================
+
 @app.get("/__routes__")
 def __routes__():
     rows = []
@@ -288,6 +287,38 @@ def __routes__():
         rows.append(f"{rule.endpoint:35s} {methods:8s} {rule.rule}")
     rows.sort()
     return "<pre>" + "\n".join(rows) + "</pre>"
+
+
+@app.get("/debug_slovar")
+def debug_slovar():
+    """
+    Hiter test na Renderju: ali baza in tabela 'slovar' obstajata.
+    """
+    import sys, traceback, sqlite3
+
+    try:
+        con = get_conn(readonly=True)
+        cur = con.cursor()
+        cols = list(cur.execute("PRAGMA table_info(slovar);"))
+        if not cols:
+            con.close()
+            return jsonify(ok=False, msg="Tabela 'slovar' ne obstaja ali je prazna PRAGMA."), 200
+
+        try:
+            row = cur.execute("SELECT COUNT(*) FROM slovar;").fetchone()
+            n = int(row[0] or 0)
+        except sqlite3.OperationalError as e:
+            con.close()
+            return jsonify(ok=False, msg=f"Napaka pri SELECT COUNT(*): {e}"), 200
+
+        con.close()
+        return jsonify(ok=True, count=n, msg="Tabela 'slovar' je dosegljiva."), 200
+
+    except Exception as e:
+        print("debug_slovar ERROR:", e, file=sys.stderr)
+        traceback.print_exc()
+        return jsonify(ok=False, msg=str(e)), 200
+
 
 
 # ===== API: števec (COUNT slovar) ============================================
@@ -343,37 +374,7 @@ def preveri_geslo():
         )
     except Exception as e:
         return jsonify(ok=False, error=str(e)), 500
-@app.get("/debug_slovar")
-def debug_slovar():
-    """
-    Hiter test na Renderju: ali baza in tabela 'slovar' obstajata.
-    """
-    import sys, traceback, sqlite3
 
-    try:
-        con = get_conn(readonly=True)
-        cur = con.cursor()
-        # pogledamo, če tabela obstaja
-        cols = list(cur.execute("PRAGMA table_info(slovar);"))
-        if not cols:
-            con.close()
-            return jsonify(ok=False, msg="Tabela 'slovar' ne obstaja ali je prazna PRAGMA."), 200
-
-        # poskusimo še en COUNT, da vidimo, če SELECT dela
-        try:
-            row = cur.execute("SELECT COUNT(*) FROM slovar;").fetchone()
-            n = int(row[0] or 0)
-        except sqlite3.OperationalError as e:
-            con.close()
-            return jsonify(ok=False, msg=f"Napaka pri SELECT COUNT(*): {e}"), 200
-
-        con.close()
-        return jsonify(ok=True, count=n, msg="Tabela 'slovar' je dosegljiva."), 200
-
-    except Exception as e:
-        print("debug_slovar ERROR:", e, file=sys.stderr)
-        traceback.print_exc()
-        return jsonify(ok=False, msg=str(e)), 200
 
 
 @app.route("/api/preveri_geslo", methods=["GET", "POST"], endpoint="api_preveri_geslo")
