@@ -173,7 +173,9 @@ def favicon():
     return ("", 204)
 
 
-# ===== Minimalni legacy end-pointi (da predloge ne padijo) ===================
+
+# ===== ISKANJE PO VZORCU =====================================================
+
 # ===== ISKANJE PO VZORCU =====================================================
 @app.get("/isci-vzorec", endpoint="isci_vzorec")
 def isci_vzorec_page():
@@ -186,7 +188,11 @@ def isci_vzorec_api():
     API za iskanje po vzorcu.
     Pričakuje JSON: { vzorec, dolzina, dodatno }
     Vrne seznam: [{ GESLO: ..., OPIS: ... }, ...]
+    Če na Renderju pride do napake (npr. baza/tabela manjka),
+    NE vrže 500, ampak vrne prazen seznam + ok=False, error.
     """
+    import sys, traceback, sqlite3
+
     try:
         data = request.get_json(silent=True) or {}
 
@@ -200,7 +206,7 @@ def isci_vzorec_api():
         if not vzorec and not dodatno:
             return jsonify([])
 
-        like = vzorec  # '_' je wildcard za 1 znak v LIKE
+        like = vzorec  # '_' je wildcard za en znak v LIKE
 
         con = get_conn(readonly=True)
         cur = con.cursor()
@@ -243,18 +249,25 @@ def isci_vzorec_api():
 
         sql += " ORDER BY geslo LIMIT 500;"
 
-        rows = cur.execute(sql, params).fetchall()
+        try:
+            rows = cur.execute(sql, params).fetchall()
+        except sqlite3.OperationalError as e:
+            # npr. "no such table: slovar" – raje vrnemo prazen rezultat kot 500
+            print("isci_vzorec_api SQL ERROR:", e, file=sys.stderr)
+            traceback.print_exc()
+            con.close()
+            return jsonify({"ok": False, "error": str(e), "results": []}), 200
+
         con.close()
 
         results = [{"GESLO": r[0], "OPIS": r[1] or ""} for r in rows]
         return jsonify(results)
 
     except Exception as e:
-        import sys, traceback
         print("isci_vzorec_api ERROR:", e, file=sys.stderr)
         traceback.print_exc()
-        # na klienta pošljemo razumljiv JSON, ne praznega 500
-        return jsonify({"ok": False, "error": str(e)}), 500
+        return jsonify({"ok": False, "error": str(e), "results": []}), 200
+
 
 
 
@@ -330,6 +343,37 @@ def preveri_geslo():
         )
     except Exception as e:
         return jsonify(ok=False, error=str(e)), 500
+@app.get("/debug_slovar")
+def debug_slovar():
+    """
+    Hiter test na Renderju: ali baza in tabela 'slovar' obstajata.
+    """
+    import sys, traceback, sqlite3
+
+    try:
+        con = get_conn(readonly=True)
+        cur = con.cursor()
+        # pogledamo, če tabela obstaja
+        cols = list(cur.execute("PRAGMA table_info(slovar);"))
+        if not cols:
+            con.close()
+            return jsonify(ok=False, msg="Tabela 'slovar' ne obstaja ali je prazna PRAGMA."), 200
+
+        # poskusimo še en COUNT, da vidimo, če SELECT dela
+        try:
+            row = cur.execute("SELECT COUNT(*) FROM slovar;").fetchone()
+            n = int(row[0] or 0)
+        except sqlite3.OperationalError as e:
+            con.close()
+            return jsonify(ok=False, msg=f"Napaka pri SELECT COUNT(*): {e}"), 200
+
+        con.close()
+        return jsonify(ok=True, count=n, msg="Tabela 'slovar' je dosegljiva."), 200
+
+    except Exception as e:
+        print("debug_slovar ERROR:", e, file=sys.stderr)
+        traceback.print_exc()
+        return jsonify(ok=False, msg=str(e)), 200
 
 
 @app.route("/api/preveri_geslo", methods=["GET", "POST"], endpoint="api_preveri_geslo")
