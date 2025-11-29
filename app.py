@@ -170,13 +170,73 @@ def favicon():
 
 # ===== Minimalni legacy end-pointi (da predloge ne padijo) ===================
 @app.get("/isci-vzorec", endpoint="isci_vzorec")
-def _isci_vzorec_redirect():
-    return redirect(url_for("admin"))
+def isci_vzorec_page():
+    # prikaz strani "Išči po vzorcu"
+    return render_template("isci_vzorec.html")
+
+
+
+@app.post("/isci_vzorec")
+def isci_vzorec_api():
+    """
+    API za iskanje po vzorcu.
+    Pričakuje JSON: { vzorec, dolzina, dodatno }
+    Vrne seznam: [{ GESLO: ..., OPIS: ... }, ...]
+    """
+    data = request.get_json(silent=True) or {}
+    vzorec = (data.get("vzorec") or "").strip().upper()
+    dolzina = int(data.get("dolzina") or 0)
+    dodatno = (data.get("dodatno") or "").strip()
+
+    if not vzorec and not dodatno:
+        return jsonify([])
+
+    like = vzorec  # '_' že deluje kot wildcard za en znak v LIKE
+
+    con = get_conn(readonly=True)
+    cur = con.cursor()
+
+    # najdi stolpec za opis/razlago (če obstaja)
+    cols_raw = list(cur.execute("PRAGMA table_info(slovar);"))
+    name_map = {(row[1] or "").lower(): row[1] for row in cols_raw}
+    desc_col = None
+    for cand in ("opis", "razlaga", "opis_gesla", "clue"):
+        if cand in name_map:
+            desc_col = name_map[cand]
+            break
+
+    if desc_col:
+        sql = f"SELECT geslo, {desc_col} FROM slovar WHERE geslo LIKE ? COLLATE NOCASE"
+    else:
+        sql = "SELECT geslo, '' FROM slovar WHERE geslo LIKE ? COLLATE NOCASE"
+
+    params = [like]
+
+    if dolzina > 0:
+        sql += " AND LENGTH(geslo) = ?"
+        params.append(dolzina)
+
+    if dodatno:
+        if desc_col:
+            sql += f" AND {desc_col} LIKE ?"
+        else:
+            sql += " AND geslo LIKE ?"
+        params.append(f"%{dodatno}%")
+
+    sql += " ORDER BY geslo LIMIT 500;"
+
+    rows = cur.execute(sql, params).fetchall()
+    con.close()
+
+    results = [{"GESLO": r[0], "OPIS": r[1] or ""} for r in rows]
+    return jsonify(results)
+
 
 @app.get("/arhiv-krizanke", endpoint="arhiv_krizanke_legacy_redirect")
 def _arhiv_krizanke_legacy_redirect():
     # stari URL samo preusmeri na pravi arhiv
     return redirect(url_for("arhiv_krizank"))
+
 
 
 
