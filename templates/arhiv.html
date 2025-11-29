@@ -16,7 +16,11 @@
           {% if tip == 'krizanke' %}
             <a href="{{ url_for('prikazi_krizanko', d=d) }}">{{ d }}</a>
           {% else %}
-            <a href="{{ url_for('prikazi_sudoku', tezavnost=tezavnost, datum=d) }}">{{ d }}</a>
+            <a href="{{ url_for('prikazi_sudoku',
+                                tezavnost=tezavnost,
+                                datum=d) }}">
+              {{ d }}
+            </a>
           {% endif %}
         </li>
       {% endfor %}

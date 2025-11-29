@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Sudoku – {{ datum }} ({{ tezavnost }}){% endblock %}
+
+{% block content %}
+  {% set label_map = {
+    'very_easy': 'Zelo lahka',
+    'easy': 'Lahka',
+    'medium': 'Srednja',
+    'hard': 'Težka'
+  } %}
+
+  <div class="container-fluid" style="padding-top: 1rem;">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+      <div>
+        <h2 class="h4 mb-1">
+          Sudoku – {{ datum }}
+        </h2>
+        <span class="badge bg-info">
+          Težavnost:
+          {{ label_map.get(tezavnost, tezavnost) }}
+        </span>
+      </div>
+
+      <div class="d-flex flex-wrap gap-2">
+        <a class="btn btn-secondary btn-sm"
+           href="{{ url_for('arhiv_sudoku_pregled', tezavnost=tezavnost) }}">
+          ← Nazaj na arhiv
+        </a>
+        <a class="btn btn-secondary btn-sm"
+           href="{{ url_for('osnovni_sudoku', tezavnost=tezavnost) }}">
+          Današnji {{ label_map.get(tezavnost, tezavnost) }}
+        </a>
+      </div>
+    </div>
+
+    <!-- preklop težavnosti za današnji sudoku -->
+    <div class="mb-3">
+      <div class="btn-group btn-group-sm" role="group" aria-label="Izberi težavnost danes">
+        <a class="btn btn-outline-primary {% if tezavnost == 'very_easy' %}active{% endif %}"
+           href="{{ url_for('osnovni_sudoku', tezavnost='very_easy') }}">
+          Zelo lahka (danes)
+        </a>
+        <a class="btn btn-outline-primary {% if tezavnost == 'easy' %}active{% endif %}"
+           href="{{ url_for('osnovni_sudoku', tezavnost='easy') }}">
+          Lahka (danes)
+        </a>
+        <a class="btn btn-outline-primary {% if tezavnost == 'medium' %}active{% endif %}"
+           href="{{ url_for('osnovni_sudoku', tezavnost='medium') }}">
+          Srednja (danes)
+        </a>
+        <a class="btn btn-outline-primary {% if tezavnost == 'hard' %}active{% endif %}"
+           href="{{ url_for('osnovni_sudoku', tezavnost='hard') }}">
+          Težka (danes)
+        </a>
+      </div>
+    </div>
+
+    <div style="width: 100%; height: 80vh;">
+      <iframe
+        src="{{ sudoku_url }}"
+        style="border: 0; width: 100%; height: 100%;"
+        loading="lazy"
+      ></iframe>
+    </div>
+  </div>
+{% endblock %}

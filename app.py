@@ -159,8 +159,13 @@ def login_required(f):
 # ===== Home + favicon ========================================================
 @app.get("/", endpoint="home")
 def home():
-    # base.html pričakuje 'home' – preusmeri na admin
-    return redirect(url_for("admin"))
+    return render_template("home.html")
+
+
+@app.get("/home")
+def home_alias():
+    return redirect(url_for("home"))
+
 
 @app.route("/favicon.ico")
 def favicon():
@@ -628,36 +633,45 @@ def make_image_filename_from_opis(opis: str, dodatno: str = "") -> str:
 
     return base_norm + ".jpg"
 
-# --- nekje med routami ---
-@app.get("/arhiv-sudoku", endpoint="arhiv_sudoku_pregled")
-def arhiv_sudoku_pregled():
-    """
-    Arhiv sudoku – isti template arhiv.html, tip='sudoku'.
-    Privzeta težavnost: 'easy' (lahko).
-    Bere tudi iz podmap YYYY-MM.
-    """
-    tezavnost = "easy"  # če hočeš kaj drugega, zamenjaj
+# --- Sudoku: arhiv + prikaz --------------------------------------------------
 
+@app.get("/arhiv-sudoku/<tezavnost>", endpoint="arhiv_sudoku_pregled")
+def arhiv_sudoku_pregled(tezavnost):
+    """
+    Arhiv sudoku po težavnosti.
+    Datoteke so v mapah:
+      Sudoku_very_easy, Sudoku_easy, Sudoku_medium, Sudoku_hard
+    in poimenovane npr.:
+      Sudoku_easy_2025-11-01.js
+    """
     folder_map = {
+        "very_easy": "Sudoku_very_easy",
         "easy": "Sudoku_easy",
         "medium": "Sudoku_medium",
         "hard": "Sudoku_hard",
     }
 
-    sub = folder_map[tezavnost]
+    sub = folder_map.get(tezavnost)
+    if not sub:
+        abort(404, "Neznana težavnost sudokuja")
+
     root = Path(app.static_folder) / sub
 
     datumi = []
     if root.exists():
-        # IMPORTANT: rglob, da pobere tudi 2025-05/2025-05-01.js itd.
         for p in root.rglob("*.js"):
-            stem = p.stem  # npr. 2025-05-01
-            try:
-                dt = datetime.strptime(stem, "%Y-%m-%d").date()
-                datumi.append(dt)
-            except ValueError:
-                # če ni prav formatiran, ga ignoriramo
-                continue
+            stem = p.stem  # npr. "Sudoku_easy_2025-11-01"
+            if len(stem) >= 10:
+                cand = stem[-10:]  # "YYYY-MM-DD"
+                try:
+                    dt = datetime.strptime(cand, "%Y-%m-%d").date()
+                    datumi.append(dt)
+                except ValueError:
+                    continue
+
+    # skrij prihodnost
+    today = date.today()
+    datumi = [d for d in datumi if d <= today]
 
     months_sorted, meseci = razbij_po_mesecih(datumi)
 
@@ -670,16 +684,20 @@ def arhiv_sudoku_pregled():
     )
 
 
+
+
 @app.get("/sudoku/<tezavnost>/<datum>", endpoint="prikazi_sudoku")
 def sudoku_page(tezavnost, datum):
+    print("DEBUG TEZAVNOST:", tezavnost)
+
     """
     Prikaz konkretnega sudokuja za dano težavnost in datum.
-    Datoteke pričakujemo v:
-      static/Sudoku_easy/2025-11-25.js
-      static/Sudoku_medium/...
-      static/Sudoku_hard/...
+
+    Iščemo fajle po vzorcu:
+      Sudoku_easy_YYYY-MM-DD.js  (in zraven HTML z istim imenom)
     """
     folder_map = {
+        "very_easy": "Sudoku_very_easy",
         "easy": "Sudoku_easy",
         "medium": "Sudoku_medium",
         "hard": "Sudoku_hard",
@@ -689,18 +707,67 @@ def sudoku_page(tezavnost, datum):
     if not sub:
         abort(404, "Neznana težavnost sudokuja")
 
-    js_path = Path(app.static_folder) / sub / f"{datum}.js"
-    if not js_path.exists():
+    root = Path(app.static_folder) / sub
+
+    target_js = None
+    if root.exists():
+        for p in root.rglob("*.js"):
+            stem = p.stem  # npr. "Sudoku_easy_2025-11-01"
+            if stem.endswith(f"_{datum}") or stem == datum:
+                target_js = p
+                break
+
+    if not target_js:
         abort(404, f"Za {datum} ni sudokuja ({tezavnost}).")
 
-    js_url = url_for("static", filename=f"{sub}/{datum}.js")
+    # poskusi najti ustrezno HTML datoteko z istim imenom
+    target_html = target_js.with_suffix(".html")
+    if target_html.exists():
+        sudoku_rel = target_html.relative_to(Path(app.static_folder)).as_posix()
+    else:
+        # fallback: če ni HTML, uporabimo kar JS (teoretično)
+        sudoku_rel = target_js.relative_to(Path(app.static_folder)).as_posix()
+
+    sudoku_url = url_for("static", filename=sudoku_rel)
 
     return render_template(
-        "sudoku.html",   # če imaš drugačno ime template-a, zamenjaj
+        "sudoku_igra.html",
         tezavnost=tezavnost,
         datum=datum,
-        js_url=js_url,
+        sudoku_url=sudoku_url,
     )
+
+
+# --- LEGACY: stari linki (današnji + arhiv) ----------------------------------
+@app.get("/sudoku-danes/<tezavnost>", endpoint="osnovni_sudoku")
+def sudoku_danes(tezavnost):
+    folder_map = {
+        "very_easy": "Sudoku_very_easy",
+        "easy": "Sudoku_easy",
+        "medium": "Sudoku_medium",
+        "hard": "Sudoku_hard",
+    }
+    if tezavnost not in folder_map:
+        abort(404, "Neznana težavnost sudokuja")
+
+    today = date.today().strftime("%Y-%m-%d")
+    return redirect(url_for("prikazi_sudoku", tezavnost=tezavnost, datum=today))
+
+
+# optional: star URL brez težavnosti -> easy
+@app.get("/sudoku-danes", endpoint="osnovni_sudoku_default")
+def sudoku_danes_default():
+    return redirect(url_for("osnovni_sudoku", tezavnost="easy"))
+
+
+
+
+@app.get("/arhiv-sudoku-legacy", endpoint="arhiv_sudoku")
+def arhiv_sudoku_legacy():
+    """
+    Stari endpoint 'arhiv_sudoku' – preusmeri na novi arhiv_sudoku_pregled.
+    """
+    return redirect(url_for("arhiv_sudoku_pregled"))
 
 # ...
 

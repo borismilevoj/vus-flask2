@@ -5,52 +5,59 @@
   <div class="container-fluid p-0">
     <div
       class="hero-image"
-      style="background-image: url('{{ url_for('static', filename='slika.png') }}'); background-size: cover; background-position: center; padding: 100px 20px; text-align: center;"
+      style="
+        background-image: url('{{ url_for('static', filename='slika.png') }}');
+        background-size: cover;
+        background-position: center;
+        padding: 100px 20px;
+        text-align: center;
+      "
     >
       <h2 class="display-6 fw-bold text-white mb-4">SUDOKU – Izberi težavnost</h2>
 
       <div class="d-flex flex-wrap justify-content-center gap-4">
         <div class="d-flex flex-column gap-2">
-          <a
-            class="btn btn-primary fw-bold"
-            href="{{ url_for('prikazi_danasnji_sudoku', tezavnost='very_easy') }}"
-            >Današnji – Zelo lahka</a
-          >
-          <a
-            class="btn btn-outline-light"
-            href="{{ url_for('arhiv_sudoku', tezavnost='very_easy') }}"
-            >Arhiv – Zelo lahka</a
-          >
+          <a class="btn btn-primary fw-bold"
+             href="{{ url_for('osnovni_sudoku', tezavnost='very_easy') }}">
+            Današnji – Zelo lahka
+          </a>
+          <a class="btn btn-outline-light"
+             href="{{ url_for('arhiv_sudoku_pregled', tezavnost='very_easy') }}">
+            Arhiv – Zelo lahka
+          </a>
         </div>
+
         <div class="d-flex flex-column gap-2">
-          <a
-            class="btn btn-primary fw-bold"
-            href="{{ url_for('prikazi_danasnji_sudoku', tezavnost='easy') }}"
-            >Današnji – Lahka</a
-          >
-          <a class="btn btn-outline-light" href="{{ url_for('arhiv_sudoku', tezavnost='easy') }}"
-            >Arhiv – Lahka</a
-          >
+          <a class="btn btn-primary fw-bold"
+             href="{{ url_for('osnovni_sudoku', tezavnost='easy') }}">
+            Današnji – Lahka
+          </a>
+          <a class="btn btn-outline-light"
+             href="{{ url_for('arhiv_sudoku_pregled', tezavnost='easy') }}">
+            Arhiv – Lahka
+          </a>
         </div>
+
         <div class="d-flex flex-column gap-2">
-          <a
-            class="btn btn-primary fw-bold"
-            href="{{ url_for('prikazi_danasnji_sudoku', tezavnost='medium') }}"
-            >Današnji – Srednja</a
-          >
-          <a class="btn btn-outline-light" href="{{ url_for('arhiv_sudoku', tezavnost='medium') }}"
-            >Arhiv – Srednja</a
-          >
+          <a class="btn btn-primary fw-bold"
+             href="{{ url_for('osnovni_sudoku', tezavnost='medium') }}">
+            Današnji – Srednja
+          </a>
+          <a class="btn btn-outline-light"
+             href="{{ url_for('arhiv_sudoku_pregled', tezavnost='medium') }}">
+            Arhiv – Srednja
+          </a>
         </div>
+
         <div class="d-flex flex-column gap-2">
-          <a
-            class="btn btn-primary fw-bold"
-            href="{{ url_for('prikazi_danasnji_sudoku', tezavnost='hard') }}"
-            >Današnji – Težka</a
-          >
-          <a class="btn btn-outline-light" href="{{ url_for('arhiv_sudoku', tezavnost='hard') }}"
-            >Arhiv – Težka</a
-          >
+          <a class="btn btn-primary fw-bold"
+             href="{{ url_for('osnovni_sudoku', tezavnost='hard') }}">
+            Današnji – Težka
+          </a>
+          <a class="btn btn-outline-light"
+             href="{{ url_for('arhiv_sudoku_pregled', tezavnost='hard') }}">
+            Arhiv – Težka
+          </a>
         </div>
       </div>
     </div>
