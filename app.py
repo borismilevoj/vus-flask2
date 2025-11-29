@@ -182,14 +182,13 @@ def isci_vzorec_page():
     return render_template("isci_vzorec.html")
 
 
-@app.post("/isci_vzorec")
+@app.post("/isci_vzorec", endpoint="isci_vzorec_api")
 def isci_vzorec_api():
     """
     API za iskanje po vzorcu.
     Pričakuje JSON: { vzorec, dolzina, dodatno }
     Vrne seznam: [{ GESLO: ..., OPIS: ... }, ...]
-    Če na Renderju pride do napake (npr. baza/tabela manjka),
-    NE vrže 500, ampak vrne prazen seznam + ok=False, error.
+    Stolpce (GESLO/geslo, OPIS/Opis/razlaga...) zazna dinamično iz PRAGMA.
     """
     import sys, traceback, sqlite3
 
@@ -211,48 +210,65 @@ def isci_vzorec_api():
         con = get_conn(readonly=True)
         cur = con.cursor()
 
-        # PRAGMA: najdi stolpec z opisom (če obstaja)
+        # PRAGMA: preberi imena stolpcev v 'slovar'
         cols_raw = list(cur.execute("PRAGMA table_info(slovar);"))
+        # npr. [(0, 'id', ...), (1, 'GESLO', ...), (2, 'OPIS', ...)]
         name_map = {(row[1] or "").lower(): row[1] for row in cols_raw}
 
+        # stolpec za geslo (GESLO / geslo / word ...)
+        geslo_col = None
+        for cand in ("geslo", "word", "beseda"):
+            if cand in name_map:
+                geslo_col = name_map[cand]
+                break
+        if not geslo_col and cols_raw:
+            # fallback: vzamemo drugi stolpec (po navadi je to GESLO)
+            geslo_col = cols_raw[1][1]
+
+        # stolpec za opis
         desc_col = None
         for cand in ("opis", "razlaga", "opis_gesla", "clue"):
             if cand in name_map:
                 desc_col = name_map[cand]
                 break
 
+        if not geslo_col:
+            con.close()
+            return jsonify({"ok": False, "error": "V tabeli 'slovar' ne najdem stolpca za geslo.", "results": []}), 200
+
+        # Sestavimo SQL
         if desc_col:
             sql = f"""
-                SELECT geslo, {desc_col}
+                SELECT {geslo_col}, {desc_col}
                 FROM slovar
-                WHERE geslo LIKE ? COLLATE NOCASE
+                WHERE {geslo_col} LIKE ? COLLATE NOCASE
             """
         else:
-            sql = """
-                SELECT geslo, ''
+            sql = f"""
+                SELECT {geslo_col}, ''
                 FROM slovar
-                WHERE geslo LIKE ? COLLATE NOCASE
+                WHERE {geslo_col} LIKE ? COLLATE NOCASE
             """
 
         params = [like]
 
         if dolzina > 0:
-            sql += " AND LENGTH(geslo) = ?"
+            sql += f" AND LENGTH({geslo_col}) = ?"
             params.append(dolzina)
 
         if dodatno:
             if desc_col:
                 sql += f" AND {desc_col} LIKE ?"
             else:
-                sql += " AND geslo LIKE ?"
+                sql += f" AND {geslo_col} LIKE ?"
             params.append(f"%{dodatno}%")
 
-        sql += " ORDER BY geslo LIMIT 500;"
+        sql += f" ORDER BY {geslo_col} LIMIT 500;"
 
         try:
             rows = cur.execute(sql, params).fetchall()
         except sqlite3.OperationalError as e:
-            # npr. "no such table: slovar" – raje vrnemo prazen rezultat kot 500
+            # npr. "no such column: GESLO" ali kaj podobnega
             print("isci_vzorec_api SQL ERROR:", e, file=sys.stderr)
             traceback.print_exc()
             con.close()
@@ -260,13 +276,14 @@ def isci_vzorec_api():
 
         con.close()
 
-        results = [{"GESLO": r[0], "OPIS": r[1] or ""} for r in rows]
+        results = [{"GESLO": r[0], "OPIS": (r[1] or "")} for r in rows]
         return jsonify(results)
 
     except Exception as e:
         print("isci_vzorec_api ERROR:", e, file=sys.stderr)
         traceback.print_exc()
         return jsonify({"ok": False, "error": str(e), "results": []}), 200
+
 
 
 
