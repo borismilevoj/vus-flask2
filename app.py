@@ -42,6 +42,16 @@ try:
 except Exception:
     pass
 
+import threading
+import traceback
+
+# preprost global za status uvoza ALL
+UVOZ_CC_ALL_STATUS = {
+    "running": False,
+    "last_msg": None,
+    "last_error": None,
+}
+
 
 
 # ===== DB config (Path + opcijski URI) =======================================
@@ -503,29 +513,62 @@ def admin_uvoz_cc():
 
     return redirect(url_for("admin"))
 
-# 2) GUMB: ALL – ignoriraj Citation, uvozi vse vrstice
-@app.post("/admin/uvoz_cc_all")
-def admin_uvoz_cc_all():
+def _run_uvoz_cc_all_bg():
+    """Teče v ozadju (thread) – uvoz ALL iz CC_CSV_PATH."""
+    global UVOZ_CC_ALL_STATUS
+    UVOZ_CC_ALL_STATUS["running"] = True
+    UVOZ_CC_ALL_STATUS["last_error"] = None
+    UVOZ_CC_ALL_STATUS["last_msg"] = None
+
     try:
         stats = uvoz_cc_run(
             csv_path=CC_CSV_PATH,
             db_path=str(DB_PATH),
             import_all=True,                  # ALL
-            only_citation_contains=None,      # zagotovo brez filtra
+            only_citation_contains=None,      # brez filtra
             verbose=False,
             dry_run=False,
         )
         msg = (
-            f"Uvoz iz CC CSV (ALL): "
+            f"Uvoz iz CC CSV (ALL) KONČAN: "
             f"dodanih {stats['inserted']}, "
             f"posodobljenih {stats['updated']}, "
             f"preskočenih {stats['skipped']}."
         )
-        flash(msg, "warning")  # lahko 'success', dal sem 'warning' da veš da je BIG sync
-    except Exception as e:
-        flash(f"Napaka pri uvozu iz CC CSV (ALL): {e}", "danger")
+        print(msg)
+        UVOZ_CC_ALL_STATUS["last_msg"] = msg
 
+    except Exception as e:
+        err = f"Napaka pri uvozu iz CC CSV (ALL): {e}"
+        print(err)
+        traceback.print_exc()
+        UVOZ_CC_ALL_STATUS["last_error"] = err
+
+    finally:
+        UVOZ_CC_ALL_STATUS["running"] = False
+
+
+@app.post("/admin/uvoz_cc_all")
+def admin_uvoz_cc_all():
+    """
+    Uvoz iz CC CSV (ALL) – zažene se v ozadju (thread),
+    da Render ne ubije requesta zaradi timeouta.
+    """
+    global UVOZ_CC_ALL_STATUS
+
+    # če že teče, ne zaganjaj še enkrat
+    if UVOZ_CC_ALL_STATUS.get("running"):
+        flash("Uvoz ALL že teče v ozadju. Počakaj, da se zaključi.", "warning")
+        return redirect(url_for("admin"))
+
+    # start ozadja
+    t = threading.Thread(target=_run_uvoz_cc_all_bg)
+    t.daemon = True  # da ne blokira shutdowna
+    t.start()
+
+    flash("Uvoz iz CC CSV (ALL) je zagnan v ozadju. To lahko traja dlje časa.", "info")
     return redirect(url_for("admin"))
+
 
 @app.get("/stevec_gesel")
 def stevec_gesel():
