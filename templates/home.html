@@ -1,48 +1,313 @@
 {% extends "base.html" %}
-{% block title %}VUS – Veliki ugankarski slovar{% endblock %}
+
+{% block title %}Domov | VUS{% endblock %}
+
+{% block styles %}
+<style>
+  .vus-hero {
+    background: radial-gradient(circle at top left, #ffe082 0, #fff3e0 40%, #ffffff 100%);
+    border-radius: 18px;
+    padding: 32px 28px;
+    margin-bottom: 32px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+  }
+
+  .vus-hero-title {
+    font-size: 2.2rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .vus-hero-sub {
+    font-size: 1.1rem;
+    color: #555;
+    max-width: 600px;
+  }
+
+  .vus-hero-badges span {
+    display: inline-block;
+    background: #212529;
+    color: #fff;
+    border-radius: 999px;
+    padding: 4px 12px;
+    font-size: 0.8rem;
+    margin-right: 8px;
+    margin-top: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .vus-main-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 18px;
+  }
+
+  .vus-card {
+    border-radius: 14px;
+    border: 1px solid #e3e3e3;
+    background: #ffffff;
+    padding: 18px 18px 16px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .vus-card h3 {
+    font-size: 1.1rem;
+    margin-bottom: 6px;
+  }
+
+  .vus-card p {
+    font-size: 0.95rem;
+    margin-bottom: 12px;
+    color: #555;
+  }
+
+  .vus-card small {
+    font-size: 0.8rem;
+    color: #777;
+  }
+
+  .vus-chip {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 8px;
+  }
+
+  .vus-chip-green {
+    background: #e8f5e9;
+    color: #2e7d32;
+  }
+
+  .vus-chip-blue {
+    background: #e3f2fd;
+    color: #1565c0;
+  }
+
+  .vus-chip-orange {
+    background: #fff3e0;
+    color: #ef6c00;
+  }
+
+  .vus-chip-purple {
+    background: #f3e5f5;
+    color: #6a1b9a;
+  }
+
+  .vus-section-title {
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: #999;
+    margin-bottom: 6px;
+  }
+
+  .vus-divider {
+    border-top: 1px dashed #ddd;
+    margin: 28px 0 18px;
+  }
+
+  @media (max-width: 576px) {
+    .vus-hero {
+      padding: 22px 18px;
+    }
+    .vus-hero-title {
+      font-size: 1.7rem;
+    }
+  }
+</style>
+{% endblock %}
 
 {% block content %}
-  <div class="container py-4">
-    <h1 class="mb-4">VUS – Veliki ugankarski slovar</h1>
+<div class="vus-hero">
+  <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between">
+    <div class="mb-3 mb-md-0">
+      <div class="vus-section-title">Veliki ugankarski slovar</div>
+      <h1 class="vus-hero-title mb-2">VUS – tvoja baza za križanke</h1>
+      <p class="vus-hero-sub mb-2">
+        Išči gesla po vzorcu, rešuj dnevne križanke in sudoku ter dodaj svoja gesla.
+        Vse na enem mestu, povezano z ogromno bazo izrazov.
+      </p>
+      <div class="vus-hero-badges">
+        <!-- TA span bo “živ” -->
+        <span id="vus-stevec-badge">≈ 160&nbsp;000 gesel</span>
+        <span>križanke &amp; sudoku</span>
+      </div>
+    </div>
 
-    <p class="text-muted mb-4">
-      Izberi, kaj želiš rešiti ali iskati:
-    </p>
-
-    <div class="row g-3">
-      <div class="col-md-6 col-lg-3">
-        <a class="btn btn-primary w-100 mb-2" href="{{ url_for('isci_vzorec') }}">
+    <div class="text-md-end">
+      <div class="mb-2">Za hiter start:</div>
+      <div class="d-flex flex-wrap gap-2 justify-content-md-end">
+        <a href="{{ url_for('isci_vzorec') }}" class="btn btn-success">
           Išči po vzorcu
         </a>
-        <small class="text-muted">Za križanke: znane črke, dolžina gesla…</small>
-      </div>
-
-      <div class="col-md-6 col-lg-3">
-        <a class="btn btn-outline-primary w-100 mb-2" href="{{ url_for('krizanka') }}">
+        <a href="{{ url_for('krizanka') }}" class="btn btn-outline-dark">
           Današnja križanka
         </a>
-        <a class="btn btn-outline-secondary w-100 mb-2" href="{{ url_for('arhiv_krizank') }}">
-          Arhiv križank
-        </a>
-      </div>
-
-      <div class="col-md-6 col-lg-3">
-        <a class="btn btn-outline-primary w-100 mb-2"
-           href="{{ url_for('osnovni_sudoku', tezavnost='easy') }}">
-          Današnji sudoku
-        </a>
-        <a class="btn btn-outline-secondary w-100 mb-2"
-           href="{{ url_for('arhiv_sudoku_pregled', tezavnost='easy') }}">
-          Arhiv sudoku
-        </a>
-      </div>
-
-      <div class="col-md-6 col-lg-3">
-        <a class="btn btn-outline-success w-100 mb-2" href="{{ url_for('prispevaj_geslo') }}">
-          Prispevaj geslo
-        </a>
-        <small class="text-muted">Dodaj svoje geslo in opis.</small>
       </div>
     </div>
   </div>
+</div>
+
+<div class="vus-main-cards mb-3">
+  <!-- Iskanje po vzorcu -->
+  <div class="vus-card">
+    <div>
+      <div class="vus-chip vus-chip-green">Iskanje</div>
+      <h3>Iskanje po vzorcu</h3>
+      <p>
+        Vpiši število črk in znane črke v geslu. Prazna polja predstavljajo neznanke –
+        idealno za križanke, kjer imaš samo del rešitve.
+      </p>
+    </div>
+    <div class="d-flex justify-content-between align-items-center">
+      <a href="{{ url_for('isci_vzorec') }}" class="btn btn-sm btn-success">
+        Odpri iskanje
+      </a>
+      <small>Podpira tudi dodatni opis (poklic, letnica …)</small>
+    </div>
+  </div>
+
+  <!-- Križanke -->
+  <div class="vus-card">
+    <div>
+      <div class="vus-chip vus-chip-blue">Križanke</div>
+      <h3>Današnja in arhiv križank</h3>
+      <p>
+        Rešuj aktualno križanko ali pobrskaj po arhivu. Gesla so povezana z VUS bazo,
+        zato dobiš bogate opise in slike.
+      </p>
+    </div>
+    <div class="d-flex justify-content-between align-items-center">
+      <div class="btn-group btn-group-sm">
+        <a href="{{ url_for('krizanka') }}" class="btn btn-outline-primary">
+          Današnja
+        </a>
+        <a href="{{ url_for('arhiv_krizank') }}" class="btn btn-outline-primary">
+          Arhiv
+        </a>
+      </div>
+      <small>Klasika + skandinavski stil</small>
+    </div>
+  </div>
+
+  <!-- Sudoku -->
+  <div class="vus-card">
+    <div>
+      <div class="vus-chip vus-chip-orange">Sudoku</div>
+      <h3>Sudoku za vsak dan</h3>
+      <p>
+        Izberi težavnost in reši sudoku v brskalniku. V arhivu lahko vedno skočiš
+        na pretekle dneve.
+      </p>
+    </div>
+    <div class="d-flex justify-content-between align-items-center">
+      <div class="btn-group btn-group-sm">
+        <a href="{{ url_for('osnovni_sudoku_default') }}" class="btn btn-outline-warning">
+          Današnji
+        </a>
+        <a href="{{ url_for('arhiv_sudoku_pregled', tezavnost='medium') }}" class="btn btn-outline-warning">
+          Arhiv (srednja)
+        </a>
+      </div>
+      <small>Very easy → hard</small>
+    </div>
+  </div>
+
+  <!-- Prispevaj -->
+  <div class="vus-card">
+    <div>
+      <div class="vus-chip vus-chip-purple">Skupnost</div>
+      <h3>Prispevaj geslo</h3>
+      <p>
+        Poznaš dobro geslo ali zanimiv opis? Pošlji svoj predlog. Administrator ga pregleda,
+        uredi in po potrditvi doda v glavno bazo.
+      </p>
+    </div>
+    <div class="d-flex justify-content-between align-items-center">
+      <a href="{{ url_for('prispevaj_geslo') }}" class="btn btn-sm btn-outline-secondary">
+        Prispevaj geslo
+      </a>
+      <small>Pomagaš graditi največji ugankarski slovar.</small>
+    </div>
+  </div>
+</div>
+
+<div class="vus-divider"></div>
+
+<div class="text-muted small">
+  Tip: do glavnih funkcij vedno prideš tudi preko menija zgoraj (Iskanje po vzorcu, Križanke, Sudoku, Prispevaj).
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const badge = document.getElementById('vus-stevec-badge');
+    if (!badge) return;
+
+    // najprej pokažemo, da nalaga
+    badge.textContent = '… gesel v bazi';
+
+    function applyCount(data) {
+      let n = null;
+
+      if (typeof data === 'number') {
+        n = data;
+      } else if (data && typeof data.count === 'number') {
+        n = data.count;
+      } else if (data && typeof data.stevec === 'number') {
+        n = data.stevec;
+      } else if (data && data.data && typeof data.data.count === 'number') {
+        n = data.data.count;
+      }
+
+      if (n != null) {
+        badge.textContent = n.toLocaleString('sl-SI') + ' gesel v bazi';
+        return true;
+      }
+      console.warn('Nepričakovan format podatkov za števec:', data);
+      return false;
+    }
+
+    // 1) poskusi /api/stevec
+    fetch('/api/stevec', { cache: 'no-store' })
+      .then(function (res) {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.json();
+      })
+      .then(function (data) {
+        if (!applyCount(data)) {
+          throw new Error('Nepričakovan format /api/stevec');
+        }
+      })
+      .catch(function (err) {
+        console.warn('API /api/stevec ni uspel:', err);
+
+        // 2) fallback: /debug_slovar
+        fetch('/debug_slovar', { cache: 'no-store' })
+          .then(function (res) {
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            return res.json();
+          })
+          .then(function (data) {
+            if (!applyCount(data)) {
+              badge.textContent = 'št. gesel ni na voljo';
+            }
+          })
+          .catch(function (err2) {
+            console.error('Tudi /debug_slovar je padel:', err2);
+            badge.textContent = 'št. gesel ni na voljo';
+          });
+      });
+  });
+</script>
 {% endblock %}

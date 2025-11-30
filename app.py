@@ -174,12 +174,14 @@ def favicon():
 
 
 
-# ===== ISKANJE PO VZORCU =====================================================
+
 
 # ===== ISKANJE PO VZORCU =====================================================
 @app.get("/isci-vzorec", endpoint="isci_vzorec")
 def isci_vzorec_page():
     return render_template("isci_vzorec.html")
+
+
 
 
 @app.post("/isci_vzorec", endpoint="isci_vzorec_api")
@@ -265,6 +267,9 @@ def isci_vzorec_api():
 
         sql += f" ORDER BY {geslo_col} LIMIT 500;"
 
+        # debug: izpiši SQL in parametre
+        print("isci_vzorec_api SQL:", sql, "params:", params, file=sys.stderr)
+
         try:
             rows = cur.execute(sql, params).fetchall()
         except sqlite3.OperationalError as e:
@@ -278,6 +283,7 @@ def isci_vzorec_api():
 
         results = [{"GESLO": r[0], "OPIS": (r[1] or "")} for r in rows]
         return jsonify(results)
+
 
     except Exception as e:
         print("isci_vzorec_api ERROR:", e, file=sys.stderr)
