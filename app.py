@@ -1,5 +1,7 @@
 # ===== app.py ================================================================
 from __future__ import annotations
+import re
+import unicodedata
 
 # --- Stdlib
 import os
@@ -128,33 +130,57 @@ from pathlib import Path
 ALLOWED_IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".webp"}
 
 
+import re
+import unicodedata
+
+
 def naredi_slug_iz_opisa(opis: str, dodatno: str = "") -> str:
     """
-    Naredi slug iz besedila (opis + dodatno).
-    Enaka logika kot v JS: brez šumnikov, max 15 besed, podčrtaji.
+    Poenoteno poimenovanje slik:
+
+    - odstrani šumnike (čšž → csz, itd.)
+    - pomišljaje odstrani (ne zamenja v presledke), npr. "dansko-ameriški" → "danskoameriski"
+    - letnice 1844–1900 → 18441900 (zlepljene)
+    - odstrani ločila ( (), . , ; : ! ? )
+    - vse spremeni v male črke
+    - dovoli samo črke, številke in presledke
+    - besede združi s podčrtaji, max 15 besed
     """
+
+    # združi opis + dodatno ime
     s = f"{opis or ''} {dodatno or ''}"
 
-    # odstrani šumnike
+    # 1) odstrani šumnike (NFD + odstrani znake kategorije Mn)
     s = unicodedata.normalize("NFD", s)
     s = "".join(ch for ch in s if unicodedata.category(ch) != "Mn")
 
-    # pomišljaje v presledke
-    s = re.sub(r"[-–—−]", " ", s)
+    # 2) pomišljaje popolnoma odstrani
+    s = re.sub(r"[-–—−]", "", s)
 
-    # odstrani ločila
+    # 3) letnice 1844–1900 → 18441900 (zlepi dve 4-mestni števili)
+    s = re.sub(r"(\d{4})\D+(\d{4})", r"\1\2", s)
+
+    # 4) odstrani ločila
     s = re.sub(r"[().,;:!?]", "", s)
 
+    # 5) male črke
     s = s.lower()
-    # dovoli samo črke, številke in presledke
+
+    # 6) dovoli samo črke, številke in presledke
     s = re.sub(r"[^a-z0-9\s]", "", s)
 
-    # trim, razbij na besede, vzemi max 15 in poveži s podčrtaji
+    # 7) razbij na besede, max 15, poveži z "_"
     parts = s.strip().split()
     parts = parts[:15]
-    slug = "_".join(parts) if parts else "slika"
 
+    slug = "_".join(parts) if parts else "slika"
     return slug
+
+
+
+
+
+
 
 # ===== Helpers ===============================================================
 
@@ -1188,102 +1214,86 @@ def preveri_slika():
 @app.post("/api/preveri_sliko")
 def api_preveri_sliko():
     """
-    Sprejme opis + dodatno ime (Sagres...), vrne:
-    - predlagano ime datoteke (vključno s končnico)
-    - ali slika obstaja
-    - URL slike (če obstaja)
-    Preveri več končnic: .jpg, .jpeg, .png, .webp
+    - iz opisa + dodatnega imena naredi slug (stara logika)
+    - preveri, ali obstaja datoteka slug.(jpg|jpeg|png|webp) v static/images
+    - vrne info za front-end (slug, filename, exists, url)
     """
-    data = request.get_json() or request.form
-    opis = (data.get("opis") or "").strip()
-    dodatno = (data.get("dodatno") or "").strip()
+    import os, sys, pprint
+    from flask import request, jsonify
 
-    base_name = make_image_basename_from_opis(opis, dodatno)
+    data = request.get_json(silent=True) or {}
+    print("api_preveri_sliko data =", pprint.pformat(data), file=sys.stderr)
 
+    opis    = (data.get("opis") or "").strip()
+    dodatno = (data.get("dodatno_ime") or data.get("dodatno") or "").strip()
+
+    # tvoj slug (stara logika)
+    slug = naredi_slug_iz_opisa(opis, dodatno)
+
+    # kje so slike – PRILAGODI, če imaš 'Images' z veliko!
     images_dir = os.path.join(app.static_folder, "Images")
-    os.makedirs(images_dir, exist_ok=True)
 
-    # katere končnice preverjamo
     exts = [".jpg", ".jpeg", ".png", ".webp"]
-
     found_filename = None
-    found_url = None
 
     for ext in exts:
-        candidate = base_name + ext
+        candidate = slug + ext
         full_path = os.path.join(images_dir, candidate)
         if os.path.exists(full_path):
             found_filename = candidate
-            found_url = url_for("images_static", filename=candidate)
             break
 
-    # če nismo našli nobene, predlagamo privzeto .jpg
-    if found_filename is None:
-        found_filename = base_name + ".jpg"
+    exists = found_filename is not None
+    url = f"/images/{found_filename}" if exists else None
 
-    exists = found_url is not None
+    # če slike ni, predlagamo .jpg kot default ime
+    suggested_filename = found_filename or (slug + ".jpg")
 
     return jsonify({
-        "filename": found_filename,  # to vključuje končnico
+        "ok": True,
+        "slug": slug,
+        "ime_slike": slug,
+        "filename": suggested_filename,
         "exists": exists,
-        "url": found_url,
+        "url": url,
     })
+
+
 
 @app.post("/api/upload_sliko")
 def api_upload_sliko():
-    """
-    Upload slike v static/Images z izbranim imenom.
+    import os
+    from flask import request, jsonify
 
-    Pričakuje:
-    - form field 'file' (slika)
-    - form field 'filename' (osnova ali ime, lahko z ali brez končnice)
-    Končnico vzamemo iz uploadane datoteke, če je le-ta prisotna.
-    """
-    if "file" not in request.files:
-        return jsonify({"ok": False, "error": "Manjka 'file'."}), 400
+    file = request.files.get("file")
+    filename = (request.form.get("filename") or "").strip()
 
-    file = request.files["file"]
-    if file.filename == "":
-        return jsonify({"ok": False, "error": "Ni izbrane datoteke."}), 400
+    if not file:
+        return jsonify({"ok": False, "error": "Ni datoteke."})
+    if not filename:
+        return jsonify({"ok": False, "error": "Manjka ime datoteke."})
 
-    requested = (request.form.get("filename") or "").strip()
-    # razbij requested na osnovo + ext (če je)
-    base_from_form, ext_from_form = os.path.splitext(requested)
+    # če ni končnice, jo dodamo iz originalnega imena datoteke
+    if "." not in filename:
+        ext = os.path.splitext(file.filename)[1].lower()
+        if ext:
+            filename = filename + ext
 
-    # ext iz dejanske datoteke (lahko .jpg/.png/...)
-    _, ext_from_file = os.path.splitext(file.filename)
+    # 1) shrani v static/Images  (folder z veliko I – tako kot imaš na disku)
+    save_dir = os.path.join(app.static_folder, "Images")
+    os.makedirs(save_dir, exist_ok=True)
 
-    # izberi končnico:
-    # 1) če jo ima uploadana datoteka, vzamemo to
-    # 2) sicer, če je bila v formi, vzamemo to
-    # 3) fallback: .jpg
-    if ext_from_file:
-        final_ext = ext_from_file.lower()
-    elif ext_from_form:
-        final_ext = ext_from_form.lower()
-    else:
-        final_ext = ".jpg"
+    save_path = os.path.join(save_dir, filename)
+    file.save(save_path)
 
-    # osnova imena: če je v formi prazna, naredimo generično
-    if base_from_form:
-        base = base_from_form
-    else:
-        base = "slika"
+    # 2) URL, ki ga front-end uporablja za <img src="...">
+    url = f"/images/{filename}"
 
-    base = secure_filename(base)
-    if not base:
-        base = "slika"
-
-    filename = base + final_ext
-
-    images_dir = os.path.join(app.static_folder, "Images")
-    os.makedirs(images_dir, exist_ok=True)
-
-    full_path = os.path.join(images_dir, filename)
-    file.save(full_path)
-
-    url = url_for("images_static", filename=filename)
-    return jsonify({"ok": True, "filename": filename, "url": url})
+    return jsonify({
+        "ok": True,
+        "filename": filename,
+        "url": url
+    })
 
 
 # ===== Run ====================================================================

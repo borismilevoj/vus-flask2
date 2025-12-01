@@ -110,48 +110,62 @@ async function preveriSliko() {
     const resp = await fetch("/api/preveri_sliko", {
       method: "POST",
       headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({opis, dodatno})
+      body: JSON.stringify({ opis, dodatno })
     });
 
     if (!resp.ok) {
-      alert("Napaka pri preverjanju slike (status " + resp.status + ").");
-      return;
+      throw new Error("HTTP " + resp.status);
     }
 
     const data = await resp.json();
+    console.log("api/preveri_sliko odgovor:", data);
 
     // pokažemo kartico z rezultatom
-    document.getElementById("rezultatCard").style.display = "block";
+    const card = document.getElementById("rezultatCard");
+    if (card) {
+      card.style.display = "block";
+    }
 
-    // predlagano ime (vključno s končnico)
-    document.getElementById("predlagano_ime").value = data.filename || "";
-
-    const statusEl = document.getElementById("status_text");
+    const imeInput       = document.getElementById("predlagano_ime");
+    const statusEl       = document.getElementById("status_text");
     const previewWrapper = document.getElementById("preview_wrapper");
-    const previewImg = document.getElementById("preview_img");
+    const previewImg     = document.getElementById("preview_img");
 
-    if (data.exists) {
-      statusEl.textContent = "Slika obstaja";
-      statusEl.className = "badge bg-success";
+    // slug / ime za datoteko
+    const slug = data.slug || data.ime_slike || data.filename || "";
 
-      if (data.url) {
+    if (imeInput) {
+      imeInput.value = slug;
+      imeInput.style.textDecoration = slug ? "underline" : "none";
+    }
+
+    // za zdaj exists vedno false (tako smo nastavili v API)
+    if (statusEl) {
+      if (data.exists) {
+        statusEl.textContent = "Slika obstaja";
+        statusEl.className = "badge bg-success";
+      } else {
+        statusEl.textContent = "Slika NE obstaja (še)";
+        statusEl.className = "badge bg-danger";
+      }
+    }
+
+    if (previewWrapper && previewImg) {
+      if (data.exists && data.url) {
         previewWrapper.style.display = "block";
-        // cache-buster, da ne drži stare verzije v brskalniku
         previewImg.src = data.url + "?_=" + Date.now();
       } else {
         previewWrapper.style.display = "none";
         previewImg.src = "";
       }
-    } else {
-      statusEl.textContent = "Slika NE obstaja (še)";
-      statusEl.className = "badge bg-danger";
-      previewWrapper.style.display = "none";
-      previewImg.src = "";
     }
 
+    return data;
+
   } catch (err) {
-    console.error(err);
-    alert("Prišlo je do napake pri komunikaciji s strežnikom.");
+    console.error("Napaka pri preverjanju slike:", err);
+    alert("Prišlo je do napake pri preverjanju slike.");
+    return null;
   }
 }
 
@@ -192,23 +206,27 @@ async function uploadSliko(event) {
       return;
     }
 
-    const statusEl = document.getElementById("status_text");
+    const statusEl       = document.getElementById("status_text");
     const previewWrapper = document.getElementById("preview_wrapper");
-    const previewImg = document.getElementById("preview_img");
+    const previewImg     = document.getElementById("preview_img");
 
-    statusEl.textContent = "Slika uspešno naložena";
-    statusEl.className = "badge bg-success";
+    if (statusEl) {
+      statusEl.textContent = "Slika uspešno naložena";
+      statusEl.className = "badge bg-success";
+    }
 
-    if (data.url) {
-      previewWrapper.style.display = "block";
-      previewImg.src = data.url + "?_=" + Date.now();
-    } else {
-      // fallback: še enkrat preverimo, če se je pojavila
-      preveriSliko();
+    if (previewWrapper && previewImg) {
+      if (data.url) {
+        previewWrapper.style.display = "block";
+        previewImg.src = data.url + "?_=" + Date.now();
+      } else {
+        // fallback: še enkrat preverimo, če se je pojavila
+        preveriSliko();
+      }
     }
 
   } catch (err) {
-    console.error(err);
+    console.error("Napaka pri uploadu slike:", err);
     alert("Prišlo je do napake pri uploadu slike.");
   }
 }
@@ -225,4 +243,6 @@ function kopirajIme() {
   );
 }
 </script>
+
+
 {% endblock %}
