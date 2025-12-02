@@ -1208,9 +1208,13 @@ def preveri_slika():
 @app.post("/api/preveri_sliko")
 def api_preveri_sliko():
     """
-    - iz opisa + dodatnega imena naredi slug (stara logika)
-    - preveri, ali obstaja datoteka slug.(jpg|jpeg|png|webp) v static/images
-    - vrne info za front-end (slug, filename, exists, url)
+    Preveri, ali obstaja slika za dani opis (+ opcijsko dodatno ime).
+
+    Logika:
+    - uporabi ISTO funkcijo kot pri kreiranju imena: make_image_filename_from_opis
+    - najprej proba (opis + dodatno)
+    - če ne najde, proba samo (opis)
+    - išče v static/Images (ali static/images, odvisno od tvojega diska)
     """
     import os, sys, pprint
     from flask import request, jsonify
@@ -1221,36 +1225,71 @@ def api_preveri_sliko():
     opis    = (data.get("opis") or "").strip()
     dodatno = (data.get("dodatno_ime") or data.get("dodatno") or "").strip()
 
-    # tvoj slug (stara logika)
-    slug = naredi_slug_iz_opisa(opis, dodatno)
+    # 1) ime datoteke po tvoji funkciji (OPIS + DODATNO)
+    fname_full = make_image_filename_from_opis(opis, dodatno)   # npr. "danskoameriski_..._sagres.jpg"
+    # 2) fallback: ime datoteke samo iz opisa (za stare slike)
+    fname_base = make_image_filename_from_opis(opis, "")        # npr. "danskoameriski_..._kralj_komedije.jpg"
 
-    # kje so slike – PRILAGODI, če imaš 'Images' z veliko!
+    # odstrani končnico -> dobimo "slug" (brez .jpg)
+    slug_full = os.path.splitext(fname_full)[0]
+    slug_base = os.path.splitext(fname_base)[0]
+
+    # v kakšnem vrstnem redu probamo
+    slugs_to_try = []
+    if dodatno:
+        slugs_to_try.append((slug_full, fname_full))
+        if slug_base != slug_full:
+            slugs_to_try.append((slug_base, fname_base))
+    else:
+        slugs_to_try.append((slug_base, fname_base))
+
+    # POZOR: tukaj uporabi pravo mapo: "Images" ali "images"
+    # Če imaš na disku "static/images", zamenjaj v "images".
     images_dir = os.path.join(app.static_folder, "Images")
 
     exts = [".jpg", ".jpeg", ".png", ".webp"]
+
+    found_slug = None
     found_filename = None
 
-    for ext in exts:
-        candidate = slug + ext
+    for slug, suggested_fname in slugs_to_try:
+        # najprej pogledamo točno ime, ki ga vrne make_image_filename_from_opis
+        candidate = suggested_fname
         full_path = os.path.join(images_dir, candidate)
         if os.path.exists(full_path):
+            found_slug = slug
             found_filename = candidate
+            break
+
+        # če slučajno obstaja v drugi končnici (.png, .webp...)
+        for ext in exts:
+            alt_candidate = slug + ext
+            alt_path = os.path.join(images_dir, alt_candidate)
+            if os.path.exists(alt_path):
+                found_slug = slug
+                found_filename = alt_candidate
+                break
+
+        if found_filename:
             break
 
     exists = found_filename is not None
     url = f"/images/{found_filename}" if exists else None
 
-    # če slike ni, predlagamo .jpg kot default ime
-    suggested_filename = found_filename or (slug + ".jpg")
+    # če slike ni, kot predlog vrnemo PRVO ime, ki ga je zgradila funkcija
+    default_slug = slug_full or slug_base
+    default_fname = fname_full or fname_base
+    suggested_filename = found_filename or default_fname
 
     return jsonify({
         "ok": True,
-        "slug": slug,
-        "ime_slike": slug,
+        "slug": found_slug or default_slug,
+        "ime_slike": found_slug or default_slug,
         "filename": suggested_filename,
         "exists": exists,
         "url": url,
     })
+
 
 
 
