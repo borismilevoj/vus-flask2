@@ -176,12 +176,6 @@ def naredi_slug_iz_opisa(opis: str, dodatno: str = "") -> str:
     slug = "_".join(parts) if parts else "slika"
     return slug
 
-
-
-
-
-
-
 # ===== Helpers ===============================================================
 
 def login_required(f):
