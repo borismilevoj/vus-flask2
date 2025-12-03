@@ -234,6 +234,7 @@ def isci_vzorec_api():
             dolzina = 0
         dodatno = (data.get("dodatno") or "").strip()
 
+        # če ni ne vzorca ne dodatnega filtra, nima smisla iskati
         if not vzorec and not dodatno:
             return jsonify([])
 
@@ -244,7 +245,6 @@ def isci_vzorec_api():
 
         # PRAGMA: preberi imena stolpcev v 'slovar'
         cols_raw = list(cur.execute("PRAGMA table_info(slovar);"))
-        # npr. [(0, 'id', ...), (1, 'GESLO', ...), (2, 'OPIS', ...)]
         name_map = {(row[1] or "").lower(): row[1] for row in cols_raw}
 
         # stolpec za geslo (GESLO / geslo / word ...)
@@ -266,33 +266,42 @@ def isci_vzorec_api():
 
         if not geslo_col:
             con.close()
-            return jsonify({"ok": False, "error": "V tabeli 'slovar' ne najdem stolpca za geslo.", "results": []}), 200
+            return jsonify({
+                "ok": False,
+                "error": "V tabeli 'slovar' ne najdem stolpca za geslo.",
+                "results": []
+            }), 200
+
+        # izraz, kjer ignoriramo presledke in delamo z UPPER(geslo)
+        norm_geslo = f"REPLACE(UPPER({geslo_col}), ' ', '')"
 
         # Sestavimo SQL
         if desc_col:
             sql = f"""
                 SELECT {geslo_col}, {desc_col}
                 FROM slovar
-                WHERE {geslo_col} LIKE ? COLLATE NOCASE
+                WHERE {norm_geslo} LIKE ?
             """
         else:
             sql = f"""
                 SELECT {geslo_col}, ''
                 FROM slovar
-                WHERE {geslo_col} LIKE ? COLLATE NOCASE
+                WHERE {norm_geslo} LIKE ?
             """
 
         params = [like]
 
+        # filter po dolžini – štejejo samo črke (brez presledkov)
         if dolzina > 0:
-            sql += f" AND LENGTH({geslo_col}) = ?"
+            sql += f" AND LENGTH({norm_geslo}) = ?"
             params.append(dolzina)
 
+        # dodatni filter po opisu ali geslu (klasičen LIKE, tu presledkov ne ignoriramo)
         if dodatno:
             if desc_col:
-                sql += f" AND {desc_col} LIKE ?"
+                sql += f" AND {desc_col} LIKE ? COLLATE NOCASE"
             else:
-                sql += f" AND {geslo_col} LIKE ?"
+                sql += f" AND {geslo_col} LIKE ? COLLATE NOCASE"
             params.append(f"%{dodatno}%")
 
         sql += f" ORDER BY {geslo_col} LIMIT 500;"
@@ -303,7 +312,6 @@ def isci_vzorec_api():
         try:
             rows = cur.execute(sql, params).fetchall()
         except sqlite3.OperationalError as e:
-            # npr. "no such column: GESLO" ali kaj podobnega
             print("isci_vzorec_api SQL ERROR:", e, file=sys.stderr)
             traceback.print_exc()
             con.close()
@@ -314,14 +322,10 @@ def isci_vzorec_api():
         results = [{"GESLO": r[0], "OPIS": (r[1] or "")} for r in rows]
         return jsonify(results)
 
-
     except Exception as e:
         print("isci_vzorec_api ERROR:", e, file=sys.stderr)
         traceback.print_exc()
         return jsonify({"ok": False, "error": str(e), "results": []}), 200
-
-
-
 
 
 @app.get("/arhiv-krizanke", endpoint="arhiv_krizanke_legacy_redirect")
