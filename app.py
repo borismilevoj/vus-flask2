@@ -1,19 +1,19 @@
 # ===== app.py ================================================================
 from __future__ import annotations
-import re
-import unicodedata
 
 # --- Stdlib
-import os
 import io
+import os
 import re
 import sqlite3
+import threading
+import traceback
 import unicodedata
 from datetime import date, datetime, timedelta
 from functools import wraps
 from pathlib import Path
 
-# --- Flask
+# --- Flask / 3rd-party
 from flask import (
     Flask,
     request,
@@ -27,10 +27,7 @@ from flask import (
     session,
     current_app,
 )
-
 from werkzeug.utils import secure_filename
-
-# --- Imaging
 from PIL import Image
 
 # --- Lokalni moduli
@@ -44,8 +41,6 @@ try:
 except Exception:
     pass
 
-import threading
-import traceback
 
 # preprost global za status uvoza ALL
 UVOZ_CC_ALL_STATUS = {
@@ -53,6 +48,18 @@ UVOZ_CC_ALL_STATUS = {
     "last_msg": None,
     "last_error": None,
 }
+
+def normaliziraj_geslo(s: str) -> str:
+    """
+    Odstrani šumnike/naglase in posebne znake, da dobimo "čisto" osnovo
+    za ime datoteke (npr. 'Müller čŠž' -> 'Muller cSz').
+    """
+    if not s:
+        return ""
+    # NFKD razbije črke z naglasi, encode/decode pobriše ne-ASCII
+    s_norm = unicodedata.normalize("NFKD", s)
+    s_ascii = s_norm.encode("ascii", "ignore").decode("ascii")
+    return s_ascii
 
 
 
@@ -123,39 +130,36 @@ app.url_map.strict_slashes = False
 app.secret_key = "boris-vus-krizanka-1234567890"
 # ali katerikoli drug dolg string, samo da NI None/prazen
 
+from pathlib import Path
 import re
 import unicodedata
-from pathlib import Path
 
 ALLOWED_IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".webp"}
 
 
-import re
-import unicodedata
+MAX_IMAGE_WORDS = 15  # skupni max (opis + dodatno)
 
 
-def naredi_slug_iz_opisa(opis: str, dodatno: str = "") -> str:
-    """
-    Poenoteno poimenovanje slik:
+def _slug_words(text: str) -> list[str]:
+    """Normalizira besedilo in vrne seznam 'čistih' besed za slug."""
+    text = (text or "").strip()
+    if not text:
+        return []
 
-    - odstrani šumnike (čšž → csz, itd.)
-    - pomišljaje odstrani (ne zamenja v presledke), npr. "dansko-ameriški" → "danskoameriski"
-    - letnice 1844–1900 → 18441900 (zlepljene)
-    - odstrani ločila ( (), . , ; : ! ? )
-    - vse spremeni v male črke
-    - dovoli samo črke, številke in presledke
-    - besede združi s podčrtaji, max 15 besed
-    """
+    # 0) subscript + superscript cifre v navadne (H₁ / H¹ → H1)
+    subs_map = str.maketrans("₀₁₂₃₄₅₆₇₈₉", "0123456789")
+    sups_map = str.maketrans("⁰¹²³⁴⁵⁶⁷⁸⁹", "0123456789")
+    s = text.translate(subs_map).translate(sups_map)
 
-    # združi opis + dodatno ime
-    s = f"{opis or ''} {dodatno or ''}"
+    # 1a) hyphen med števko in črko -> presledek (H1-recepte -> H1 recepte)
+    s = re.sub(r"(\d)[-–—−]([A-Za-z])", r"\1 \2", s)
 
-    # 1) odstrani šumnike (NFD + odstrani znake kategorije Mn)
+    # 1b) ostale pomišljaje odstrani
+    s = re.sub(r"[-–—−]", "", s)
+
+    # 2) odstrani šumnike (NFD + odstrani znake kategorije Mn)
     s = unicodedata.normalize("NFD", s)
     s = "".join(ch for ch in s if unicodedata.category(ch) != "Mn")
-
-    # 2) pomišljaje popolnoma odstrani
-    s = re.sub(r"[-–—−]", "", s)
 
     # 3) letnice 1844–1900 → 18441900 (zlepi dve 4-mestni števili)
     s = re.sub(r"(\d{4})\D+(\d{4})", r"\1\2", s)
@@ -169,12 +173,42 @@ def naredi_slug_iz_opisa(opis: str, dodatno: str = "") -> str:
     # 6) dovoli samo črke, številke in presledke
     s = re.sub(r"[^a-z0-9\s]", "", s)
 
-    # 7) razbij na besede, max 15, poveži z "_"
-    parts = s.strip().split()
-    parts = parts[:15]
+    # 7) razbij na besede
+    words = s.strip().split()
+    return words
+
+
+def naredi_slug_iz_opisa(opis: str, dodatno: str = "") -> str:
+    """
+    Poenoteno poimenovanje slik:
+
+    - opis in dodatno normaliziramo ločeno
+    - dodatno ime vedno pride NA KONCU sluga
+    - skupno največ MAX_IMAGE_WORDS besed
+    """
+
+    opis_words = _slug_words(opis)
+    extra_words = _slug_words(dodatno)
+
+    if extra_words:
+        # vedno rezerviramo prostor za dodatno ime
+        space_for_opis = max(1, MAX_IMAGE_WORDS - len(extra_words))
+        used_opis = opis_words[:space_for_opis]
+        parts = used_opis + extra_words
+    else:
+        parts = opis_words[:MAX_IMAGE_WORDS]
 
     slug = "_".join(parts) if parts else "slika"
     return slug
+
+
+def make_image_filename_from_opis(opis: str, dodatno: str = "") -> str:
+    slug = naredi_slug_iz_opisa(opis, dodatno)
+    return f"{slug}.jpg"
+
+
+
+
 
 # ===== Helpers ===============================================================
 
@@ -749,45 +783,9 @@ def preveri_sliko_page():
     return redirect(url_for("preveri_slika"))
 
 def make_image_filename_from_opis(opis: str, dodatno: str = "") -> str:
-    """
-    Iz opisa + dodatnega niza (npr. 'Sagres') naredi ime slike:
-    - vzamemo max 15 besed opisa
-    - dodamo dodatno (če ni prazno)
-    - odstranimo šumnike/naglas
-    - vse nenumerične znake zamenjamo z '_'
-    - spustimo v lower
-    - dodamo '.jpg'
-    """
-    opis = (opis or "").strip()
-    dodatno = (dodatno or "").strip()
+    slug = naredi_slug_iz_opisa(opis, dodatno)
+    return f"{slug}.jpg"
 
-    # 1) max 15 besed opisa
-    words = opis.split()
-    if len(words) > 15:
-        words = words[:15]
-    short_opis = " ".join(words)
-
-    # 2) spojimo z dodatnim imenom (npr. Sagres)
-    if dodatno:
-        base = f"{short_opis} {dodatno}".strip()
-    else:
-        base = short_opis or dodatno
-
-    if not base:
-        base = "slika"
-
-    # 3) odstrani šumnike/naglas (NFKD + izbrišemo 'combining' znake)
-    base_norm = unicodedata.normalize("NFKD", base)
-    base_norm = "".join(ch for ch in base_norm if not unicodedata.combining(ch))
-
-    # 4) vse, kar ni črka ali cifra, zamenjamo z '_' in malo čistimo
-    base_norm = re.sub(r"[^A-Za-z0-9]+", "_", base_norm)
-    base_norm = re.sub(r"_+", "_", base_norm).strip("_").lower()
-
-    if not base_norm:
-        base_norm = "slika"
-
-    return base_norm + ".jpg"
 
 # --- Sudoku: arhiv + prikaz --------------------------------------------------
 
@@ -1218,7 +1216,7 @@ def api_preveri_sliko():
     - uporabi ISTO funkcijo kot pri kreiranju imena: make_image_filename_from_opis
     - najprej proba (opis + dodatno)
     - če ne najde, proba samo (opis)
-    - išče v static/Images (ali static/images, odvisno od tvojega diska)
+    - išče v static/Images
     """
     import os, sys, pprint
     from flask import request, jsonify
@@ -1230,15 +1228,14 @@ def api_preveri_sliko():
     dodatno = (data.get("dodatno_ime") or data.get("dodatno") or "").strip()
 
     # 1) ime datoteke po tvoji funkciji (OPIS + DODATNO)
-    fname_full = make_image_filename_from_opis(opis, dodatno)   # npr. "danskoameriski_..._sagres.jpg"
+    fname_full = make_image_filename_from_opis(opis, dodatno)
     # 2) fallback: ime datoteke samo iz opisa (za stare slike)
-    fname_base = make_image_filename_from_opis(opis, "")        # npr. "danskoameriski_..._kralj_komedije.jpg"
+    fname_base = make_image_filename_from_opis(opis, "")
 
     # odstrani končnico -> dobimo "slug" (brez .jpg)
     slug_full = os.path.splitext(fname_full)[0]
     slug_base = os.path.splitext(fname_base)[0]
 
-    # v kakšnem vrstnem redu probamo
     slugs_to_try = []
     if dodatno:
         slugs_to_try.append((slug_full, fname_full))
@@ -1247,17 +1244,13 @@ def api_preveri_sliko():
     else:
         slugs_to_try.append((slug_base, fname_base))
 
-    # POZOR: tukaj uporabi pravo mapo: "Images" ali "images"
-    # Če imaš na disku "static/images", zamenjaj v "images".
-    images_dir = os.path.join(app.static_folder, "Images")
-
+    images_dir = os.path.join(app.static_folder, "Images")  # ali "images", če imaš tako mapo
     exts = [".jpg", ".jpeg", ".png", ".webp"]
 
     found_slug = None
     found_filename = None
 
     for slug, suggested_fname in slugs_to_try:
-        # najprej pogledamo točno ime, ki ga vrne make_image_filename_from_opis
         candidate = suggested_fname
         full_path = os.path.join(images_dir, candidate)
         if os.path.exists(full_path):
@@ -1265,7 +1258,6 @@ def api_preveri_sliko():
             found_filename = candidate
             break
 
-        # če slučajno obstaja v drugi končnici (.png, .webp...)
         for ext in exts:
             alt_candidate = slug + ext
             alt_path = os.path.join(images_dir, alt_candidate)
@@ -1280,7 +1272,6 @@ def api_preveri_sliko():
     exists = found_filename is not None
     url = f"/images/{found_filename}" if exists else None
 
-    # če slike ni, kot predlog vrnemo PRVO ime, ki ga je zgradila funkcija
     default_slug = slug_full or slug_base
     default_fname = fname_full or fname_base
     suggested_filename = found_filename or default_fname
@@ -1293,6 +1284,7 @@ def api_preveri_sliko():
         "exists": exists,
         "url": url,
     })
+
 
 
 
