@@ -32,7 +32,7 @@ from PIL import Image
 
 # --- Lokalni moduli
 from krizanka import pridobi_podatke_iz_xml
-from uvoz_cc_csv_vus import run as uvoz_cc_run
+"from uvoz_cc_csv_vus import run as uvoz_cc_run"
 
 # --- .env (ne prepiše ročno nastavljenih env spremenljivk)
 try:
@@ -523,7 +523,7 @@ def admin():
     return render_template("admin.html", DB_PATH=DB_PATH)
 
 from pathlib import Path
-from uvoz_cc_csv_vus import run as uvoz_cc_run
+"from uvoz_cc_csv_vus import run as uvoz_cc_run"
 
 BASE_DIR = Path(__file__).resolve().parent
 
@@ -531,85 +531,68 @@ BASE_DIR = Path(__file__).resolve().parent
 CC_CSV_PATH = str(BASE_DIR / "data" / "cc_clues_DISPLAY_UTF8.csv")
 
 
-# 1) GUMB: samo Citation vsebuje "vpis"
-@app.post("/admin/uvoz_cc")
-def admin_uvoz_cc():
-    try:
-        stats = uvoz_cc_run(
-            csv_path=CC_CSV_PATH,
-            db_path=str(DB_PATH),
-            import_all=False,                 # NE ALL
-            only_citation_contains="vpis",    # tukaj filtriramo
-            verbose=False,
-            dry_run=False,
-        )
-        msg = (
-            f"Uvoz iz CC CSV (VPIS): "
-            f"dodanih {stats['inserted']}, "
-            f"posodobljenih {stats['updated']}, "
-            f"preskočenih {stats['skipped']}."
-        )
-        flash(msg, "success")
-    except Exception as e:
-        flash(f"Napaka pri uvozu iz CC CSV (VPIS): {e}", "danger")
+# # 1) GUMB: samo Citation vsebuje "vpis"
+# @app.post("/admin/uvoz_cc")
+# def admin_uvoz_cc():
+#     try:
+#         stats = uvoz_cc_run(
+#             csv_path=CC_CSV_PATH,
+#             db_path=str(DB_PATH),
+#             import_all=False,                 # NE ALL
+#             only_citation_contains="vpis",    # tukaj filtriramo
+#             verbose=False,
+#             dry_run=False,
+#         )
+#         msg = (
+#             f"Uvoz iz CC CSV (VPIS): "
+#             f"dodanih {stats['inserted']}, "
+#             f"posodobljenih {stats['updated']}, "
+#             f"preskočenih {stats['skipped']}."
+#         )
+#         flash(msg, "success")
+#     except Exception as e:
+#         flash(f"Napaka pri uvozu iz CC CSV (VPIS): {e}", "danger")
 
-    return redirect(url_for("admin"))
-
-def _run_uvoz_cc_all_bg():
-    """Teče v ozadju (thread) – uvoz ALL iz CC_CSV_PATH."""
-    global UVOZ_CC_ALL_STATUS
-    UVOZ_CC_ALL_STATUS["running"] = True
-    UVOZ_CC_ALL_STATUS["last_error"] = None
-    UVOZ_CC_ALL_STATUS["last_msg"] = None
-
-    try:
-        stats = uvoz_cc_run(
-            csv_path=CC_CSV_PATH,
-            db_path=str(DB_PATH),
-            import_all=True,                  # ALL
-            only_citation_contains=None,      # brez filtra
-            verbose=False,
-            dry_run=False,
-        )
-        msg = (
-            f"Uvoz iz CC CSV (ALL) KONČAN: "
-            f"dodanih {stats['inserted']}, "
-            f"posodobljenih {stats['updated']}, "
-            f"preskočenih {stats['skipped']}."
-        )
-        print(msg)
-        UVOZ_CC_ALL_STATUS["last_msg"] = msg
-
-    except Exception as e:
-        err = f"Napaka pri uvozu iz CC CSV (ALL): {e}"
-        print(err)
-        traceback.print_exc()
-        UVOZ_CC_ALL_STATUS["last_error"] = err
-
-    finally:
-        UVOZ_CC_ALL_STATUS["running"] = False
+#     return redirect(url_for("admin"))
 
 
-@app.post("/admin/uvoz_cc_all")
-def admin_uvoz_cc_all():
-    """
-    Uvoz iz CC CSV (ALL) – zažene se v ozadju (thread),
-    da Render ne ubije requesta zaradi timeouta.
-    """
-    global UVOZ_CC_ALL_STATUS
+# def _run_uvoz_cc_all_bg():
+#     """Teče v ozadju (thread) – uvoz ALL iz CC_CSV_PATH."""
+#     global UVOZ_CC_ALL_STATUS
+#     UVOZ_CC_ALL_STATUS["running"] = True
+#     UVOZ_CC_ALL_STATUS["last_error"] = None
+#     UVOZ_CC_ALL_STATUS["last_msg"] = None
 
-    # če že teče, ne zaganjaj še enkrat
-    if UVOZ_CC_ALL_STATUS.get("running"):
-        flash("Uvoz ALL že teče v ozadju. Počakaj, da se zaključi.", "warning")
-        return redirect(url_for("admin"))
+#     try:
+#         stats = uvoz_cc_run(
+#             csv_path=CC_CSV_PATH,
+#             db_path=str(DB_PATH),
+#             import_all=True,                  # ALL
+#             only_citation_contains=None,      # brez filtra
+#             verbose=False,
+#             dry_run=False,
+#         )
+#         msg = (
+#             f"Uvoz iz CC CSV (ALL) KONČAN: "
+#             f"dodanih {stats['inserted']}, "
+#             f"posodobljenih {stats['updated']}, "
+#             f"preskočenih {stats['skipped']}."
+#         )
+#         print(msg)
+#         UVOZ_CC_ALL_STATUS["last_msg"] = msg
 
-    # start ozadja
-    t = threading.Thread(target=_run_uvoz_cc_all_bg)
-    t.daemon = True  # da ne blokira shutdowna
-    t.start()
+#     except Exception as e:
+#         err = f"Napaka pri uvozu iz CC CSV (ALL): {e}"
+#         print(err)
+#         traceback.print_exc()
+#         UVOZ_CC_ALL_STATUS["last_error"] = err
 
-    flash("Uvoz iz CC CSV (ALL) je zagnan v ozadju. To lahko traja dlje časa.", "info")
-    return redirect(url_for("admin"))
+#     finally:
+#         UVOZ_CC_ALL_STATUS["running"] = False
+
+
+
+#
 
 
 @app.get("/stevec_gesel")

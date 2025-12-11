@@ -1,247 +1,488 @@
-﻿import csv, os, sqlite3, sys, glob, argparse
-from pathlib import Path
-from datetime import datetime
+﻿#!/usr/bin/env python3
+"""
+Uvoz Crossword Compiler (CC) CSV → VUS.db (SQLite).
 
-# ------------------ Nastavitve ------------------
-DB_PATH = os.environ.get("DB_PATH", "VUS.db")
+Ta različica je nastavljena na privzeti način **ALL**:
+- privzeto uvozi **vse** vrstice (Citation se ignorira),
+- če želiš filtrirati po Citation, uporabi: --only-citation-contains "vpis"
+  (filter se upošteva le, če --all ni podan oz. je izklopljen).
 
-CANDIDATE_PATTERNS = [
-    "cc_clues_DISPLAY_UTF8*.csv",
-    "cc_clues*.csv",
-]
+- Ciljna tabela: slovar(id INTEGER PK, geslo TEXT, opis TEXT, ...),
+  upošteva UNIQUE(geslo, opis) v tvoji bazi (ali jo varno obide).
+- Upsert:
+    * če (geslo) obstaja (case-insensitive):
+        - update opis samo, če je drugačen IN ne krši UNIQUE(geslo, opis)
+        - sicer skip
+    * če ne obstaja: insert
+- Robustnosti:
+    * odstrani BOM iz glave
+    * autodetect CSV ločilo (comma/semicolon)
+    * normalizira NBSP in presledke
+    * varno preskoči konfliktnen UPDATE/INSERT
+"""
 
-# mapiranje možnih glav (angleško/slovensko)
-COL_ALIASES = {
-    "word": {"word", "geslo", "gesla"},
-    "clue": {"clue", "opis", "opisi"},
-    "date": {"date", "datum"},
-    "citation": {"citation", "cit", "vir"},
-}
-REQUIRED = {"word", "clue"}
-# ------------------------------------------------
+import argparse
+import csv
+import os
+import sqlite3
+import sys
+from contextlib import closing
 
-def norm(s): return (s or "").strip()
+POSSIBLE_WORD_COLS = {"word", "geslo", "entry", "answer"}
+POSSIBLE_CLUE_COLS = {"clue", "opis", "definition", "hint"}
 
-def detect_delimiter(sample_text: str, fallback=","):
-    try:
-        dialect = csv.Sniffer().sniff(sample_text)
-        return dialect.delimiter
-    except Exception:
-        return ";" if ";" in sample_text and "," not in sample_text else fallback
 
-def looks_like_header(first_row):
-    tokens = [norm(x).lower() for x in first_row]
-    return any(t in COL_ALIASES["word"] for t in tokens) or any(t in COL_ALIASES["clue"] for t in tokens)
-
-def map_header(raw_headers):
-    idx = {}
-    for i, h in enumerate(raw_headers):
-        h_clean = norm(h).lower()
-        for canon, aliases in COL_ALIASES.items():
-            if h_clean in aliases:
-                idx[canon] = i
-    return idx
-
-def open_csv_rows(path: Path):
-    with open(path, "r", encoding="utf-8-sig", newline="") as f:
-        sample = f.read(4096)
-        f.seek(0)
-        delim = detect_delimiter(sample)
-        reader = csv.reader(f, delimiter=delim)
-        rows = list(reader)
-    return rows, delim
-
-# ---------- ODKRIVANJE SHEME V BAZI -------------
-def get_tables(conn):
-    cur = conn.execute("SELECT name FROM sqlite_master WHERE type='table'")
-    return [r[0] for r in cur.fetchall()]
-
-def get_columns(conn, table):
-    cur = conn.execute(f"PRAGMA table_info({table})")
-    return [r[1] for r in cur.fetchall()]
-
-def detect_table_and_columns(conn):
-    aliases_word = COL_ALIASES["word"]
-    aliases_clue = COL_ALIASES["clue"]
-
-    candidates = get_tables(conn)
-    if "slovar" in candidates:
-        cols = get_columns(conn, "slovar")
-        low = {c.lower(): c for c in cols}
-        word_col = next((low[a] for a in aliases_word if a in low), None)
-        clue_col = next((low[a] for a in aliases_clue if a in low), None)
-        if word_col and clue_col:
-            return "slovar", word_col, clue_col
-
-    for t in candidates:
-        cols = get_columns(conn, t)
-        low = {c.lower(): c for c in cols}
-        word_col = next((low[a] for a in aliases_word if a in low), None)
-        clue_col = next((low[a] for a in aliases_clue if a in low), None)
-        if word_col and clue_col:
-            return t, word_col, clue_col
-
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS slovar (
-            geslo TEXT,
-            opis  TEXT,
-            UNIQUE(geslo, opis)
-        )
-    """)
-    conn.commit()
-    return "slovar", "geslo", "opis"
-
-# --------- Operacije nad bazo -------------------
-def insert_pair(conn, table, col_word, col_clue, geslo, opis):
-    conn.execute(
-        f"INSERT OR IGNORE INTO {table} ({col_word}, {col_clue}) VALUES (?, ?)",
-        (geslo, opis),
+def try_open_csv(path, forced_encoding=None):
+    encodings = [forced_encoding] if forced_encoding else [
+        "utf-8-sig", "utf-8", "cp1250", "windows-1250", "latin1"
+    ]
+    last_err = None
+    for enc in encodings:
+        try:
+            f = open(path, "r", encoding=enc, newline="")
+            head = f.read(2048)
+            f.seek(0)
+            return f, enc, head
+        except Exception as e:
+            last_err = e
+    raise RuntimeError(
+        f"Ne morem odpreti CSV '{path}' (poskusi: {encodings}). Zadnja napaka: {last_err}"
     )
 
-def delete_by_word(conn, table, col_word, geslo):
-    conn.execute(f"DELETE FROM {table} WHERE {col_word}=?", (geslo,))
 
-# ------------- ISKANJE CSV ----------------------
-def candidate_dirs():
-    here = Path(__file__).resolve().parent
-    home = Path.home()
-    dirs = [here]
+def sniff_dialect(sample_text: str):
+    sc = sample_text.count(';')
+    cc = sample_text.count(',')
+    if sc > cc:
+        class Semi(csv.excel):
+            delimiter = ';'
+        return Semi()
+    return csv.excel()
 
-    for desk in [
-        home / "Desktop",
-        home / "Namizje",
-        home / "OneDrive" / "Desktop",
-        home / "OneDrive" / "Namizje",
-        home / "OneDrive - Personal" / "Desktop",
-        home / "OneDrive - Personal" / "Namizje",
-    ]:
-        if desk.exists(): dirs.append(desk)
 
-    for dl in [home / "Downloads", home / "Prenosi"]:
-        if dl.exists(): dirs.append(dl)
+def normalize_text(s: str) -> str:
+    if s is None:
+        return ""
+    s = s.replace("\u00A0", " ").replace("\u2007", " ").replace("\u202F", " ")
+    s = " ".join(s.strip().split())
+    return s
 
-    if (here / "out").exists(): dirs.append(here / "out")
-    if here.parent.exists(): dirs.append(here.parent)
 
-    seen, uniq = set(), []
-    for d in dirs:
-        if d not in seen:
-            uniq.append(d); seen.add(d)
-    return uniq
+def ensure_schema(conn: sqlite3.Connection):
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS slovar (
+            id    INTEGER PRIMARY KEY AUTOINCREMENT,
+            geslo TEXT NOT NULL,
+            opis  TEXT NOT NULL
+        );
+    """)
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_slovar_geslo_nocase ON slovar(geslo COLLATE NOCASE);"
+    )
 
-def find_latest_csv():
-    if len(sys.argv) > 1 and not sys.argv[1].startswith("--"):
-        p = Path(sys.argv[1]).expanduser()
-        if p.exists() and p.suffix.lower() == ".csv":
-            return p
 
-    hits = []
-    for d in candidate_dirs():
-        for pat in CANDIDATE_PATTERNS:
-            hits.extend(Path(d).glob(pat))
+def detect_columns(header, word_col_opt=None, clue_col_opt=None):
+    cols_raw = header[:]
+    cols = [h.strip().lower().lstrip('\ufeff') for h in header]
+    word_idx = clue_idx = None
 
-    if not hits:
-        return None
+    if word_col_opt:
+        wl = word_col_opt.strip().lower()
+        if wl in cols:
+            word_idx = cols.index(wl)
+    if clue_col_opt:
+        cl = clue_col_opt.strip().lower()
+        if cl in cols:
+            clue_idx = cols.index(cl)
 
-    hits.sort(key=lambda p: p.stat().st_mtime, reverse=True)
-    # DEBUG: izpisi najdene datoteke
-    if "--debug" in sys.argv:
-        print("Najdene CSV datoteke:")
-        for p in hits[:10]:
-            print("  -", p)
-    return hits[0]
+    looks_like_header = any(x in cols for x in POSSIBLE_WORD_COLS) or any(
+        x in cols for x in POSSIBLE_CLUE_COLS
+    )
 
-# ------------------ MAIN ------------------------
+    if word_idx is None and looks_like_header:
+        for i, h in enumerate(cols):
+            if h in POSSIBLE_WORD_COLS:
+                word_idx = i
+                break
+    if clue_idx is None and looks_like_header:
+        for i, h in enumerate(cols):
+            if h in POSSIBLE_CLUE_COLS:
+                clue_idx = i
+                break
+
+    return word_idx, clue_idx, cols_raw, looks_like_header
+
+
+def select_existing_id_and_opis(conn: sqlite3.Connection, geslo: str):
+    row = conn.execute(
+        "SELECT id, opis FROM slovar WHERE lower(geslo)=lower(?) LIMIT 1;",
+        (geslo,),
+    ).fetchone()
+    if row:
+        return row[0], row[1]
+    return None, None
+
+
+def pair_exists_elsewhere(conn: sqlite3.Connection, geslo: str, opis: str,
+                          exclude_id: int) -> bool:
+    row = conn.execute(
+        "SELECT 1 FROM slovar WHERE lower(geslo)=lower(?) AND opis=? AND id<>? LIMIT 1;",
+        (geslo, opis, exclude_id),
+    ).fetchone()
+    return row is not None
+
+
+def exact_pair_exists(conn: sqlite3.Connection, geslo: str, opis: str) -> bool:
+    row = conn.execute(
+        "SELECT 1 FROM slovar WHERE lower(geslo)=lower(?) AND opis=? LIMIT 1;",
+        (geslo, opis),
+    ).fetchone()
+    return row is not None
+
+
+def upsert_row(conn: sqlite3.Connection, geslo: str, opis: str, overwrite: bool):
+    geslo = normalize_text(geslo)
+    opis = normalize_text(opis)
+
+    if not geslo:
+        return ("skip", None)
+    if not opis:
+        existing_id, _ = select_existing_id_and_opis(conn, geslo)
+        return ("skip", existing_id)
+
+    existing_id, existing_opis = select_existing_id_and_opis(conn, geslo)
+    if existing_id is None:
+        if exact_pair_exists(conn, geslo, opis):
+            return ("skip", None)
+        try:
+            cur = conn.execute(
+                "INSERT INTO slovar(geslo, opis) VALUES (?, ?);",
+                (geslo, opis),
+            )
+            return ("insert", cur.lastrowid)
+        except sqlite3.IntegrityError:
+            return ("skip", None)
+
+    if opis != (existing_opis or "") and (overwrite or not existing_opis):
+        if pair_exists_elsewhere(conn, geslo, opis, existing_id):
+            return ("skip", existing_id)
+        try:
+            conn.execute(
+                "UPDATE slovar SET opis=? WHERE id=?;",
+                (opis, existing_id),
+            )
+            return ("update", existing_id)
+        except sqlite3.IntegrityError:
+            return ("skip", existing_id)
+
+    return ("skip", existing_id)
+
+
+def refresh_slovar_sortiran(db_path: str):
+    import sqlite3 as _sqlite3
+    con = _sqlite3.connect(db_path)
+    cur = con.cursor()
+    cur.execute("BEGIN")
+    cur.execute("CREATE TABLE IF NOT EXISTS slovar_sortiran (geslo TEXT, opis TEXT);")
+    cur.execute("DELETE FROM slovar_sortiran")
+    cur.execute("""
+        INSERT OR IGNORE INTO slovar_sortiran(geslo, opis)
+        SELECT geslo, opis
+        FROM slovar
+        ORDER BY
+          CASE
+            WHEN instr(opis, ' - ') > 0
+              THEN lower(trim(substr(opis, instr(opis, ' - ')+3)))
+            ELSE lower(opis)
+          END
+    """)
+    cur.execute("COMMIT")
+    con.close()
+
+
+def run(csv_path: str,
+        db_path: str,
+        word_col: str = None,
+        clue_col: str = None,
+        encoding: str = None,
+        overwrite: bool = True,
+        dry_run: bool = False,
+        commit_every: int = 1000,
+        verbose: bool = False,
+        only_citation_contains: str | None = None,
+        import_all: bool = False,
+        refresh_sortiran: bool = True):
+
+    db_existed = os.path.exists(db_path)
+
+    f, used_enc, head = try_open_csv(csv_path, forced_encoding=encoding)
+    dialect = sniff_dialect(head)
+
+    with f:
+        reader = csv.reader(f, dialect=dialect)
+        header = next(reader, None)
+        if not header:
+            print("❌ CSV je prazen ali nima glave.")
+            sys.exit(1)
+
+        w_idx, c_idx, cols_raw, looks_like_header = detect_columns(
+            header, word_col, clue_col
+        )
+
+        no_header = False
+        if w_idx is None or c_idx is None:
+            if not looks_like_header:
+                w_idx, c_idx = 0, 1
+                no_header = True
+            else:
+                print(
+                    f"❌ Ne najdem stolpcev za geslo/word in opis/clue v glavi: {header}"
+                )
+                print("   Uporabi npr.: --word-col Answer --clue-col Clue")
+                sys.exit(1)
+
+        citation_idx = None
+        if looks_like_header:
+            for i, h in enumerate([h.strip().lower() for h in cols_raw]):
+                if h == "citation":
+                    citation_idx = i
+                    break
+        else:
+            if len(header) > 3:
+                citation_idx = 3
+
+        if import_all:
+            only_citation_contains = None
+        if (only_citation_contains is not None) and (citation_idx is None):
+            print(
+                "❌ Zahtevan je filter po Citation, a stolpec 'Citation' v CSV ne obstaja."
+            )
+            sys.exit(1)
+
+        with closing(sqlite3.connect(db_path)) as conn:
+            conn.row_factory = sqlite3.Row
+            conn.execute("PRAGMA journal_mode=WAL;")
+            conn.execute("PRAGMA synchronous=NORMAL;")
+            conn.execute("PRAGMA temp_store=MEMORY;")
+
+            ensure_schema(conn)
+
+            inserted = updated = skipped = 0
+            filtered_out = 0
+            batch = 0
+
+            if verbose:
+                mode = "ALL (brez filtra)" if import_all or (
+                    only_citation_contains is None
+                ) else f"Citation contains '{only_citation_contains}'"
+                print(
+                    f"[run] mode = {mode}; encoding={used_enc}; "
+                    f"delimiter='{getattr(dialect, 'delimiter', ',')}', "
+                    f"header={'DA' if looks_like_header else 'NE'}"
+                )
+
+            try:
+                conn.execute("BEGIN;")
+
+                if not looks_like_header:
+                    row = header
+                    if only_citation_contains is not None:
+                        cit = row[citation_idx] if (
+                            citation_idx is not None and citation_idx < len(row)
+                        ) else ""
+                        if only_citation_contains.lower() not in (cit or "").lower():
+                            filtered_out += 1
+                        else:
+                            word = row[w_idx] if w_idx < len(row) else ""
+                            clue = row[c_idx] if c_idx < len(row) else ""
+                            action, _ = upsert_row(conn, word, clue, overwrite=overwrite)
+                            if action == "insert":
+                                inserted += 1
+                            elif action == "update":
+                                updated += 1
+                            else:
+                                skipped += 1
+                    else:
+                        word = row[w_idx] if w_idx < len(row) else ""
+                        clue = row[c_idx] if c_idx < len(row) else ""
+                        action, _ = upsert_row(conn, word, clue, overwrite=overwrite)
+                        if action == "insert":
+                            inserted += 1
+                        elif action == "update":
+                            updated += 1
+                        else:
+                            skipped += 1
+
+                batch = 0
+                for row in reader:
+                    if not row:
+                        continue
+
+                    if only_citation_contains is not None:
+                        cit = row[citation_idx] if (
+                            citation_idx is not None and citation_idx < len(row)
+                        ) else ""
+                        if only_citation_contains.lower() not in (cit or "").lower():
+                            filtered_out += 1
+                            continue
+
+                    word = row[w_idx] if w_idx < len(row) else ""
+                    clue = row[c_idx] if c_idx < len(row) else ""
+
+                    action, _ = upsert_row(conn, word, clue, overwrite=overwrite)
+                    if action == "insert":
+                        inserted += 1
+                    elif action == "update":
+                        updated += 1
+                    else:
+                        skipped += 1
+
+                    batch += 1
+                    if verbose and batch % 20000 == 0:
+                        print(
+                            f"… obdelanih {batch} (➕ {inserted}, ✏️ {updated}, "
+                            f"⏭️ {skipped}, 🔎 filter out {filtered_out})"
+                        )
+                    if batch % commit_every == 0 and not dry_run:
+                        conn.execute("COMMIT;")
+                        conn.execute("BEGIN;")
+
+                if dry_run:
+                    conn.execute("ROLLBACK;")
+                else:
+                    conn.execute("COMMIT;")
+
+                    if refresh_sortiran:
+                        try:
+                            refresh_slovar_sortiran(db_path)
+                            if verbose:
+                                print(
+                                    "🔄 slovar_sortiran: osvežen (sort po delu za ' - ')"
+                                )
+                        except Exception as e:
+                            print(f"⚠️  slovar_sortiran refresh ni uspel: {e}")
+            except KeyboardInterrupt:
+                if not dry_run:
+                    conn.execute("COMMIT;")
+                raise
+            except Exception:
+                conn.execute("ROLLBACK;")
+                raise
+
+    delim = getattr(dialect, 'delimiter', ',')
+    print("──────── Povzetek ────────")
+    print(
+        f"📄 CSV:        {csv_path}  (encoding: {used_enc}, delimiter: {delim})"
+    )
+    print(
+        f"🗄️  Baza:       {db_path}  ({'obstajala' if db_existed else 'nova'})"
+    )
+    if only_citation_contains is not None:
+        print(f"🔎 Filter:     Citation contains \"{only_citation_contains}\"")
+        print(f"🚫 Preskočenih zaradi filtra: {filtered_out}")
+    else:
+        print("🔎 Filter:     (brez) — uvožene vse vrstice")
+    print(f"➕ Dodanih:    {inserted}")
+    print(f"✏️  Posodobljenih: {updated}")
+    print(f"⏭️  Preskočenih:   {skipped}")
+    print(f"🔁 Overwrite:  {'DA' if overwrite else 'NE'}")
+    print("──────────────────────────")
+
+    return {
+        "inserted": inserted,
+        "updated": updated,
+        "skipped": skipped,
+        "filtered_out": filtered_out,
+        "import_all": import_all,
+        "only_citation_contains": only_citation_contains,
+    }
+
+
 def main():
-    parser = argparse.ArgumentParser(description="Uvoz CC delta v SQLite")
-    parser.add_argument("csv", nargs="?", help="Pot do CSV (neobvezno)")
-    parser.add_argument("--mode", choices=["replace","append"], default="replace",
-    help="replace: zamenja vse opise za gesla iz CSV; append: samo doda nove pare")
-    args = parser.parse_args()
+    ap = argparse.ArgumentParser(
+        description="Uvoz CC CSV v VUS.db (tabela 'slovar')."
+    )
+    ap.add_argument("csv", help="Pot do .csv (npr. out/cc_clues_UTF8.csv)")
+    ap.add_argument("db", help="Pot do SQLite baze (npr. VUS.db)")
+    ap.add_argument(
+        "--word-col",
+        help="Ime stolpca za geslo (npr. Answer/Word/Geslo)",
+        default=None,
+    )
+    ap.add_argument(
+        "--clue-col",
+        help="Ime stolpca za opis (npr. Clue/Opis/Definition)",
+        default=None,
+    )
+    ap.add_argument(
+        "--encoding", help="Prisili kodiranje (utf-8, cp1250, ...)", default=None
+    )
+    ap.add_argument(
+        "--no-overwrite",
+        action="store_true",
+        help="Ne prepisuj obstoječih opisov (posodobi samo, če je prazen).",
+    )
+    ap.add_argument(
+        "--dry-run", action="store_true", help="Samo simulacija brez zapisovanja."
+    )
+    ap.add_argument(
+        "--commit-every",
+        type=int,
+        default=1000,
+        help="Commit na N vrstic (privzeto 1000).",
+    )
+    ap.add_argument(
+        "--verbose", action="store_true", help="Vmesni izpisi napredka."
+    )
 
-    csv_path = find_latest_csv()
-    if args.debug:
-        print("Uporabljam CSV:", csv_path)
-    if not csv_path:
-        print("CSV nisem našel. Daj mi pot kot argument ali shrani datoteko kot 'cc_clues_DISPLAY_UTF8*.csv' na Namizje/OneDrive Namizje/Prenosi/out.")
-        sys.exit(1)
+    ap.add_argument(
+        "--only-citation-contains",
+        default="vpis",
+        help="Uvozi samo vrstice, kjer Citation vsebuje to vrednost (npr. 'vpis').",
+    )
 
-    rows, delim = open_csv_rows(csv_path)
-    if not rows:
-        print("CSV je prazen.")
-        sys.exit(1)
+    ap.add_argument(
+        "--all",
+        dest="import_all",
+        action="store_true",
+        default=False,
+        help="Ignoriraj Citation filter in uvozi vse vrstice (ALL mode).",
+    )
 
-    first = rows[0]
-    data_start = 1
-    header_idx = {}
-    if looks_like_header(first):
-        header_idx = map_header(first)
-    else:
-        data_start = 0
-        header_idx = {"word": 0, "clue": 1}
-        if len(first) > 2: header_idx["date"] = 2
-        if len(first) > 3: header_idx["citation"] = 3
+    ap.add_argument(
+        "--refresh-sortiran",
+        dest="refresh_sortiran",
+        action="store_true",
+        default=True,
+        help=(
+            "Po uvozu rebuild slovar_sortiran z abecednim redom po delu za ' - ' "
+            "(privzeto vklopljeno)."
+        ),
+    )
+    ap.add_argument(
+        "--no-refresh-sortiran",
+        dest="refresh_sortiran",
+        action="store_false",
+        help="Ne rebuildaj slovar_sortiran po uvozu.",
+    )
 
-    if not REQUIRED.issubset(header_idx):
-        print(f"Ne najdem obveznih stolpcev (Word/GESLO in Clue/OPIS). Najdene glave/indeksi: {header_idx}")
-        preview = rows[:2]
-        print("Predogled prvih vrstic:", preview)
-        sys.exit(1)
+    args = ap.parse_args()
 
-    # 1) Zberi vrstice (samo citation == 'vpis')
-    entries = []
-    for r in rows[data_start:]:
-        if not r or all(not norm(x) for x in r):
-            continue
-        word = norm(r[header_idx["word"]]) if len(r) > header_idx["word"] else ""
-        clue = norm(r[header_idx["clue"]]) if len(r) > header_idx["clue"] else ""
-        cit  = norm(r[header_idx["citation"]]) if "citation" in header_idx and len(r) > header_idx["citation"] else ""
-        if not word or not clue:
-            continue
-        if (cit or "").lower() != "vpis":
-            continue
-        entries.append((word, clue))
+    run(
+        csv_path=args.csv,
+        db_path=args.db,
+        word_col=args.word_col,
+        clue_col=args.clue_col,
+        encoding=args.encoding,
+        overwrite=not args.no_overwrite,
+        dry_run=args.dry_run,
+        commit_every=args.commit_every,
+        verbose=args.verbose,
+        only_citation_contains=args.only_citation_contains,
+        import_all=args.import_all,
+        refresh_sortiran=args.refresh_sortiran,
+    )
 
-    if not entries:
-        print("Ni vnosov s citation='vpis'. Ni kaj uvoziti.")
-        sys.exit(0)
 
-    # 2) Po geslih združi vnose iz CSV
-    by_word = {}
-    for w, c in entries:
-        by_word.setdefault(w, []).append(c)
-
-    conn = sqlite3.connect(DB_PATH)
-    table = col_word = col_clue = None
-    replaced_words = inserted_pairs = appended_pairs = 0
-
-    try:
-        table, col_word, col_clue = detect_table_and_columns(conn)
-        print(f"Uporabljam tabelo: {table} | stolpca: {col_word} (geslo), {col_clue} (opis)")
-        conn.execute("BEGIN")
-        for w, clues in by_word.items():
-            if args.mode == "replace":
-                delete_by_word(conn, table, col_word, w)
-                replaced_words += 1
-                for c in clues:
-                    insert_pair(conn, table, col_word, col_clue, w, c)
-                    inserted_pairs += 1
-            else:  # append
-                for c in clues:
-                    insert_pair(conn, table, col_word, col_clue, w, c)
-                    appended_pairs += 1
-        conn.commit()
-    except Exception:
-        conn.rollback()
-        raise
-    finally:
-        conn.close()
-
-    ts = datetime.fromtimestamp(csv_path.stat().st_mtime).strftime("%Y-%m-%d %H:%M")
-    print(f"Najden CSV: {csv_path} (zadnja sprememba: {ts}) | delimiter: '{delim}'")
-    print(f"DB: {DB_PATH}")
-    if args.mode == "replace":
-        print(f"Zamenjanih gesel: {replaced_words}")
-        print(f"Vstavljenih parov (po zamenjavi): {inserted_pairs}")
-    else:
-        print(f"Dodanih novih parov (append): {appended_pairs}")
+if __name__ == "__main__":
+    main()
