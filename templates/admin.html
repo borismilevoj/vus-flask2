@@ -36,25 +36,28 @@
 
   <div class="mb-3 d-flex flex-wrap align-items-center gap-2">
 
-    <!-- GUMB: samo "vpis" -->
-    <form method="post" action="{{ url_for('admin_uvoz_cc') }}">
-      <button type="submit" class="btn btn-dark btn-sm">
-        Uvozi iz CC (CSV) – VPIS
-      </button>
-    </form>
+   {#
+<!-- GUMB: samo "vpis" -->
+<form method="post" action="{{ url_for('admin_uvoz_cc') }}">
+  <button type="submit" class="btn btn-dark btn-sm">
+    Uvozi iz CC (CSV) – VPIS
+  </button>
+</form>
+
+<!-- GUMB: ALL -->
+<form method="post" action="{{ url_for('admin_uvoz_cc_all') }}">
+  <button type="submit" class="btn btn-outline-danger btn-sm"
+          onclick="return confirm('Res želiš uvoziti VSE vrstice iz CSV (ALL)?');">
+    Uvozi iz CC (CSV) – ALL
+  </button>
+</form>
+
+<small class="form-text text-muted ms-2">
+  VPIS = samo vrstice, kjer je v Citation označeno "vpis"; ALL = brez filtra (vse vrstice).
+</small>
+#}
 
 
-    <!-- GUMB: ALL -->
-    <form method="post" action="{{ url_for('admin_uvoz_cc_all') }}">
-      <button type="submit" class="btn btn-outline-danger btn-sm"
-              onclick="return confirm('Res želiš uvoziti VSE vrstice iz CSV (ALL)?');">
-        Uvozi iz CC (CSV) – ALL
-      </button>
-    </form>
-
-    <small class="form-text text-muted ms-2">
-      VPIS = samo vrstice, kjer je v Citation označeno "vpis"; ALL = brez filtra (vse vrstice).
-    </small>
 
     <!-- MINI ŠTEVEC -->
     <div class="ms-auto d-flex align-items-center gap-2">

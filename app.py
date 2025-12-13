@@ -66,14 +66,21 @@ def normaliziraj_geslo(s: str) -> str:
 # ===== DB config (Path + opcijski URI) =======================================
 VUS_DB_URL = (os.getenv("VUS_DB_URL") or "").strip()
 
+# ===== DB config (Path + opcijski URI) =======================================
+VUS_DB_URL = (os.getenv("VUS_DB_URL") or "").strip()
+
 def _resolve_db() -> tuple[Path, str | None]:
     """
-    Vrne (DB_PATH kot Path, DB_URI kot 'file:...' ali None) — varno:
-    - spoštuje VUS_DB_URL=file:... če datoteka obstaja
-    - nato VUS_DB_PATH / DB_PATH, če obstaja
-    - sicer prva izbira: ~/Documents/VUS/VUS.db
-    - nikoli ne pusti projektne mape '.../vus-flask2/VUS.db' kot privzet
+    Vrne (DB_PATH kot Path, DB_URI kot 'file:...' ali None) — varno in deterministično:
+    - 1) VUS_DB_URL=file:... če datoteka obstaja
+    - 2) VUS_DB_PATH / DB_PATH če obstaja
+    - 3) projektna data/VUS.db (če obstaja)  <-- lokalni default za ta projekt
+    - 4) projektna var/data/VUS.db (če obstaja)
+    - 5) fallback: ~/Documents/VUS/VUS.db
     """
+
+    proj_dir = Path(__file__).resolve().parent
+
     # 1) URL (file:)
     if VUS_DB_URL.startswith("file:"):
         raw = VUS_DB_URL[5:].split("?", 1)[0]
@@ -93,16 +100,20 @@ def _resolve_db() -> tuple[Path, str | None]:
             else:
                 print(f"[VUS][WARN] Ignoriram {k} (ne obstaja): {p}")
 
-    # 3) Fallback: vedno Documents\VUS\VUS.db
+    # 3) projektna data/VUS.db
+    proj_data_db = proj_dir / "data" / "VUS.db"
+    if proj_data_db.exists():
+        return proj_data_db, None
+
+    # 4) projektna var/data/VUS.db
+    proj_var_db = proj_dir / "var" / "data" / "VUS.db"
+    if proj_var_db.exists():
+        return proj_var_db, None
+
+    # 5) fallback: Documents\VUS\VUS.db
     fallback = Path.home() / "Documents" / "VUS" / "VUS.db"
-
-    # 4) Guard: nikoli projektna pot kot default
-    proj_dir = Path(__file__).resolve().parent
-    proj_vusdb = proj_dir / "VUS.db"
-    if proj_vusdb.exists():
-        print(f"[VUS][WARN] Ignoriram projektni VUS.db: {proj_vusdb}")
-
     return fallback, None
+
 
 DB_PATH, DB_URI = _resolve_db()
 print(f"[VUS] DB_PATH = {DB_PATH} (exists={DB_PATH.exists()})")
