@@ -436,7 +436,7 @@ def preveri_geslo():
     # normalizacija: NBSP -> space, collapse spaces, in key brez presledkov
     q_norm = q.replace("\u00A0", " ")
     q_norm = " ".join(q_norm.split())
-    q_key = q_norm.replace(" ", "").lower()
+    q_compact = q_norm.replace(" ", "")
 
     try:
         con = get_conn(readonly=True)
@@ -444,17 +444,19 @@ def preveri_geslo():
         # 1) preštej vse zadetke (case-insensitive, ignorira presledke)
         row = con.execute(
             "SELECT COUNT(*) FROM slovar "
-            "WHERE replace(lower(geslo), ' ', '') = ?;",
-            (q_key,),
+            "WHERE replace(geslo, ' ', '') = ?;",
+            (q_compact,),
         ).fetchone()
+
         count = int(row[0] or 0)
 
         # 2) pobereš še vse zadetke (dejanski zapis gesla v bazi)
         rows = con.execute(
             "SELECT geslo FROM slovar "
-            "WHERE replace(lower(geslo), ' ', '') = ?;",
-            (q_key,),
+            "WHERE replace(geslo, ' ', '') = ?;",
+            (q_compact,),
         ).fetchall()
+
         exact = [r[0] for r in rows]
 
         con.close()
@@ -477,27 +479,23 @@ def api_preveri_geslo():
 
 @app.get("/api/gesla_admin")
 def api_gesla_admin():
-    """
-    Vrne vse vrstice iz tabele 'slovar' za dano geslo (NOCASE),
-    skupaj z opisom/razlago, če ustrezen stolpec obstaja.
-    """
     q = (request.args.get("geslo") or "").strip()
     if not q:
         return jsonify(ok=False, msg="Manjka 'geslo'."), 400
 
-    # normalizacija: NBSP -> space, collapse spaces, in key brez presledkov
+    # normalizacija: NBSP -> space, collapse spaces
     q_norm = q.replace("\u00A0", " ")
     q_norm = " ".join(q_norm.split())
-    q_key = q_norm.replace(" ", "").lower()
+
+    # kompakt brez presledkov (ZA SQL primerjavo brez lower())
+    q_compact = q_norm.replace(" ", "")
 
     con = get_conn(readonly=True)
     cur = con.cursor()
 
-    # preberi stolpce v tabeli slovar
     cols_raw = list(cur.execute("PRAGMA table_info(slovar);"))
     name_map = {(row[1] or "").lower(): row[1] for row in cols_raw}
 
-    # poskusi najti stolpec za opis/razlago (case-insensitive)
     desc_col = None
     for cand in ("opis", "razlaga", "opis_gesla", "clue"):
         if cand in name_map:
@@ -510,34 +508,26 @@ def api_gesla_admin():
         sql = f"""
             SELECT id, geslo, {desc_col}
             FROM slovar
-            WHERE replace(lower(geslo), ' ', '') = ?
+            WHERE replace(geslo, ' ', '') = ?
             ORDER BY id;
         """
-        rows = cur.execute(sql, (q_key,)).fetchall()
+        rows = cur.execute(sql, (q_compact,)).fetchall()
         for rid, g, desc in rows:
-            results.append({
-                "id": rid,
-                "geslo": g,
-                "razlaga": desc or "",
-            })
+            results.append({"id": rid, "geslo": g, "razlaga": desc or ""})
     else:
         sql = """
             SELECT id, geslo
             FROM slovar
-            WHERE replace(lower(geslo), ' ', '') = ?
+            WHERE replace(geslo, ' ', '') = ?
             ORDER BY id;
         """
-        rows = cur.execute(sql, (q_key,)).fetchall()
+        rows = cur.execute(sql, (q_compact,)).fetchall()
         for rid, g in rows:
-            results.append({
-                "id": rid,
-                "geslo": g,
-                "razlaga": "",
-            })
+            results.append({"id": rid, "geslo": g, "razlaga": ""})
 
     con.close()
-
     return jsonify(ok=True, results=results)
+
 
 
 @app.route("/api/preveri", methods=["GET", "POST"], endpoint="api_preveri_legacy")

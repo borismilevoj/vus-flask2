@@ -2,23 +2,23 @@
 """
 Uvoz Crossword Compiler (CC) CSV → VUS.db (SQLite).
 
-Ta različica je nastavljena na privzeti način **ALL**:
-- privzeto uvozi **vse** vrstice (Citation se ignorira),
+Privzeto:
+- uvozi VSE vrstice (brez Citation filtra)
 - če želiš filtrirati po Citation, uporabi: --only-citation-contains "vpis"
-  (filter se upošteva le, če --all ni podan oz. je izklopljen).
+- če podaš --all, se Citation filter ignorira
 
-- Ciljna tabela: slovar(id INTEGER PK, geslo TEXT, opis TEXT, ...),
-  upošteva UNIQUE(geslo, opis) v tvoji bazi (ali jo varno obide).
-- Upsert:
-    * če (geslo) obstaja (case-insensitive):
-        - update opis samo, če je drugačen IN ne krši UNIQUE(geslo, opis)
-        - sicer skip
-    * če ne obstaja: insert
-- Robustnosti:
-    * odstrani BOM iz glave
-    * autodetect CSV ločilo (comma/semicolon)
-    * normalizira NBSP in presledke
-    * varno preskoči konfliktnen UPDATE/INSERT
+Ciljna tabela: slovar(id INTEGER PK, geslo TEXT, opis TEXT)
+Upsert:
+- če geslo obstaja (case-insensitive):
+    - update opis, če je drugačen in je dovoljeno overwrite
+- če ne obstaja: insert
+Robustnost:
+- odstrani BOM
+- autodetect delimiter (, ali ;)
+- normalizira NBSP in presledke
+- varno ravnanje pri konfliktih
+- varno transaction rollback (samo če je aktiven)
+- ASCII-safe izpisi (brez emoji), da Windows cp1250 ne sesuje procesa
 """
 
 import argparse
@@ -30,6 +30,19 @@ from contextlib import closing
 
 POSSIBLE_WORD_COLS = {"word", "geslo", "entry", "answer"}
 POSSIBLE_CLUE_COLS = {"clue", "opis", "definition", "hint"}
+
+
+def _safe_reconfigure_stdio():
+    """Poskusi preklopit stdout/stderr na utf-8; če ne gre, ignoriraj.
+    Izpisi so sicer ASCII-safe."""
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+    try:
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
 
 
 def try_open_csv(path, forced_encoding=None):
@@ -51,11 +64,11 @@ def try_open_csv(path, forced_encoding=None):
 
 
 def sniff_dialect(sample_text: str):
-    sc = sample_text.count(';')
-    cc = sample_text.count(',')
+    sc = sample_text.count(";")
+    cc = sample_text.count(",")
     if sc > cc:
         class Semi(csv.excel):
-            delimiter = ';'
+            delimiter = ";"
         return Semi()
     return csv.excel()
 
@@ -83,7 +96,7 @@ def ensure_schema(conn: sqlite3.Connection):
 
 def detect_columns(header, word_col_opt=None, clue_col_opt=None):
     cols_raw = header[:]
-    cols = [h.strip().lower().lstrip('\ufeff') for h in header]
+    cols = [h.strip().lower().lstrip("\ufeff") for h in header]
     word_idx = clue_idx = None
 
     if word_col_opt:
@@ -123,8 +136,7 @@ def select_existing_id_and_opis(conn: sqlite3.Connection, geslo: str):
     return None, None
 
 
-def pair_exists_elsewhere(conn: sqlite3.Connection, geslo: str, opis: str,
-                          exclude_id: int) -> bool:
+def pair_exists_elsewhere(conn: sqlite3.Connection, geslo: str, opis: str, exclude_id: int) -> bool:
     row = conn.execute(
         "SELECT 1 FROM slovar WHERE lower(geslo)=lower(?) AND opis=? AND id<>? LIMIT 1;",
         (geslo, opis, exclude_id),
@@ -146,11 +158,15 @@ def upsert_row(conn: sqlite3.Connection, geslo: str, opis: str, overwrite: bool)
 
     if not geslo:
         return ("skip", None)
+
+    # Ne ruši obstoječih opisov s praznim
     if not opis:
         existing_id, _ = select_existing_id_and_opis(conn, geslo)
         return ("skip", existing_id)
 
     existing_id, existing_opis = select_existing_id_and_opis(conn, geslo)
+
+    # Insert
     if existing_id is None:
         if exact_pair_exists(conn, geslo, opis):
             return ("skip", None)
@@ -163,14 +179,12 @@ def upsert_row(conn: sqlite3.Connection, geslo: str, opis: str, overwrite: bool)
         except sqlite3.IntegrityError:
             return ("skip", None)
 
+    # Update
     if opis != (existing_opis or "") and (overwrite or not existing_opis):
         if pair_exists_elsewhere(conn, geslo, opis, existing_id):
             return ("skip", existing_id)
         try:
-            conn.execute(
-                "UPDATE slovar SET opis=? WHERE id=?;",
-                (opis, existing_id),
-            )
+            conn.execute("UPDATE slovar SET opis=? WHERE id=?;", (opis, existing_id))
             return ("update", existing_id)
         except sqlite3.IntegrityError:
             return ("skip", existing_id)
@@ -179,39 +193,50 @@ def upsert_row(conn: sqlite3.Connection, geslo: str, opis: str, overwrite: bool)
 
 
 def refresh_slovar_sortiran(db_path: str):
-    import sqlite3 as _sqlite3
-    con = _sqlite3.connect(db_path)
-    cur = con.cursor()
-    cur.execute("BEGIN")
-    cur.execute("CREATE TABLE IF NOT EXISTS slovar_sortiran (geslo TEXT, opis TEXT);")
-    cur.execute("DELETE FROM slovar_sortiran")
-    cur.execute("""
-        INSERT OR IGNORE INTO slovar_sortiran(geslo, opis)
-        SELECT geslo, opis
-        FROM slovar
-        ORDER BY
-          CASE
-            WHEN instr(opis, ' - ') > 0
-              THEN lower(trim(substr(opis, instr(opis, ' - ')+3)))
-            ELSE lower(opis)
-          END
-    """)
-    cur.execute("COMMIT")
-    con.close()
+    """Rebuild tabela slovar_sortiran v svoji povezavi. Če pade, naj ne sesuje uvoza."""
+    con = sqlite3.connect(db_path)
+    try:
+        con.execute("BEGIN;")
+        con.execute("CREATE TABLE IF NOT EXISTS slovar_sortiran (geslo TEXT, opis TEXT);")
+        con.execute("DELETE FROM slovar_sortiran;")
+        con.execute("""
+            INSERT OR IGNORE INTO slovar_sortiran(geslo, opis)
+            SELECT geslo, opis
+            FROM slovar
+            ORDER BY
+              CASE
+                WHEN instr(opis, ' - ') > 0
+                  THEN lower(trim(substr(opis, instr(opis, ' - ')+3)))
+                ELSE lower(opis)
+              END
+        """)
+        con.execute("COMMIT;")
+    except Exception:
+        try:
+            if con.in_transaction:
+                con.execute("ROLLBACK;")
+        except Exception:
+            pass
+        raise
+    finally:
+        con.close()
 
 
-def run(csv_path: str,
-        db_path: str,
-        word_col: str = None,
-        clue_col: str = None,
-        encoding: str = None,
-        overwrite: bool = True,
-        dry_run: bool = False,
-        commit_every: int = 1000,
-        verbose: bool = False,
-        only_citation_contains: str | None = None,
-        import_all: bool = False,
-        refresh_sortiran: bool = True):
+def run(
+    csv_path: str,
+    db_path: str,
+    word_col: str | None = None,
+    clue_col: str | None = None,
+    encoding: str | None = None,
+    overwrite: bool = True,
+    dry_run: bool = False,
+    commit_every: int = 1000,
+    verbose: bool = False,
+    only_citation_contains: str | None = None,
+    import_all: bool = False,
+    refresh_sortiran: bool = True,
+):
+    _safe_reconfigure_stdio()
 
     db_existed = os.path.exists(db_path)
 
@@ -220,27 +245,23 @@ def run(csv_path: str,
 
     with f:
         reader = csv.reader(f, dialect=dialect)
+
         header = next(reader, None)
         if not header:
-            print("❌ CSV je prazen ali nima glave.")
+            print("ERROR: CSV je prazen ali nima glave/prve vrstice.")
             sys.exit(1)
 
-        w_idx, c_idx, cols_raw, looks_like_header = detect_columns(
-            header, word_col, clue_col
-        )
+        w_idx, c_idx, cols_raw, looks_like_header = detect_columns(header, word_col, clue_col)
 
-        no_header = False
         if w_idx is None or c_idx is None:
             if not looks_like_header:
                 w_idx, c_idx = 0, 1
-                no_header = True
             else:
-                print(
-                    f"❌ Ne najdem stolpcev za geslo/word in opis/clue v glavi: {header}"
-                )
-                print("   Uporabi npr.: --word-col Answer --clue-col Clue")
+                print(f"ERROR: Ne najdem stolpcev za geslo/word in opis/clue v glavi: {header}")
+                print("       Uporabi npr.: --word-col Answer --clue-col Clue")
                 sys.exit(1)
 
+        # Citation indeks
         citation_idx = None
         if looks_like_header:
             for i, h in enumerate([h.strip().lower() for h in cols_raw]):
@@ -248,15 +269,16 @@ def run(csv_path: str,
                     citation_idx = i
                     break
         else:
+            # brez headerja: CC tipično: Word, Clue, Date, Citation
             if len(header) > 3:
                 citation_idx = 3
 
+        # --all vedno izklopi filter
         if import_all:
             only_citation_contains = None
+
         if (only_citation_contains is not None) and (citation_idx is None):
-            print(
-                "❌ Zahtevan je filter po Citation, a stolpec 'Citation' v CSV ne obstaja."
-            )
+            print("ERROR: Zahtevan je filter po Citation, a stolpec 'Citation' v CSV ne obstaja.")
             sys.exit(1)
 
         with closing(sqlite3.connect(db_path)) as conn:
@@ -269,40 +291,28 @@ def run(csv_path: str,
 
             inserted = updated = skipped = 0
             filtered_out = 0
-            batch = 0
+            processed = 0
 
             if verbose:
-                mode = "ALL (brez filtra)" if import_all or (
-                    only_citation_contains is None
-                ) else f"Citation contains '{only_citation_contains}'"
-                print(
-                    f"[run] mode = {mode}; encoding={used_enc}; "
-                    f"delimiter='{getattr(dialect, 'delimiter', ',')}', "
-                    f"header={'DA' if looks_like_header else 'NE'}"
+                mode = "ALL (brez filtra)" if (import_all or only_citation_contains is None) else (
+                    f"Citation contains '{only_citation_contains}'"
                 )
+                delim = getattr(dialect, "delimiter", ",")
+                print(f"[run] mode = {mode}; encoding={used_enc}; delimiter='{delim}', header={'DA' if looks_like_header else 'NE'}")
+
+            def row_passes_filter(row_) -> bool:
+                if only_citation_contains is None:
+                    return True
+                cit = row_[citation_idx] if (citation_idx is not None and citation_idx < len(row_)) else ""
+                return (only_citation_contains.lower() in (cit or "").lower())
 
             try:
                 conn.execute("BEGIN;")
 
+                # Če ni headerja, je 'header' dejansko prva data vrstica
                 if not looks_like_header:
                     row = header
-                    if only_citation_contains is not None:
-                        cit = row[citation_idx] if (
-                            citation_idx is not None and citation_idx < len(row)
-                        ) else ""
-                        if only_citation_contains.lower() not in (cit or "").lower():
-                            filtered_out += 1
-                        else:
-                            word = row[w_idx] if w_idx < len(row) else ""
-                            clue = row[c_idx] if c_idx < len(row) else ""
-                            action, _ = upsert_row(conn, word, clue, overwrite=overwrite)
-                            if action == "insert":
-                                inserted += 1
-                            elif action == "update":
-                                updated += 1
-                            else:
-                                skipped += 1
-                    else:
+                    if row and row_passes_filter(row):
                         word = row[w_idx] if w_idx < len(row) else ""
                         clue = row[c_idx] if c_idx < len(row) else ""
                         action, _ = upsert_row(conn, word, clue, overwrite=overwrite)
@@ -312,19 +322,17 @@ def run(csv_path: str,
                             updated += 1
                         else:
                             skipped += 1
+                        processed += 1
+                    else:
+                        filtered_out += 1
 
-                batch = 0
                 for row in reader:
                     if not row:
                         continue
 
-                    if only_citation_contains is not None:
-                        cit = row[citation_idx] if (
-                            citation_idx is not None and citation_idx < len(row)
-                        ) else ""
-                        if only_citation_contains.lower() not in (cit or "").lower():
-                            filtered_out += 1
-                            continue
+                    if not row_passes_filter(row):
+                        filtered_out += 1
+                        continue
 
                     word = row[w_idx] if w_idx < len(row) else ""
                     clue = row[c_idx] if c_idx < len(row) else ""
@@ -337,18 +345,18 @@ def run(csv_path: str,
                     else:
                         skipped += 1
 
-                    batch += 1
-                    if verbose and batch % 20000 == 0:
-                        print(
-                            f"… obdelanih {batch} (➕ {inserted}, ✏️ {updated}, "
-                            f"⏭️ {skipped}, 🔎 filter out {filtered_out})"
-                        )
-                    if batch % commit_every == 0 and not dry_run:
+                    processed += 1
+
+                    if processed % commit_every == 0 and not dry_run:
                         conn.execute("COMMIT;")
                         conn.execute("BEGIN;")
 
+                    if verbose and processed % 20000 == 0:
+                        print(f"... obdelanih {processed} (+ {inserted}, * {updated}, >> {skipped}, filter_out {filtered_out})")
+
                 if dry_run:
-                    conn.execute("ROLLBACK;")
+                    if conn.in_transaction:
+                        conn.execute("ROLLBACK;")
                 else:
                     conn.execute("COMMIT;")
 
@@ -356,37 +364,41 @@ def run(csv_path: str,
                         try:
                             refresh_slovar_sortiran(db_path)
                             if verbose:
-                                print(
-                                    "🔄 slovar_sortiran: osvežen (sort po delu za ' - ')"
-                                )
+                                print("[refresh] slovar_sortiran: osvezen (sort po delu za ' - ')")
                         except Exception as e:
-                            print(f"⚠️  slovar_sortiran refresh ni uspel: {e}")
+                            print(f"[warn] slovar_sortiran refresh ni uspel: {e}")
+
             except KeyboardInterrupt:
+                # Če user prekine: commitaj, kar je že v batchih (razen dry-run), pa dvigni naprej
                 if not dry_run:
-                    conn.execute("COMMIT;")
+                    try:
+                        if conn.in_transaction:
+                            conn.execute("COMMIT;")
+                    except Exception:
+                        pass
                 raise
             except Exception:
-                conn.execute("ROLLBACK;")
+                try:
+                    if conn.in_transaction:
+                        conn.execute("ROLLBACK;")
+                except Exception:
+                    pass
                 raise
 
-    delim = getattr(dialect, 'delimiter', ',')
-    print("──────── Povzetek ────────")
-    print(
-        f"📄 CSV:        {csv_path}  (encoding: {used_enc}, delimiter: {delim})"
-    )
-    print(
-        f"🗄️  Baza:       {db_path}  ({'obstajala' if db_existed else 'nova'})"
-    )
+    delim = getattr(dialect, "delimiter", ",")
+    print("-------- Povzetek --------")
+    print(f"CSV:  {csv_path}  (encoding: {used_enc}, delimiter: {delim})")
+    print(f"DB:   {db_path}  ({'obstajala' if db_existed else 'nova'})")
     if only_citation_contains is not None:
-        print(f"🔎 Filter:     Citation contains \"{only_citation_contains}\"")
-        print(f"🚫 Preskočenih zaradi filtra: {filtered_out}")
+        print(f"Filter: Citation contains '{only_citation_contains}'")
+        print(f"Filter_out: {filtered_out}")
     else:
-        print("🔎 Filter:     (brez) — uvožene vse vrstice")
-    print(f"➕ Dodanih:    {inserted}")
-    print(f"✏️  Posodobljenih: {updated}")
-    print(f"⏭️  Preskočenih:   {skipped}")
-    print(f"🔁 Overwrite:  {'DA' if overwrite else 'NE'}")
-    print("──────────────────────────")
+        print("Filter: (brez) - uvozene vse vrstice")
+    print(f"Inserted: {inserted}")
+    print(f"Updated:  {updated}")
+    print(f"Skipped:  {skipped}")
+    print(f"Overwrite: {'DA' if overwrite else 'NE'}")
+    print("--------------------------")
 
     return {
         "inserted": inserted,
@@ -399,72 +411,30 @@ def run(csv_path: str,
 
 
 def main():
-    ap = argparse.ArgumentParser(
-        description="Uvoz CC CSV v VUS.db (tabela 'slovar')."
-    )
+    ap = argparse.ArgumentParser(description="Uvoz CC CSV v VUS.db (tabela 'slovar').")
     ap.add_argument("csv", help="Pot do .csv (npr. out/cc_clues_UTF8.csv)")
     ap.add_argument("db", help="Pot do SQLite baze (npr. VUS.db)")
-    ap.add_argument(
-        "--word-col",
-        help="Ime stolpca za geslo (npr. Answer/Word/Geslo)",
-        default=None,
-    )
-    ap.add_argument(
-        "--clue-col",
-        help="Ime stolpca za opis (npr. Clue/Opis/Definition)",
-        default=None,
-    )
-    ap.add_argument(
-        "--encoding", help="Prisili kodiranje (utf-8, cp1250, ...)", default=None
-    )
-    ap.add_argument(
-        "--no-overwrite",
-        action="store_true",
-        help="Ne prepisuj obstoječih opisov (posodobi samo, če je prazen).",
-    )
-    ap.add_argument(
-        "--dry-run", action="store_true", help="Samo simulacija brez zapisovanja."
-    )
-    ap.add_argument(
-        "--commit-every",
-        type=int,
-        default=1000,
-        help="Commit na N vrstic (privzeto 1000).",
-    )
-    ap.add_argument(
-        "--verbose", action="store_true", help="Vmesni izpisi napredka."
-    )
 
-    ap.add_argument(
-        "--only-citation-contains",
-        default="vpis",
-        help="Uvozi samo vrstice, kjer Citation vsebuje to vrednost (npr. 'vpis').",
-    )
+    ap.add_argument("--word-col", default=None, help="Ime stolpca za geslo (npr. Answer/Word/Geslo)")
+    ap.add_argument("--clue-col", default=None, help="Ime stolpca za opis (npr. Clue/Opis/Definition)")
+    ap.add_argument("--encoding", default=None, help="Prisili kodiranje (utf-8, cp1250, ...)")
 
-    ap.add_argument(
-        "--all",
-        dest="import_all",
-        action="store_true",
-        default=False,
-        help="Ignoriraj Citation filter in uvozi vse vrstice (ALL mode).",
-    )
+    ap.add_argument("--no-overwrite", action="store_true",
+                    help="Ne prepisuj obstoječih opisov (posodobi samo, če je prazen).")
+    ap.add_argument("--dry-run", action="store_true", help="Samo simulacija brez zapisovanja.")
+    ap.add_argument("--commit-every", type=int, default=1000, help="Commit na N vrstic (privzeto 1000).")
+    ap.add_argument("--verbose", action="store_true", help="Vmesni izpisi napredka.")
 
-    ap.add_argument(
-        "--refresh-sortiran",
-        dest="refresh_sortiran",
-        action="store_true",
-        default=True,
-        help=(
-            "Po uvozu rebuild slovar_sortiran z abecednim redom po delu za ' - ' "
-            "(privzeto vklopljeno)."
-        ),
-    )
-    ap.add_argument(
-        "--no-refresh-sortiran",
-        dest="refresh_sortiran",
-        action="store_false",
-        help="Ne rebuildaj slovar_sortiran po uvozu.",
-    )
+    ap.add_argument("--only-citation-contains", default=None,
+                    help="Uvozi samo vrstice, kjer Citation vsebuje to vrednost (npr. 'vpis').")
+
+    ap.add_argument("--all", dest="import_all", action="store_true", default=False,
+                    help="Ignoriraj Citation filter in uvozi vse vrstice (ALL mode).")
+
+    ap.add_argument("--refresh-sortiran", dest="refresh_sortiran", action="store_true", default=True,
+                    help="Po uvozu rebuild slovar_sortiran (privzeto vklopljeno).")
+    ap.add_argument("--no-refresh-sortiran", dest="refresh_sortiran", action="store_false",
+                    help="Ne rebuildaj slovar_sortiran po uvozu.")
 
     args = ap.parse_args()
 
