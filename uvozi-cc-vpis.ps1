@@ -1,9 +1,9 @@
-# uvozi-cc-vpis-only.ps1
+﻿# uvozi-cc-vpis.ps1
 # Uvoz CC CSV → MASTER VUS.db, samo Citation vsebuje "vpis"
 
 [CmdletBinding()]
 param(
-    # CSV export iz Crossword Compilerja
+    # CSV export iz Crossword Compilerja (Desktop je pri tebi v OneDrive)
     [string]$CsvPath = "$([Environment]::GetFolderPath('Desktop'))\cc_clues_DISPLAY_UTF8.csv",
 
     # MASTER baza
@@ -13,7 +13,7 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-Write-Host ">>> uvozi-cc-vpis-only.ps1 SE JE ZAGNAL" -ForegroundColor Yellow
+Write-Host ">>> uvozi-cc-vpis.ps1 SE JE ZAGNAL" -ForegroundColor Yellow
 Write-Host "CSV: $CsvPath"
 Write-Host "DB:  $DbPath"
 
@@ -30,14 +30,16 @@ if ($dir -and -not (Test-Path -LiteralPath $dir)) {
 
 $python = "python"
 
+# argumenti za python importer (VPIS-only)
 $arguments = @(
-    ".\uvozi_cc_delta_v_sqlite.py"
-    $CsvPath
-    $DbPath
-    "--only-citation-contains"
+    ".\uvozi_cc_delta_v_sqlite.py",
+    $CsvPath,
+    $DbPath,
+    "--only-citation-contains",
     "vpis"
 )
 
+# če je bil podan -Verbose, dodaj python --verbose
 if ($PSBoundParameters.ContainsKey('Verbose')) {
     $arguments += "--verbose"
 }

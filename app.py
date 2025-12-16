@@ -428,24 +428,32 @@ def preveri_geslo():
         q = data.get("geslo") or request.form.get("geslo") or ""
     else:
         q = request.args.get("geslo") or request.args.get("q") or ""
+
     q = (q or "").strip()
     if not q:
         return jsonify(ok=False, error="Manjka 'geslo'."), 400
 
+    # normalizacija: NBSP -> space, collapse spaces, in key brez presledkov
+    q_norm = q.replace("\u00A0", " ")
+    q_norm = " ".join(q_norm.split())
+    q_key = q_norm.replace(" ", "").lower()
+
     try:
         con = get_conn(readonly=True)
 
-        # 1) preštej vse zadetke (case-insensitive)
+        # 1) preštej vse zadetke (case-insensitive, ignorira presledke)
         row = con.execute(
-            "SELECT COUNT(*) FROM slovar WHERE geslo = ? COLLATE NOCASE;",
-            (q,),
+            "SELECT COUNT(*) FROM slovar "
+            "WHERE replace(lower(geslo), ' ', '') = ?;",
+            (q_key,),
         ).fetchone()
         count = int(row[0] or 0)
 
-        # 2) opcijsko pobereš še vse natančne zapise (če jih hočeš videt)
+        # 2) pobereš še vse zadetke (dejanski zapis gesla v bazi)
         rows = con.execute(
-            "SELECT geslo FROM slovar WHERE geslo = ? COLLATE NOCASE;",
-            (q,),
+            "SELECT geslo FROM slovar "
+            "WHERE replace(lower(geslo), ' ', '') = ?;",
+            (q_key,),
         ).fetchall()
         exact = [r[0] for r in rows]
 
@@ -454,7 +462,7 @@ def preveri_geslo():
         return jsonify(
             ok=True,
             exists=(count > 0),
-            geslo=q,
+            geslo=q_norm,
             exact=exact,
             count=count,
         )
@@ -462,10 +470,10 @@ def preveri_geslo():
         return jsonify(ok=False, error=str(e)), 500
 
 
-
 @app.route("/api/preveri_geslo", methods=["GET", "POST"], endpoint="api_preveri_geslo")
 def api_preveri_geslo():
     return preveri_geslo()
+
 
 @app.get("/api/gesla_admin")
 def api_gesla_admin():
@@ -477,12 +485,17 @@ def api_gesla_admin():
     if not q:
         return jsonify(ok=False, msg="Manjka 'geslo'."), 400
 
+    # normalizacija: NBSP -> space, collapse spaces, in key brez presledkov
+    q_norm = q.replace("\u00A0", " ")
+    q_norm = " ".join(q_norm.split())
+    q_key = q_norm.replace(" ", "").lower()
+
     con = get_conn(readonly=True)
     cur = con.cursor()
 
     # preberi stolpce v tabeli slovar
     cols_raw = list(cur.execute("PRAGMA table_info(slovar);"))
-    name_map = { (row[1] or "").lower(): row[1] for row in cols_raw }
+    name_map = {(row[1] or "").lower(): row[1] for row in cols_raw}
 
     # poskusi najti stolpec za opis/razlago (case-insensitive)
     desc_col = None
@@ -494,8 +507,13 @@ def api_gesla_admin():
     results = []
 
     if desc_col:
-        sql = f"SELECT id, geslo, {desc_col} FROM slovar WHERE geslo = ? COLLATE NOCASE ORDER BY id;"
-        rows = cur.execute(sql, (q,)).fetchall()
+        sql = f"""
+            SELECT id, geslo, {desc_col}
+            FROM slovar
+            WHERE replace(lower(geslo), ' ', '') = ?
+            ORDER BY id;
+        """
+        rows = cur.execute(sql, (q_key,)).fetchall()
         for rid, g, desc in rows:
             results.append({
                 "id": rid,
@@ -503,9 +521,13 @@ def api_gesla_admin():
                 "razlaga": desc or "",
             })
     else:
-        # fallback, če v tabeli sploh ni opisnega stolpca
-        sql = "SELECT id, geslo FROM slovar WHERE geslo = ? COLLATE NOCASE ORDER BY id;"
-        rows = cur.execute(sql, (q,)).fetchall()
+        sql = """
+            SELECT id, geslo
+            FROM slovar
+            WHERE replace(lower(geslo), ' ', '') = ?
+            ORDER BY id;
+        """
+        rows = cur.execute(sql, (q_key,)).fetchall()
         for rid, g in rows:
             results.append({
                 "id": rid,
