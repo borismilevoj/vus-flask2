@@ -41,17 +41,34 @@ Write-Host ""
 
 # PowerShell 5.1 safe logging (da dobiš tudi stderr v log)
 $logPath = Join-Path $PSScriptRoot "uvoz-all.log"
-$cmd = @(
-    "`"$python`"",
-    ($arguments | ForEach-Object { if($_ -match '\s') { "`"$_`"" } else { $_ } })
-) -join " "
 
-cmd /c "$cmd 1> `"$logPath`" 2>&1"
+$psi = New-Object System.Diagnostics.ProcessStartInfo
+$psi.FileName = $python
+$psi.ArgumentList.Add(".\uvozi_cc_delta_v_sqlite.py")
+$psi.ArgumentList.Add($CsvPath)
+$psi.ArgumentList.Add($DbPath)
+$psi.ArgumentList.Add("--all")
+$psi.ArgumentList.Add("--verbose")
+$psi.RedirectStandardOutput = $true
+$psi.RedirectStandardError  = $true
+$psi.UseShellExecute = $false
+$psi.CreateNoWindow = $true
 
+$p = New-Object System.Diagnostics.Process
+$p.StartInfo = $psi
+[void]$p.Start()
+
+$stdout = $p.StandardOutput.ReadToEnd()
+$stderr = $p.StandardError.ReadToEnd()
+$p.WaitForExit()
+
+$stdout + $stderr | Set-Content -Encoding UTF8 $logPath
 Get-Content $logPath -Tail 80
-if ($LASTEXITCODE -ne 0) {
-    throw "Uvoz ni uspel (exit $LASTEXITCODE). Poglej log: $logPath"
+
+if ($p.ExitCode -ne 0) {
+    throw "Uvoz ni uspel (exit $($p.ExitCode)). Poglej log: $logPath"
 }
+
 
 Write-Host ""
 Write-Host "✓ Uvoz (ALL) zaključen. Log: $logPath" -ForegroundColor Green
