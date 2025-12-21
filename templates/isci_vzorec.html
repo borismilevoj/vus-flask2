@@ -308,5 +308,16 @@
     if (rez) rez.innerHTML = '';
   };
 </script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  document.addEventListener("click", function (e) {
+    if (e.target.closest && e.target.closest("#btn-isci")) {
+      console.log("[DBG] click on IŠČI detected");
+    }
+  });
+});
+</script>
+{% endblock %}
+
 {% endblock %}
 

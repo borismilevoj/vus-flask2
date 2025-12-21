@@ -272,6 +272,12 @@ def isci_vzorec_api():
         con = get_conn(readonly=True)
         cur = con.cursor()
 
+        db_list = cur.execute("PRAGMA database_list;").fetchall()
+        print("DB LIST (isci_vzorec):", db_list, file=sys.stderr, flush=True)
+
+        # še en “marker”, da 100% vidiš, da je del kode šel čez
+        print("MARK: after PRAGMA database_list", file=sys.stderr, flush=True)
+
         # PRAGMA: preberi imena stolpcev v 'slovar'
         cols_raw = list(cur.execute("PRAGMA table_info(slovar);"))
         name_map = {(row[1] or "").lower(): row[1] for row in cols_raw}
@@ -333,7 +339,10 @@ def isci_vzorec_api():
                 sql += f" AND {geslo_col} LIKE ? COLLATE NOCASE"
             params.append(f"%{dodatno}%")
 
-        sql += f" ORDER BY {geslo_col} LIMIT 500;"
+        if desc_col:
+            sql += f" ORDER BY {desc_col} COLLATE NOCASE, {geslo_col} COLLATE NOCASE LIMIT 500;"
+        else:
+            sql += f" ORDER BY {geslo_col} COLLATE NOCASE LIMIT 500;"
 
         # debug: izpiši SQL in parametre
         print("isci_vzorec_api SQL:", sql, "params:", params, file=sys.stderr)
