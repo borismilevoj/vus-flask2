@@ -126,7 +126,7 @@ def get_conn(readonly: bool = False) -> sqlite3.Connection:
         s, is_uri = DB_URI, True
     else:
         if readonly:
-            s, is_uri = f"file:{DB_PATH.as_posix()}?mode=ro&cache=shared&immutable=1", True
+            s, is_uri = f"file:{DB_PATH.resolve().as_posix()}?mode=ro&cache=shared&immutable=1", True
         else:
             s, is_uri = str(DB_PATH), False
     con = sqlite3.connect(s, uri=is_uri, timeout=10.0, check_same_thread=False, isolation_level=None)
@@ -271,6 +271,7 @@ def isci_vzorec_api():
 
         con = get_conn(readonly=True)
         cur = con.cursor()
+        table = "slovar_sortiran"
 
         db_list = cur.execute("PRAGMA database_list;").fetchall()
         print("DB LIST (isci_vzorec):", db_list, file=sys.stderr, flush=True)
@@ -279,7 +280,7 @@ def isci_vzorec_api():
         print("MARK: after PRAGMA database_list", file=sys.stderr, flush=True)
 
         # PRAGMA: preberi imena stolpcev v 'slovar'
-        cols_raw = list(cur.execute("PRAGMA table_info(slovar);"))
+        cols_raw = list(cur.execute(f"PRAGMA table_info({table});"))
         name_map = {(row[1] or "").lower(): row[1] for row in cols_raw}
 
         # stolpec za geslo (GESLO / geslo / word ...)
@@ -303,7 +304,7 @@ def isci_vzorec_api():
             con.close()
             return jsonify({
                 "ok": False,
-                "error": "V tabeli 'slovar' ne najdem stolpca za geslo.",
+                "error": f"V tabeli '{table}' ne najdem stolpca za geslo.",
                 "results": []
             }), 200
 
@@ -314,13 +315,15 @@ def isci_vzorec_api():
         if desc_col:
             sql = f"""
                 SELECT {geslo_col}, {desc_col}
-                FROM slovar
+                FROM {table}
                 WHERE {norm_geslo} LIKE ?
             """
+
         else:
             sql = f"""
                 SELECT {geslo_col}, ''
-                FROM slovar
+                FROM slovar_sortiran
+
                 WHERE {norm_geslo} LIKE ?
             """
 
@@ -340,7 +343,32 @@ def isci_vzorec_api():
             params.append(f"%{dodatno}%")
 
         if desc_col:
-            sql += f" ORDER BY {desc_col} COLLATE NOCASE, {geslo_col} COLLATE NOCASE LIMIT 500;"
+            has_dash = f"CASE WHEN instr({desc_col}, ' - ') > 0 THEN 0 ELSE 1 END"
+
+            after_dash = f"""
+            CASE
+              WHEN instr({desc_col}, ' - ') > 0
+              THEN substr({desc_col}, instr({desc_col}, ' - ') + 3)
+              ELSE {desc_col}
+            END
+            """
+
+            name_key = f"""
+            CASE
+              WHEN instr({after_dash}, '(') > 0
+              THEN trim(substr({after_dash}, 1, instr({after_dash}, '(') - 1))
+              ELSE trim({after_dash})
+            END
+            """
+
+            sql += f"""
+              ORDER BY
+                {has_dash},                             -- najprej tisti z ' - '
+                {name_key} COLLATE NOCASE,              -- potem po imenu
+                {desc_col} COLLATE NOCASE,              -- stabilnost
+                {geslo_col} COLLATE NOCASE
+              LIMIT 500;
+            """
         else:
             sql += f" ORDER BY {geslo_col} COLLATE NOCASE LIMIT 500;"
 
