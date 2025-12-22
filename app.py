@@ -1380,6 +1380,26 @@ def api_upload_sliko():
 
 
 # ===== Run ====================================================================
+import os
+from flask import request, jsonify, abort, render_template_string
+from pathlib import Path
+
+@app.get("/admin/upload-cc")
+def admin_upload_cc_form():
+    key = request.args.get("key")
+    if key != os.environ.get("ADMIN_KEY"):
+        abort(403)
+
+    return render_template_string("""
+    <h2>Upload CC CSV</h2>
+    <p>Upload cc_clues_UTF8.csv</p>
+    <form method="post" enctype="multipart/form-data">
+      <input type="file" name="file" />
+      <button type="submit">Upload</button>
+    </form>
+    """)
+
+
 @app.post("/admin/upload-cc")
 def admin_upload_cc():
     key = request.args.get("key")
