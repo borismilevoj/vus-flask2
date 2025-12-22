@@ -445,14 +445,32 @@ def debug_slovar():
 
 
 # ===== API: števec (COUNT slovar) ============================================
+from pathlib import Path
+import os
+
+def _resolve_cc_clues_file() -> Path:
+    # 1) Render override (najbolj ziher)
+    envp = (os.getenv("CC_CLUES_PATH") or "").strip()
+    if envp:
+        return Path(envp)
+
+    # 2) lokalno: projekt/out/cc_clues_UTF8.csv
+    return Path(__file__).resolve().parent / "out" / "cc_clues_UTF8.csv"
+
+def _count_nonempty_lines(p: Path) -> int:
+    n = 0
+    with p.open("rb") as f:
+        for line in f:
+            if line.strip():
+                n += 1
+    return n
+
 @app.get("/api/stevec", endpoint="api_stevec")
 def api_stevec():
     try:
-        dbp = DB_PATH.as_posix() if hasattr(DB_PATH, "as_posix") else str(DB_PATH)
-        con = sqlite3.connect(f"file:{dbp}?mode=ro&cache=shared", uri=True, timeout=5.0, check_same_thread=False)
-        n = int(con.execute("SELECT COUNT(*) FROM slovar;").fetchone()[0] or 0)
-        con.close()
-        return jsonify(ok=True, count=n)
+        p = _resolve_cc_clues_file()
+        n = _count_nonempty_lines(p)
+        return jsonify(ok=True, count=n, source=str(p))
     except Exception as e:
         return jsonify(ok=False, msg=str(e), count=0), 500
 
@@ -1351,6 +1369,27 @@ def api_upload_sliko():
 
 
 # ===== Run ====================================================================
+@app.post("/admin/upload-cc")
+def admin_upload_cc():
+    key = request.args.get("key")
+    if key != os.environ.get("ADMIN_KEY"):
+        abort(403)
+
+    if "file" not in request.files:
+        return jsonify(ok=False, msg="Manjka file"), 400
+
+    f = request.files["file"]
+    if not f.filename:
+        return jsonify(ok=False, msg="Prazen filename"), 400
+
+    out_path = Path("/var/data/cc_clues_UTF8.csv")  # Render disk mount
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    f.save(str(out_path))
+
+    return jsonify(ok=True, saved=str(out_path))
+
+
+
 if __name__ == "__main__":
     # Na Windows/PyCharm včasih pomaga izklop reloaderja
     os.environ.pop("WERKZEUG_SERVER_FD", None)
