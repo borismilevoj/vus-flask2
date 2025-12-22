@@ -1419,6 +1419,21 @@ def admin_upload_cc():
 
     return jsonify(ok=True, saved=str(out_path))
 
+@app.get("/api/stevec-debug")
+def api_stevec_debug():
+    import os
+    from pathlib import Path
+
+    p = os.getenv("CC_CLUES_PATH", "")
+    exists = os.path.exists(p) if p else False
+
+    files = []
+    try:
+        files = sorted([x.name for x in Path("/var/data").glob("*")])
+    except Exception as e:
+        files = [f"ERR: {e}"]
+
+    return jsonify(ok=True, cc_clues_path=p, exists=exists, var_data=files)
 
 
 if __name__ == "__main__":
