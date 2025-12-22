@@ -468,11 +468,22 @@ def _count_nonempty_lines(p: Path) -> int:
 @app.get("/api/stevec", endpoint="api_stevec")
 def api_stevec():
     try:
-        p = _resolve_cc_clues_file()
-        n = _count_nonempty_lines(p)
-        return jsonify(ok=True, count=n, source=str(p))
+        import os
+
+        cc_path = os.getenv("CC_CLUES_PATH")
+
+        if not cc_path or not os.path.exists(cc_path):
+            return jsonify(ok=False, msg="CC_CLUES_PATH ne obstaja", count=0), 500
+
+        with open(cc_path, "r", encoding="utf-8", errors="ignore") as f:
+            # -1 če ima CSV header
+            n = sum(1 for _ in f) - 1
+
+        return jsonify(ok=True, count=n)
+
     except Exception as e:
         return jsonify(ok=False, msg=str(e), count=0), 500
+
 
 
 # ===== PREVERI GESLO (exact, NOCASE) + API alias =============================
