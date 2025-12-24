@@ -470,7 +470,7 @@ def api_stevec():
     try:
         import os
 
-        cc_path = os.getenv("CC_CLUES_PATH")
+        cc_path = (os.getenv("CC_CLUES_PATH") or "").strip()
 
         if not cc_path or not os.path.exists(cc_path):
             return jsonify(ok=False, msg="CC_CLUES_PATH ne obstaja", count=0), 500
@@ -1384,15 +1384,16 @@ import os
 from flask import request, jsonify, abort, render_template_string
 from pathlib import Path
 
+from flask import render_template_string
+
 @app.get("/admin/upload-cc")
 def admin_upload_cc_form():
     key = request.args.get("key")
-    if key != os.environ.get("ADMIN_KEY"):
+    if key != (os.environ.get("ADMIN_KEY") or "").strip():
         abort(403)
 
     return render_template_string("""
     <h2>Upload CC CSV</h2>
-    <p>Upload cc_clues_UTF8.csv</p>
     <form method="post" enctype="multipart/form-data">
       <input type="file" name="file" />
       <button type="submit">Upload</button>
@@ -1400,31 +1401,35 @@ def admin_upload_cc_form():
     """)
 
 
+
+import os
+from pathlib import Path
+from flask import request, jsonify, abort
+
 @app.post("/admin/upload-cc")
 def admin_upload_cc():
     key = request.args.get("key")
-    if key != os.environ.get("ADMIN_KEY"):
+    if key != (os.environ.get("ADMIN_KEY") or "").strip():
         abort(403)
 
-    if "file" not in request.files:
+    f = request.files.get("file")
+    if not f or not f.filename:
         return jsonify(ok=False, msg="Manjka file"), 400
 
-    f = request.files["file"]
-    if not f.filename:
-        return jsonify(ok=False, msg="Prazen filename"), 400
-
-    out_path = Path("/var/data/cc_clues_UTF8.csv")  # Render disk mount
+    # pomembno: .strip() pobere \n in presledke iz env var
+    out_path = Path((os.getenv("CC_CLUES_PATH") or "/var/data/cc_clues_DISPLAY_UTF8.csv").strip())
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    f.save(str(out_path))
 
+    f.save(str(out_path))
     return jsonify(ok=True, saved=str(out_path))
+
 
 @app.get("/api/stevec-debug")
 def api_stevec_debug():
     import os
     from pathlib import Path
 
-    p = os.getenv("CC_CLUES_PATH", "")
+    p = (os.getenv("CC_CLUES_PATH") or "").strip()
     exists = os.path.exists(p) if p else False
 
     files = []
@@ -1434,6 +1439,7 @@ def api_stevec_debug():
         files = [f"ERR: {e}"]
 
     return jsonify(ok=True, cc_clues_path=p, exists=exists, var_data=files)
+
 
 
 if __name__ == "__main__":
