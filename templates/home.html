@@ -138,7 +138,14 @@
       </p>
       <div class="vus-hero-badges">
         <!-- TA span bo “živ” -->
-        <span id="vus-stevec-badge">≈ 160&nbsp;000 gesel</span>
+        <span id="vus-stevec-badge">
+  {% if passwords_count %}
+    {{ "{:,}".format(passwords_count).replace(",", ".") }} gesel v bazi
+  {% else %}
+    št. gesel ni na voljo
+  {% endif %}
+</span>
+
         <span>križanke &amp; sudoku</span>
       </div>
     </div>
@@ -248,66 +255,3 @@
 </div>
 {% endblock %}
 
-{% block scripts %}
-<script>
-  document.addEventListener('DOMContentLoaded', function () {
-    const badge = document.getElementById('vus-stevec-badge');
-    if (!badge) return;
-
-    // najprej pokažemo, da nalaga
-    badge.textContent = '… gesel v bazi';
-
-    function applyCount(data) {
-      let n = null;
-
-      if (typeof data === 'number') {
-        n = data;
-      } else if (data && typeof data.count === 'number') {
-        n = data.count;
-      } else if (data && typeof data.stevec === 'number') {
-        n = data.stevec;
-      } else if (data && data.data && typeof data.data.count === 'number') {
-        n = data.data.count;
-      }
-
-      if (n != null) {
-        badge.textContent = n.toLocaleString('sl-SI') + ' gesel v bazi';
-        return true;
-      }
-      console.warn('Nepričakovan format podatkov za števec:', data);
-      return false;
-    }
-
-    // 1) poskusi /api/stevec
-    fetch('/api/stevec', { cache: 'no-store' })
-      .then(function (res) {
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        return res.json();
-      })
-      .then(function (data) {
-        if (!applyCount(data)) {
-          throw new Error('Nepričakovan format /api/stevec');
-        }
-      })
-      .catch(function (err) {
-        console.warn('API /api/stevec ni uspel:', err);
-
-        // 2) fallback: /debug_slovar
-        fetch('/debug_slovar', { cache: 'no-store' })
-          .then(function (res) {
-            if (!res.ok) throw new Error('HTTP ' + res.status);
-            return res.json();
-          })
-          .then(function (data) {
-            if (!applyCount(data)) {
-              badge.textContent = 'št. gesel ni na voljo';
-            }
-          })
-          .catch(function (err2) {
-            console.error('Tudi /debug_slovar je padel:', err2);
-            badge.textContent = 'št. gesel ni na voljo';
-          });
-      });
-  });
-</script>
-{% endblock %}

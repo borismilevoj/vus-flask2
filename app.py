@@ -142,8 +142,20 @@ app.secret_key = "boris-vus-krizanka-1234567890"
 # ali katerikoli drug dolg string, samo da NI None/prazen
 
 from pathlib import Path
-import re
-import unicodedata
+
+# ... app = Flask(__name__) ...
+
+COUNT_FILE = Path(app.root_path) / "data" / "count.txt"
+
+def read_passwords_count():
+    try:
+        txt = COUNT_FILE.read_text(encoding="utf-8").strip()
+        return int(txt.replace(".", "").replace(" ", ""))
+    except Exception as e:
+        print("COUNT_FILE problem:", COUNT_FILE, "exists=", COUNT_FILE.exists(), "err=", e)
+        return None
+
+
 
 ALLOWED_IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".webp"}
 
@@ -216,9 +228,11 @@ def login_required(f):
 
 
 # ===== Home + favicon ========================================================
-@app.get("/", endpoint="home")
+@app.get("/")
 def home():
-    return render_template("home.html")
+    passwords_count = read_passwords_count()
+    return render_template("home.html", passwords_count=passwords_count)
+
 
 
 @app.get("/home")
@@ -1440,6 +1454,13 @@ def api_stevec_debug():
 
     return jsonify(ok=True, cc_clues_path=p, exists=exists, var_data=files)
 
+@app.get("/debug_count")
+def debug_count():
+    return {
+        "count_file": str(COUNT_FILE),
+        "exists": COUNT_FILE.exists(),
+        "value": read_passwords_count(),
+    }
 
 
 if __name__ == "__main__":
