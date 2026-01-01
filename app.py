@@ -910,33 +910,46 @@ def arhiv_sudoku_pregled(tezavnost):
 
 
 
+from pathlib import Path
+from flask import abort, render_template, url_for
+
 @app.get("/sudoku/<tezavnost>/<datum>", endpoint="prikazi_sudoku")
 def sudoku_page(tezavnost, datum):
     print("DEBUG TEZAVNOST:", tezavnost)
 
-    """
-    Prikaz konkretnega sudokuja za dano težavnost in datum.
+    # normalizacija
+    tez = (tezavnost or "").strip().lower()
 
-    Iščemo fajle po vzorcu:
-      Sudoku_easy_YYYY-MM-DD.js  (in zraven HTML z istim imenom)
-    """
     folder_map = {
+        # EN
         "very_easy": "Sudoku_very_easy",
         "easy": "Sudoku_easy",
         "medium": "Sudoku_medium",
         "hard": "Sudoku_hard",
+
+        # SI aliasi (da UI lahko uporablja slovensko)
+        "zelo-lahka": "Sudoku_very_easy",
+        "zelo_lahka": "Sudoku_very_easy",
+        "zelolahka": "Sudoku_very_easy",
+
+        "lahka": "Sudoku_easy",
+
+        "srednja": "Sudoku_medium",
+
+        "tezka": "Sudoku_hard",   # brez šumnikov
+        "težka": "Sudoku_hard",
     }
 
-    sub = folder_map.get(tezavnost)
+    sub = folder_map.get(tez)
     if not sub:
-        abort(404, "Neznana težavnost sudokuja")
+        abort(404, f"Neznana težavnost sudokuja: {tezavnost}")
 
     root = Path(app.static_folder) / sub
 
     target_js = None
     if root.exists():
         for p in root.rglob("*.js"):
-            stem = p.stem  # npr. "Sudoku_easy_2025-11-01"
+            stem = p.stem
             if stem.endswith(f"_{datum}") or stem == datum:
                 target_js = p
                 break
@@ -944,22 +957,21 @@ def sudoku_page(tezavnost, datum):
     if not target_js:
         abort(404, f"Za {datum} ni sudokuja ({tezavnost}).")
 
-    # poskusi najti ustrezno HTML datoteko z istim imenom
     target_html = target_js.with_suffix(".html")
     if target_html.exists():
         sudoku_rel = target_html.relative_to(Path(app.static_folder)).as_posix()
     else:
-        # fallback: če ni HTML, uporabimo kar JS (teoretično)
         sudoku_rel = target_js.relative_to(Path(app.static_folder)).as_posix()
 
     sudoku_url = url_for("static", filename=sudoku_rel)
 
     return render_template(
         "sudoku_igra.html",
-        tezavnost=tezavnost,
+        tezavnost=tez,   # lahko pustiš tudi original, ampak tez je bolj konsistenten
         datum=datum,
         sudoku_url=sudoku_url,
     )
+
 
 
 # --- LEGACY: stari linki (današnji + arhiv) ----------------------------------
