@@ -41,5 +41,3 @@ render.yml
 
 # App-specifično
 static/Images/*.exe
-# Sudoku exporti (veliko fajlov) - NE v git
-static/Sudoku_*/

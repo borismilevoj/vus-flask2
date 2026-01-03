@@ -1,0 +1,60 @@
+﻿<!doctype html>
+<html>
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <style type="text/css">
+      BODY,
+      .Clues,
+      .GridClues {
+        font-size: 11pt;
+        font-family:
+          Times New Roman,
+          Times;
+      }
+    </style>
+    <style type="text/css">
+      .PuzTitle {
+        font-size: 15pt;
+        color: #800000;
+        font-weight: bold;
+      }
+
+      .CopyTag {
+        font-size: 10pt;
+        color: #000000;
+      }
+
+      .PuzContainer {
+        display: flex;
+        justify-content: center;
+      }
+    </style>
+
+    <meta charset="UTF-8" />
+    <title>Sudoku</title>
+    <link rel="stylesheet" href="/static/vus.css" />
+  </head>
+
+  <body text="#000000" bgcolor="#ffffff">
+    <script src="/static/CrosswordCompilerApp/jquery.js"></script>
+    <script src="/static/CrosswordCompilerApp/raphael.js"></script>
+    <script src="/static/CrosswordCompilerApp/crosswordCompiler.js"></script>
+    <script src="/static/Sudoku_very_easy/2025-06/Sudoku_very_easy_2025-06-05.js"></script>
+    <script>
+      $(function () {
+        $('#CrosswordCompilerPuz').CrosswordCompiler(CrosswordPuzzleData, null, {
+          SUBMITMETHOD: 'POST',
+          SAVE: '',
+          PROGRESS: '',
+        });
+      });
+    </script>
+    <div id="CrosswordCompilerPuz"></div>
+
+    <hr />
+  </body>
+</html>

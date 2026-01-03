@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="sl">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Sudoku - VUS</title>
+
+    <style>
+      body {
+        font-family: sans-serif;
+        text-align: center;
+        margin-top: 20px;
+      }
+      #sudoku-container {
+        display: grid;
+        grid-template-columns: repeat(9, 40px);
+        width: fit-content;
+        margin: auto;
+      }
+      .cell {
+        width: 40px;
+        height: 40px;
+        border: 1px solid #999;
+        font-size: 20px;
+        text-align: center;
+        line-height: 40px;
+      }
+    </style>
+  </head>
+  <body>
+    <script src="/static/CrosswordCompilerApp/jquery.js"></script>
+    <script src="/static/CrosswordCompilerApp/raphael.js"></script>
+    <script src="/static/CrosswordCompilerApp/crosswordCompiler.js"></script>
+    <script src="/static/Sudoku_easy/2025-05/Sudoku_easy_2025-05-20.js"></script>
+    <script>
+      $(function () {
+        $('#CrosswordCompilerPuz').CrosswordCompiler(CrosswordPuzzleData, null, {
+          SUBMITMETHOD: 'POST',
+          SAVE: '',
+          PROGRESS: '',
+        });
+      });
+    </script>
+    <div id="CrosswordCompilerPuz"></div>
+
+    <h1>Sudoku - 2025-05-20</h1>
+  </body>
+</html>
