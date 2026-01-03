@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="sl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>2026-01-03</title>
+  <style>
+    html, body { height: 100%; margin: 0; }
+    #puzzle { width: 100%; height: 100vh; }
+  </style>
+</head>
+<body>
+  <div id="puzzle"></div>
+
+  <script src="CrosswordCompilerApp/jquery.js"></script>
+  <script src="CrosswordCompilerApp/raphael.js"></script>
+  <script src="CrosswordCompilerApp/crosswordCompiler.js"></script>
+  <script src="2026-01-03.js"></script>
+<script>
+  console.log("=== Globals containing 'Puzzle' or 'Init' ===");
+  Object.keys(window)
+    .filter(k => /puzzle|init|crossword|compiler/i.test(k))
+    .sort()
+    .forEach(k => console.log(k, typeof window[k]));
+</script>
+
+  <script>
+    // CC exporti niso vedno konsistentni, zato naredimo "retry" init.
+    (function () {
+      const MAX_TRIES = 50;   // ~5s, če je 100ms interval
+      let tries = 0;
+
+      function init() {
+        // Najpogostejša funkcija v CC exportih
+        if (typeof CrosswordPuzzleDataInit === "function") {
+          try {
+            CrosswordPuzzleDataInit("puzzle");
+            return true;
+          } catch (e) {
+            console.error("CrosswordPuzzleDataInit failed:", e);
+          }
+        }
+
+        // V nekaterih exportih je init drugačen:
+        if (typeof CrosswordCompilerPuzzleInit === "function") {
+          try {
+            CrosswordCompilerPuzzleInit("puzzle");
+            return true;
+          } catch (e) {
+            console.error("CrosswordCompilerPuzzleInit failed:", e);
+          }
+        }
+
+        return false;
+      }
+
+      function loop() {
+        tries++;
+        if (init()) return;
+        if (tries >= MAX_TRIES) {
+          console.error("Sudoku init failed: no known init function found in JS export.");
+          return;
+        }
+        setTimeout(loop, 100);
+      }
+
+      window.addEventListener("load", loop);
+    })();
+  </script>
+</body>
+</html>

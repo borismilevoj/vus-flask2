@@ -859,14 +859,19 @@ def make_image_filename_from_opis(opis: str, dodatno: str = "") -> str:
 
 # --- Sudoku: arhiv + prikaz --------------------------------------------------
 
+from pathlib import Path
+from datetime import datetime, date
+from flask import abort, render_template, url_for, redirect
+
+# ------------------ ARHIV ------------------
+
 @app.get("/arhiv-sudoku/<tezavnost>", endpoint="arhiv_sudoku_pregled")
 def arhiv_sudoku_pregled(tezavnost):
     """
     Arhiv sudoku po težavnosti.
-    Datoteke so v mapah:
-      Sudoku_very_easy, Sudoku_easy, Sudoku_medium, Sudoku_hard
-    in poimenovane npr.:
-      Sudoku_easy_2025-11-01.js
+    Pričakovana struktura:
+      static/Sudoku_medium/2026-01/2026-01-03.js
+    (tj. JS je poimenovan kot datum)
     """
     folder_map = {
         "very_easy": "Sudoku_very_easy",
@@ -875,7 +880,8 @@ def arhiv_sudoku_pregled(tezavnost):
         "hard": "Sudoku_hard",
     }
 
-    sub = folder_map.get(tezavnost)
+    tez = (tezavnost or "").strip().lower()
+    sub = folder_map.get(tez)
     if not sub:
         abort(404, "Neznana težavnost sudokuja")
 
@@ -884,16 +890,14 @@ def arhiv_sudoku_pregled(tezavnost):
     datumi = []
     if root.exists():
         for p in root.rglob("*.js"):
-            stem = p.stem  # npr. "Sudoku_easy_2025-11-01"
-            if len(stem) >= 10:
-                cand = stem[-10:]  # "YYYY-MM-DD"
-                try:
-                    dt = datetime.strptime(cand, "%Y-%m-%d").date()
-                    datumi.append(dt)
-                except ValueError:
-                    continue
+            stem = p.stem  # pričakujemo "YYYY-MM-DD"
+            try:
+                dt = datetime.strptime(stem, "%Y-%m-%d").date()
+                datumi.append(dt)
+            except ValueError:
+                # ignoriraj vse "Sudoku_*_YYYY-MM-DD" ipd. če so se kdaj pojavili
+                continue
 
-    # skrij prihodnost
     today = date.today()
     datumi = [d for d in datumi if d <= today]
 
@@ -902,22 +906,19 @@ def arhiv_sudoku_pregled(tezavnost):
     return render_template(
         "arhiv.html",
         tip="sudoku",
-        tezavnost=tezavnost,
+        tezavnost=tez,
         months_sorted=months_sorted,
         meseci=meseci,
     )
 
 
-
-
-from pathlib import Path
-from flask import abort, render_template, url_for
+# ------------------ PRIKAZ SUDOKUJA ------------------
 
 @app.get("/sudoku/<tezavnost>/<datum>", endpoint="prikazi_sudoku")
 def sudoku_page(tezavnost, datum):
     print("DEBUG TEZAVNOST:", tezavnost)
+    print("=== SUDOKU_PAGE: STABLE VERSION LOADED ===")
 
-    # normalizacija
     tez = (tezavnost or "").strip().lower()
 
     folder_map = {
@@ -927,16 +928,13 @@ def sudoku_page(tezavnost, datum):
         "medium": "Sudoku_medium",
         "hard": "Sudoku_hard",
 
-        # SI aliasi (da UI lahko uporablja slovensko)
+        # SI aliasi (če UI kdaj pošlje slovensko)
         "zelo-lahka": "Sudoku_very_easy",
         "zelo_lahka": "Sudoku_very_easy",
         "zelolahka": "Sudoku_very_easy",
-
         "lahka": "Sudoku_easy",
-
         "srednja": "Sudoku_medium",
-
-        "tezka": "Sudoku_hard",   # brez šumnikov
+        "tezka": "Sudoku_hard",
         "težka": "Sudoku_hard",
     }
 
@@ -944,75 +942,56 @@ def sudoku_page(tezavnost, datum):
     if not sub:
         abort(404, f"Neznana težavnost sudokuja: {tezavnost}")
 
-    root = Path(app.static_folder) / sub
+    # Validacija datuma (da ne sestavljaš čudnih poti)
+    try:
+        dt = datetime.strptime(datum, "%Y-%m-%d").date()
+    except ValueError:
+        abort(404, f"Neveljaven datum: {datum}")
 
-    target_js = None
-    if root.exists():
-        for p in root.rglob("*.js"):
-            stem = p.stem
-            if stem.endswith(f"_{datum}") or stem == datum:
-                target_js = p
-                break
+    month = dt.strftime("%Y-%m")
+    root = Path(app.static_folder) / sub / month
 
-    if not target_js:
-        abort(404, f"Za {datum} ni sudokuja ({tezavnost}).")
+    # Tvoj standard: datum.html
+    target_html = root / f"{datum}.html"
+    if not target_html.exists():
+        abort(404, f"Za {datum} ni sudokuja ({tez}).")
 
-    target_html = target_js.with_suffix(".html")
-    if target_html.exists():
-        sudoku_rel = target_html.relative_to(Path(app.static_folder)).as_posix()
-    else:
-        sudoku_rel = target_js.relative_to(Path(app.static_folder)).as_posix()
-
+    sudoku_rel = target_html.relative_to(Path(app.static_folder)).as_posix()
     sudoku_url = url_for("static", filename=sudoku_rel)
+
+    print("DEBUG sudoku_url:", sudoku_url)
 
     return render_template(
         "sudoku_igra.html",
-        tezavnost=tez,   # lahko pustiš tudi original, ampak tez je bolj konsistenten
+        tezavnost=tez,
         datum=datum,
         sudoku_url=sudoku_url,
     )
 
 
+# ------------------ LEGACY ------------------
 
-# --- LEGACY: stari linki (današnji + arhiv) ----------------------------------
 @app.get("/sudoku-danes/<tezavnost>", endpoint="osnovni_sudoku")
 def sudoku_danes(tezavnost):
-    folder_map = {
-        "very_easy": "Sudoku_very_easy",
-        "easy": "Sudoku_easy",
-        "medium": "Sudoku_medium",
-        "hard": "Sudoku_hard",
-    }
-    if tezavnost not in folder_map:
+    folder_map = {"very_easy", "easy", "medium", "hard"}
+    tez = (tezavnost or "").strip().lower()
+    if tez not in folder_map:
         abort(404, "Neznana težavnost sudokuja")
 
     today = date.today().strftime("%Y-%m-%d")
-    return redirect(url_for("prikazi_sudoku", tezavnost=tezavnost, datum=today))
+    return redirect(url_for("prikazi_sudoku", tezavnost=tez, datum=today))
 
 
-# optional: star URL brez težavnosti -> easy
 @app.get("/sudoku-danes", endpoint="osnovni_sudoku_default")
 def sudoku_danes_default():
     return redirect(url_for("osnovni_sudoku", tezavnost="easy"))
 
 
-
-
+# TOLE ti je prej rušilo arhiv, ker ni podalo tezavnost parametra:
 @app.get("/arhiv-sudoku-legacy", endpoint="arhiv_sudoku")
 def arhiv_sudoku_legacy():
-    """
-    Stari endpoint 'arhiv_sudoku' – preusmeri na novi arhiv_sudoku_pregled.
-    """
-    return redirect(url_for("arhiv_sudoku_pregled"))
+    return redirect(url_for("arhiv_sudoku_pregled", tezavnost="easy"))
 
-# ...
-
-@app.get("/prispevaj", endpoint="prispevaj_geslo")
-def prispevaj_geslo():
-    # Za zdaj samo placeholder, da ne crkne
-    return "Prispevaj geslo je trenutno začasno izklopljeno."
-    # ali če hočeš:
-    # return redirect(url_for("home"))
 
 
 # ===== API: PREVERI-SLIKO ====================================================
@@ -1479,4 +1458,4 @@ if __name__ == "__main__":
     # Na Windows/PyCharm včasih pomaga izklop reloaderja
     os.environ.pop("WERKZEUG_SERVER_FD", None)
     os.environ.pop("WERKZEUG_RUN_MAIN", None)
-    app.run(host="127.0.0.1", port=5000, debug=False, use_reloader=False)
+    app.run(host="127.0.0.1", port=5050, debug=False, use_reloader=False)
