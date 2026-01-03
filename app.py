@@ -1262,6 +1262,9 @@ def api_dodaj_geslo():
     except Exception as e:
         return jsonify(ok=False, msg=str(e)), 500
 
+@app.get("/prispevaj", endpoint="prispevaj_geslo")
+def prispevaj_geslo():
+    return "Prispevaj geslo je trenutno začasno izklopljeno."
 
 
 @app.get("/preveri_slika")

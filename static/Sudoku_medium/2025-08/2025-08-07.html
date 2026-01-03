@@ -1,66 +1,62 @@
-<!doctype html>
-<html lang="sl">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>2025-08-07</title>
-  <style>
-    html,body{height:100%;margin:0;padding:0;}
-    /* CC zna risat v različne kontejnarje – damo več opcij */
-    #puzzle,#crossword,#CrosswordPuzzle{height:100vh;width:100%;}
-  </style>
-</head>
-<body>
-  <div id="puzzle"></div>
-  <div id="crossword"></div>
-  <div id="CrosswordPuzzle"></div>
+﻿<!doctype html>
+<html>
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta name="Generator" content="Crossword Compiler (www.crossword-compiler.com)" />
 
-  <script src="CrosswordCompilerApp/jquery.js"></script>
-  <script src="CrosswordCompilerApp/raphael.js"></script>
-  <script src="CrosswordCompilerApp/crosswordCompiler.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <script src="2025-08-07.js"></script>
-
-  <script>
-    (function () {
-      function tryInit() {
-        // Najpogostejši CC način
-        if (typeof CrosswordPuzzleDataInit === "function") {
-          try { CrosswordPuzzleDataInit("puzzle"); return true; } catch (e1) {}
-          try { CrosswordPuzzleDataInit(); return true; } catch (e2) {}
-        }
-
-        // Fallbacki za druge CC verzije
-        if (typeof CreatePuzzle === "function") {
-          try { CreatePuzzle("puzzle"); return true; } catch (e1) {}
-          try { CreatePuzzle(); return true; } catch (e2) {}
-        }
-        if (typeof createPuzzle === "function") {
-          try { createPuzzle("puzzle"); return true; } catch (e1) {}
-          try { createPuzzle(); return true; } catch (e2) {}
-        }
-
-        return false;
+    <style type="text/css">
+      BODY,
+      .Clues,
+      .GridClues {
+        font-size: 11pt;
+        font-family:
+          Times New Roman,
+          Times;
+      }
+    </style>
+    <style type="text/css">
+      .PuzTitle {
+        font-size: 15pt;
+        color: #800000;
+        font-weight: bold;
       }
 
-      function start() {
-        // sanity check: ali se je sudoku .js sploh naložil
-        if (typeof CrosswordPuzzleData === "undefined") {
-          console.error("[CC wrapper] CrosswordPuzzleData ni definiran (sudoku .js se ni naložil?)");
-        }
-
-        var ok = tryInit();
-        if (!ok) {
-          console.error("[CC wrapper] Init ni uspel. Preveri console v iframe tabu (open wrapper html v nov tab).");
-        }
+      .CopyTag {
+        font-size: 10pt;
+        color: #000000;
       }
 
-      if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", start);
-      } else {
-        start();
+      .PuzContainer {
+        display: flex;
+        justify-content: center;
       }
-    })();
-  </script>
-</body>
+    </style>
+
+    <title>Crossword</title>
+  </head>
+
+  <body text="#000000" bgcolor="#ffffff">
+    <script src="/static/CrosswordCompilerApp/jquery.js"></script>
+    <script src="/static/CrosswordCompilerApp/raphael.js"></script>
+    <script src="/static/CrosswordCompilerApp/crosswordCompiler.js"></script>
+    <script src="/static/Sudoku_medium/2025-08/Sudoku_medium_2025-08-07.js"></script>
+    <script>
+      $(function () {
+        $('#CrosswordCompilerPuz').CrosswordCompiler(CrosswordPuzzleData, null, {
+          SUBMITMETHOD: 'POST',
+          SAVE: '',
+          PROGRESS: '',
+        });
+      });
+    </script>
+    <div id="CrosswordCompilerPuz"></div>
+
+    <hr />
+    <span CLASS="CopyTag">
+      Web page created by <a href="https://www.crossword-compiler.com/">Crossword Compiler</a>.
+    </span>
+  </body>
 </html>
