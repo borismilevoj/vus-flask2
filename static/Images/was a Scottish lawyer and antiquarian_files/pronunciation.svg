@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="32" height="32" viewBox="0 0 32 32">
+  <defs>
+    <polygon id="small-viseme-v3-a" points="0 0 32 0 32 32 0 32"/>
+  </defs>
+  <g fill="none" fill-rule="evenodd">
+    <mask id="small-viseme-v3-b" fill="#fff">
+      <use xlink:href="#small-viseme-v3-a"/>
+    </mask>
+    <use fill="#4285F4" xlink:href="#small-viseme-v3-a"/>
+    <path fill="#D2E3FC" d="M0,15.2397963 C2.54385714,18.8705203 5.652,22.0821946 9.20228571,24.7448769 C13.2115714,27.7517077 18.7884286,27.7517077 22.7977143,24.7448769 C26.348,22.0821946 29.4561429,18.8705203 32,15.2397963 L32,-7 L0,-7 L0,15.2397963 Z" mask="url(#small-viseme-v3-b)"/>
+    <path fill="#4285F4" fill-opacity=".6" d="M16,21.2306492 C16.9260991,21.2306492 17.7912467,21.4943157 18.5272135,21.9515019 C18.810441,22.1273309 19.1362738,21.7887485 18.9403799,21.5164674 C18.2785556,20.5973263 17.2081136,20 16,20 C14.7918864,20 13.7214444,20.5973263 13.0596201,21.5164674 C12.8637262,21.7887485 13.189559,22.1273309 13.4727865,21.9515019 C14.2087533,21.4943157 15.0739009,21.2306492 16,21.2306492" mask="url(#small-viseme-v3-b)"/>
+    <path stroke="#4285F4" stroke-linecap="square" d="M25,13 C23,15.3333333 20,16.5 16,16.5 C12,16.5 9,15.3333333 7,13 L13,10.5 L19,10.5 L25,13 Z" mask="url(#small-viseme-v3-b)"/>
+    <polygon fill="#4285F4" fill-rule="nonzero" points="8 14 7 13 25 13 24 14" mask="url(#small-viseme-v3-b)"/>
+    <path stroke="#4285F4" stroke-linecap="round" d="M20,3 L17.767875,5.25892622 C16.7915,6.24702459 15.2085,6.24702459 14.232125,5.25892622 L12,3" mask="url(#small-viseme-v3-b)"/>
+  </g>
+</svg>
