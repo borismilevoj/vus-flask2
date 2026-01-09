@@ -162,60 +162,102 @@ ALLOWED_IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".webp"}
 import re
 import unicodedata
 
-MAX_IMAGE_WORDS = 15  # isto kot si imel od začetka
+MAX_IMAGE_WORDS = 30
+# isto kot si imel od začetka
 
 
-def naredi_slug_iz_opisa(opis: str, dodatno: str = "") -> str:
-    """
-    Poenoteno poimenovanje slik (STARA LOGIKA):
+from pathlib import Path
+import unicodedata, re
 
-    - opis + dodatno zlepimo v en string
-    - odstranimo šumnike
-    - odstranimo pomišljaje
-    - letnice 1844–1900 → 18441900
-    - odstranimo ločila ((),.;:!?)
-    - vse v male črke
-    - dovoli samo črke, številke in presledke
-    - vzamemo max 15 besed
-    - besede združimo z "_"
-    """
+MAX_IMAGE_WORDS = 30  # <-- ena številka, enkrat
 
-    opis = (opis or "").strip()
-    dodatno = (dodatno or "").strip()
+def naredi_slug_iz_opisa(opis: str, dodatno: str = "", max_words: int = MAX_IMAGE_WORDS) -> str:
+    import unicodedata, re
+    text = " ".join(part for part in [(opis or "").strip(), (dodatno or "").strip()] if part).strip()
+    if not text:
+        return "slika"
 
-    # združi opis + dodatno ime
-    s = f"{opis} {dodatno}".strip()
+    words = text.split()[:max_words]
+    s = " ".join(words)
 
-    # 1) odstrani šumnike
     s = unicodedata.normalize("NFD", s)
-    s = "".join(ch for ch in s if unicodedata.category(ch) != "Mn")
-
-    # 2) pomišljaje popolnoma odstrani
-    s = re.sub(r"[-–—−]", "", s)
-
-    # 3) letnice 1844–1900 → 18441900
-    s = re.sub(r"(\d{4})\D+(\d{4})", r"\1\2", s)
-
-    # 4) odstrani ločila
-    s = re.sub(r"[().,;:!?]", "", s)
-
-    # 5) male črke
+    s = "".join(ch for ch in s if not unicodedata.combining(ch))
     s = s.lower()
+    s = re.sub(r"[^a-z0-9]+", "_", s)
+    s = re.sub(r"_+", "_", s).strip("_")
+    return s or "slika"
 
-    # 6) dovoli samo črke, številke in presledke
-    s = re.sub(r"[^a-z0-9\s]", "", s)
-
-    # 7) razbij na besede, max 15, poveži z "_"
-    parts = s.strip().split()
-    parts = parts[:MAX_IMAGE_WORDS]
-
-    slug = "_".join(parts) if parts else "slika"
-    return slug
+def make_image_filename_from_opis(opis: str, dodatno: str = "", ext: str = ".jpg") -> str:
+    slug = naredi_slug_iz_opisa(opis, dodatno, max_words=MAX_IMAGE_WORDS)
+    ext = (ext or ".jpg").lower()
+    if not ext.startswith("."):
+        ext = "." + ext
+    return f"{slug}{ext}"
 
 
-def make_image_filename_from_opis(opis: str, dodatno: str = "") -> str:
-    slug = naredi_slug_iz_opisa(opis, dodatno)
-    return f"{slug}.jpg"
+
+from pathlib import Path
+
+IMAGE_EXTS = [".jpg", ".jpeg", ".png", ".webp"]
+
+def _images_dir():
+    # pomembno: Images z veliko I
+    return Path(app.static_folder) / "Images"
+
+def find_existing_image_filename(opis: str, dodatno: str = "", max_dupes: int = 9) -> str | None:
+    """
+    Vrne filename, ki dejansko obstaja v static/Images.
+    Proba:
+      - novo slug (npr. 30 besed)
+      - Windows dupes: " (1)", " (2)", ...
+      - fallback še na staro 15-besedno varianto (da starih slik ne razbije)
+    """
+    img_dir = _images_dir()
+    if not img_dir.exists():
+        return None
+
+    # 1) najprej "nova" varianta (tvoja trenutna)
+    base30 = make_image_filename_from_opis(opis, dodatno)  # pri tebi zdaj 30
+
+    # 2) fallback: staro obnašanje 15 besed (če imaš ogromno slik narejeninaredi_slug_iz_opisah po starem)
+    #    -> najlažje: začasno naredimo lokalno 15-besedno verzijo kar tukaj
+    def base15_local(opis: str, dodatno: str = "") -> str:
+        import unicodedata, re
+        text = " ".join(part for part in [(opis or "").strip(), (dodatno or "").strip()] if part).strip()
+        if not text:
+            return "slika"
+        words = text.split()[:15]
+        s = " ".join(words)
+        s = unicodedata.normalize("NFD", s)
+        s = "".join(ch for ch in s if not unicodedata.combining(ch))
+        s = s.lower()
+        s = re.sub(r"[^a-z0-9]+", "_", s)
+        s = re.sub(r"_+", "_", s).strip("_")
+        return s or "slika"
+
+    base15 = base15_local(opis, dodatno)
+
+    # kandidati v pravem vrstnem redu
+    bases = [base30]
+    if base15 != base30:
+        bases.append(base15)
+
+    for base in bases:
+        # a) exact (brez (1))
+        for ext in IMAGE_EXTS:
+            p = img_dir / f"{base}{ext}"
+            if p.exists():
+                return p.name
+
+        # b) windows duplicate (1..max_dupes)
+        for i in range(1, max_dupes + 1):
+            for ext in IMAGE_EXTS:
+                p = img_dir / f"{base} ({i}){ext}"
+                if p.exists():
+                    return p.name
+
+    return None
+
 
 # ===== Helpers ===============================================================
 
@@ -758,6 +800,50 @@ def krizanka():
     except Exception as e:
         print("[KRIZANKA] napaka pri branju XML:", e)
     print("[KRIZANKA CC]", type(cc), cc)
+    # --- BULLETPROOF SLIKE: backend vrne točen URL ---
+    # potrebuješ funkcijo image_url_for_clue(opis, dodatno) (kot sem ti jo poslal)
+    if isinstance(cc, dict):
+        lst = cc.get("gesla_opisi") or cc.get("geslaOpisi") or []
+
+        def pick_str(d: dict, *keys: str) -> str:
+            for k in keys:
+                v = d.get(k)
+                if v is not None:
+                    s = str(v).strip()
+                    if s:
+                        return s
+            return ""
+
+        def getattr_str(obj, *attrs: str) -> str:
+            for a in attrs:
+                v = getattr(obj, a, None)
+                if v is not None:
+                    s = str(v).strip()
+                    if s:
+                        return s
+            return ""
+
+        for g in lst:
+            # 1) dict varianta
+            if isinstance(g, dict):
+                opis = pick_str(g, "opis", "clue", "definition", "definicija", "text")
+                dodatno = pick_str(g, "geslo", "resitev", "solution", "answer")
+
+                # če je slika že podana, jo pusti
+                cur = pick_str(g, "slika", "slika_url", "image")
+                if not cur:
+                    g["slika"] = image_url_for_clue(opis, dodatno)
+
+            # 2) objekt varianta
+            else:
+                opis = getattr_str(g, "opis", "clue", "definition", "definicija", "text")
+                dodatno = getattr_str(g, "geslo", "resitev", "solution", "answer")
+
+                cur = getattr_str(g, "slika", "slika_url", "image")
+                if not cur:
+                    setattr(g, "slika", image_url_for_clue(opis, dodatno))
+
+    # --- konec BULLETPROOF ---
 
     # prejšnja / naslednja
     prev_url = url_for("krizanka", d=(d - timedelta(days=1)).strftime("%Y-%m-%d"))
@@ -851,10 +937,6 @@ from flask import render_template
 def preveri_sliko_page():
     # preusmeri star URL na novega
     return redirect(url_for("preveri_slika"))
-
-def make_image_filename_from_opis(opis: str, dodatno: str = "") -> str:
-    slug = naredi_slug_iz_opisa(opis, dodatno)
-    return f"{slug}.jpg"
 
 
 # --- Sudoku: arhiv + prikaz --------------------------------------------------
@@ -1064,9 +1146,8 @@ from werkzeug.utils import secure_filename
 def make_image_basename_from_opis(opis: str, dodatno: str = "") -> str:
     """
     Generira osnovo imena slike na enak način kot JS v križanki:
-
     - opis (+ dodatno besedilo) -> tekst
-    - vzamemo max 15 "besed"
+    - vzamemo max 30 "besed"
     - odstranimo šumnike/naglas
     - vse v lower()
     - VSE, kar ni [a-z0-9], zamenjamo z '_'
@@ -1081,9 +1162,9 @@ def make_image_basename_from_opis(opis: str, dodatno: str = "") -> str:
     if not text:
         return "slika"
 
-    # max 15 "besed"
+    # max 30 "besed"
     words = text.split()
-    words = words[:15]
+    words = words[:30]
     s = " ".join(words)
 
     # odstrani šumnike/naglas
@@ -1103,6 +1184,81 @@ def make_image_basename_from_opis(opis: str, dodatno: str = "") -> str:
         s = "slika"
 
     return s
+
+from pathlib import Path
+
+from pathlib import Path
+
+def image_url_for_clue(opis: str, dodatno: str = "", prefer_ext: str = ".jpg") -> str:
+    """
+    Bulletproof:
+    - proba slug po novem (npr. 30 besed)
+    - fallback na legacy slug (15 besed)
+    - proba več končnic
+    - najde tudi duplikate z ' (1)', ' (2)'...
+    - vrne točen URL /static/Images/<filename.ext> ali "" če nič ne najde
+    """
+    images_dir = Path(app.static_folder) / "Images"  # Images z velikim I
+    if not images_dir.exists():
+        return ""
+
+    opis = (opis or "").strip()
+    dodatno = (dodatno or "").strip()
+
+    # 1) kandidati slugov: novi + legacy (15)
+    slugs = []
+
+    # novi slug (tvoja make_image_filename_from_opis že ima MAX_IMAGE_WORDS=30)
+    s30 = make_image_filename_from_opis(opis, dodatno)
+    if s30:
+        slugs.append(s30)
+
+    # legacy slug (15 besed) – isto pravilo, samo “odrežemo”
+    def make_slug_legacy_15(opis_: str, dodatno_: str = "") -> str:
+        import unicodedata, re
+        text = " ".join(part for part in [(opis_ or "").strip(), (dodatno_ or "").strip()] if part).strip()
+        if not text:
+            return "slika"
+        words = text.split()[:15]
+        s = " ".join(words)
+        s = unicodedata.normalize("NFD", s)
+        s = "".join(ch for ch in s if not unicodedata.combining(ch))
+        s = s.lower()
+        s = re.sub(r"[^a-z0-9]+", "_", s)
+        s = re.sub(r"_+", "_", s).strip("_")
+        return s or "slika"
+
+    s15 = make_slug_legacy_15(opis, dodatno)
+    if s15 and s15 not in slugs:
+        slugs.append(s15)
+
+    if not slugs:
+        return ""
+
+    # 2) končnice (unikatno + v smiselnem vrstnem redu)
+    exts = [prefer_ext, ".jpg", ".jpeg", ".png", ".webp"]
+    seen_ext = []
+    for e in exts:
+        e = (e or "").strip().lower()
+        if not e.startswith("."):
+            e = "." + e
+        if e not in seen_ext:
+            seen_ext.append(e)
+
+    # 3) proba: normal + " (1)" duplikati
+    #    (Windows style: "ime (1).jpg")
+    dup_suffixes = [""] + [f" ({i})" for i in range(1, 6)]
+
+    for slug in slugs:
+        for ext in seen_ext:
+            for suf in dup_suffixes:
+                fname = f"{slug}{suf}{ext}"
+                if (images_dir / fname).exists():
+                    return f"/static/Images/{fname}"
+
+    return ""
+
+
 
 @app.post("/api/brisi_geslo")
 def api_brisi_geslo():
@@ -1135,6 +1291,8 @@ def api_brisi_geslo():
         return jsonify(ok=True, msg=f"Geslo z id={geslo_id} izbrisano.")
     except Exception as e:
         return jsonify(ok=False, msg=str(e)), 500
+
+
 
 @app.post("/api/uredi_geslo")
 def api_uredi_geslo():
@@ -1274,15 +1432,13 @@ def preveri_slika():
 @app.post("/api/preveri_sliko")
 def api_preveri_sliko():
     """
-    Preveri, ali obstaja slika za dani opis (+ opcijsko dodatno ime).
-
-    Logika (STARA):
-    - najprej proba (opis + dodatno)
-    - če ne najde, proba samo (opis)
-    - išče v static/Images z več končnicami
+    Bulletproof:
+    - generira slug iz (opis + dodatno)
+    - poišče realen filename v static/Images (tudi (1), (2) …)
+    - fallback: če dodatno ne najde, proba še samo opis
+    - vrne URL direkt na /static/Images/<filename> (brez /images route)
     """
     import os, sys, pprint
-    from flask import request, jsonify
 
     data = request.get_json(silent=True) or {}
     print("api_preveri_sliko data =", pprint.pformat(data), file=sys.stderr)
@@ -1290,65 +1446,84 @@ def api_preveri_sliko():
     opis    = (data.get("opis") or "").strip()
     dodatno = (data.get("dodatno_ime") or data.get("dodatno") or "").strip()
 
+    # 1) generiraj "osnovo" (slug) iz tvoje funkcije
+    # make_image_filename_from_opis vrne npr. "nekaj.jpg" -> mi rabimo slug brez končnice
     fname_full = make_image_filename_from_opis(opis, dodatno)
     fname_base = make_image_filename_from_opis(opis, "")
 
-    slug_full = os.path.splitext(fname_full)[0]
-    slug_base = os.path.splitext(fname_base)[0]
+    slug_full = os.path.splitext(fname_full)[0] if fname_full else ""
+    slug_base = os.path.splitext(fname_base)[0] if fname_base else ""
 
-    slugs_to_try = []
-    if dodatno:
-        slugs_to_try.append((slug_full, fname_full))
-        if slug_base != slug_full:
-            slugs_to_try.append((slug_base, fname_base))
-    else:
-        slugs_to_try.append((slug_base, fname_base))
+    # ✅ debug šele zdaj, ko spremenljivke obstajajo
+    try:
+        print("DEBUG MAX_IMAGE_WORDS =", MAX_IMAGE_WORDS, file=sys.stderr)
+    except Exception:
+        print("DEBUG MAX_IMAGE_WORDS = (ni definiran?)", file=sys.stderr)
 
-    images_dir = os.path.join(app.static_folder, "Images")
+    print("DEBUG fname_full =", fname_full, file=sys.stderr)
+    print("DEBUG fname_base =", fname_base, file=sys.stderr)
+    print("DEBUG slug_full  =", slug_full, file=sys.stderr)
+    print("DEBUG slug_base  =", slug_base, file=sys.stderr)
+
+    images_dir = os.path.join(app.static_folder, "Images")  # velik I
     exts = [".jpg", ".jpeg", ".png", ".webp"]
 
-    found_slug = None
-    found_filename = None
+    def find_existing_for_slug(slug: str):
+        """Vrne found_filename ali None. Podpira tudi ' (1)' duplikate."""
+        if not slug:
+            return None
 
-    for slug, suggested_fname in slugs_to_try:
-        candidate = suggested_fname
-        full_path = os.path.join(images_dir, candidate)
-        if os.path.exists(full_path):
-            found_slug = slug
-            found_filename = candidate
-            break
-
+        # 1) direkt: slug + ext
         for ext in exts:
-            alt_candidate = slug + ext
-            alt_path = os.path.join(images_dir, alt_candidate)
-            if os.path.exists(alt_path):
-                found_slug = slug
-                found_filename = alt_candidate
-                break
+            cand = slug + ext
+            if os.path.exists(os.path.join(images_dir, cand)):
+                return cand
 
-        if found_filename:
-            break
+        # 2) duplikati: slug (1).ext ... slug (20).ext
+        for i in range(1, 21):
+            for ext in exts:
+                cand = f"{slug} ({i}){ext}"
+                if os.path.exists(os.path.join(images_dir, cand)):
+                    return cand
 
-    exists = found_filename is not None
-    url = f"/images/{found_filename}" if exists else None
+        return None
 
-    default_slug = slug_full or slug_base
-    default_fname = fname_full or fname_base
-    suggested_filename = found_filename or default_fname
+    found = None
+
+    # 2) najprej poskusi (opis + dodatno) če dodatno obstaja
+    if dodatno:
+        found = find_existing_for_slug(slug_full)
+
+    # 3) fallback: samo opis
+    if not found:
+        found = find_existing_for_slug(slug_base)
+
+    exists = bool(found)
+
+    # predogled URL – direkt v static/Images
+    url = f"/static/Images/{found}" if exists else None
+
+    # predlagano ime (za UI) – vedno NEW (30 besed)
+    suggested_slug = slug_full if dodatno else slug_base
+    suggested_filename = (suggested_slug + ".jpg") if suggested_slug else ""
 
     return jsonify({
         "ok": True,
-        "slug": found_slug or default_slug,
-        "ime_slike": found_slug or default_slug,
-        "filename": suggested_filename,
         "exists": exists,
+
+        # ✅ predogled naj uporablja NAJDENO sliko (kar dejansko obstaja)
         "url": url,
+        "found_filename": found,
+
+        # ✅ UI/input naj vedno kaže 30-besedno predlagano ime
+        "suggested_filename": suggested_filename,
+
+        # ✅ NAJ POMEMBNEJŠE: front-end uporablja data.filename za input
+        # zato mora biti suggested, ne found
+        "filename": suggested_filename,
+
+        "slug": suggested_slug,
     })
-
-
-
-
-
 
 
 @app.post("/api/upload_sliko")
@@ -1378,7 +1553,8 @@ def api_upload_sliko():
     file.save(save_path)
 
     # 2) URL, ki ga front-end uporablja za <img src="...">
-    url = f"/images/{filename}"
+    url = f"/static/Images/{filename}"
+
 
     return jsonify({
         "ok": True,

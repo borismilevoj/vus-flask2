@@ -122,7 +122,7 @@ async function preveriSliko() {
     document.getElementById("rezultatCard").style.display = "block";
 
     // predlagano ime (vključno s končnico)
-    document.getElementById("predlagano_ime").value = data.filename || "";
+    document.getElementById("predlagano_ime").value = data.suggested_filename || data.filename || "";
 
     const statusEl = document.getElementById("status_text");
     const previewWrapper = document.getElementById("preview_wrapper");
@@ -135,7 +135,11 @@ async function preveriSliko() {
       if (data.url) {
         previewWrapper.style.display = "block";
         // cache-buster, da ne drži stare verzije v brskalniku
-        previewImg.src = data.url + "?_=" + Date.now();
+        let u = data.url || "";
+// če backend še vrača /images/, ga pretvori na /static/Images/
+if (u.startsWith("/images/")) u = u.replace("/images/", "/static/Images/");
+previewImg.src = u + "?_=" + Date.now();
+
       } else {
         previewWrapper.style.display = "none";
         previewImg.src = "";

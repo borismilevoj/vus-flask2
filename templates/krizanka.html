@@ -408,62 +408,84 @@ window.addEventListener('DOMContentLoaded', function () {
   var title = document.getElementById('clueTitle');
   var body  = document.getElementById('clueBody');
 
-  function makeSlug(text){
-    var s = (text || '').trim();
-    if (!s) return 'slika';
-    if (s.normalize) s = s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    s = s.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'');
-    return s || 'slika';
+ function makeSlug(text, maxWords){
+  var s = (text || '').trim();
+  if (!s) return 'slika';
+
+  // maxWords (če je podan)
+  if (maxWords && maxWords > 0) {
+    s = s.split(/\s+/).slice(0, maxWords).join(' ');
   }
+
+  if (s.normalize) s = s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  s = s.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'');
+  return s || 'slika';
+}
+
+
 
   function showClueAtHead(x, y, d) {
-    var key = x + "," + y;
-    var meta = (clueAtHead.get(key + "," + d)) || null;
+  var key = x + "," + y;
+  var meta = (clueAtHead.get(key + "," + d)) || null;
 
-    if (!meta) {
-      for (var ii = 0; ii < gesla_opisi.length; ii++) {
-        var it = gesla_opisi[ii];
-        if (it.x === x && it.y === y && (it.smer || 'across') === d) { meta = it; break; }
-      }
-      if (!meta) meta = {};
+  if (!meta) {
+    for (var ii = 0; ii < gesla_opisi.length; ii++) {
+      var it = gesla_opisi[ii];
+      if (it.x === x && it.y === y && (it.smer || 'across') === d) { meta = it; break; }
     }
-
-    var num  = numberAt.get(key) || meta.stevilka || '—';
-    var opis = (meta.opis || '').trim();
-
-    if (badge) badge.textContent = num;
-    if (title) title.textContent = (d === 'down' ? 'Navpično' : 'Vodoravno');
-    if (body)  body.textContent  = opis;
-
-    // slika
-    var imgEl = document.getElementById('clueImg');
-    if (!imgEl) return;
-
-    var url = (meta && meta.slika) ? String(meta.slika).trim() : '';
-    if (!url && opis) url = '/static/Images/' + makeSlug(opis) + '.jpg';
-
-    if (url && !/^https?:\/\//i.test(url) && !url.startsWith('/')) url = '/' + url;
-
-    if (!url) {
-      imgEl.removeAttribute('src');
-      imgEl.style.display = 'none';
-      imgEl.classList.add('hidden');
-      return;
-    }
-
-    imgEl.onload = function () {
-      imgEl.style.display = 'block';
-      imgEl.classList.remove('hidden');
-    };
-
-    imgEl.onerror = function () {
-      imgEl.removeAttribute('src');
-      imgEl.style.display = 'none';
-      imgEl.classList.add('hidden');
-    };
-
-    imgEl.src = url;
+    if (!meta) meta = {};
   }
+
+  var num  = numberAt.get(key) || meta.stevilka || '—';
+  var opis = (meta.opis || '').trim();
+
+  if (badge) badge.textContent = num;
+  if (title) title.textContent = (d === 'down' ? 'Navpično' : 'Vodoravno');
+  if (body)  body.textContent  = opis;
+
+  // slika
+// slika
+var imgEl = document.getElementById('clueImg');
+if (!imgEl) return;
+
+// 1) backend URL (idealno: "/static/Images/xxx.jpg" ali full https://...)
+var url = (meta && meta.slika) ? String(meta.slika).trim() : '';
+
+// 2) fallback: če backend ni poslal nič, poskusi iz opisa (30 besed)
+if (!url && opis) {
+  url = '/static/Images/' + makeSlug(opis, 30) + '.jpg';
+}
+
+// normalizacija relativnih poti
+if (url && !/^https?:\/\//i.test(url) && !url.startsWith('/')) {
+  url = '/' + url;
+}
+
+if (!url) {
+  imgEl.removeAttribute('src');
+  imgEl.style.display = 'none';
+  imgEl.classList.add('hidden');
+  return;
+}
+
+imgEl.onload = function () {
+  imgEl.style.display = 'block';
+  imgEl.classList.remove('hidden');
+};
+
+imgEl.onerror = function () {
+  imgEl.removeAttribute('src');
+  imgEl.style.display = 'none';
+  imgEl.classList.add('hidden');
+};
+
+imgEl.src = url;
+
+
+
+  show(url + bust, false, false);
+}
+
 
   function focusWordHere(){
     if (!window.cursor) return;
