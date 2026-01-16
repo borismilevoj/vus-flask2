@@ -171,8 +171,33 @@ import unicodedata, re
 
 MAX_IMAGE_WORDS = 30  # <-- ena številka, enkrat
 
+from pathlib import Path
+
+IMAGE_EXTS = [".jpg", ".jpeg", ".png", ".webp"]
+_IMAGE_EXTS_SET = {e.lower() for e in IMAGE_EXTS}
+
+def _strip_known_image_ext(s: str) -> str:
+    """
+    Če input izgleda kot filename/path z znano slikovno končnico,
+    odstrani končnico in mapo (npr. 'static/Images/a.png' -> 'a').
+    Drugače vrne original.
+    """
+    s = (s or "").strip()
+    if not s:
+        return s
+
+    p = Path(s)
+    suffix = (p.suffix or "").lower()
+    if suffix in _IMAGE_EXTS_SET:
+        return p.stem  # samo ime brez končnice
+    return s
+
 def naredi_slug_iz_opisa(opis: str, dodatno: str = "", max_words: int = MAX_IMAGE_WORDS) -> str:
     import unicodedata, re
+
+    opis = _strip_known_image_ext(opis)
+    dodatno = _strip_known_image_ext(dodatno)
+
     text = " ".join(part for part in [(opis or "").strip(), (dodatno or "").strip()] if part).strip()
     if not text:
         return "slika"
@@ -194,12 +219,6 @@ def make_image_filename_from_opis(opis: str, dodatno: str = "", ext: str = ".jpg
         ext = "." + ext
     return f"{slug}{ext}"
 
-
-
-from pathlib import Path
-
-IMAGE_EXTS = [".jpg", ".jpeg", ".png", ".webp"]
-
 def _images_dir():
     # pomembno: Images z veliko I
     return Path(app.static_folder) / "Images"
@@ -216,13 +235,16 @@ def find_existing_image_filename(opis: str, dodatno: str = "", max_dupes: int = 
     if not img_dir.exists():
         return None
 
-    # 1) najprej "nova" varianta (tvoja trenutna)
-    base30 = make_image_filename_from_opis(opis, dodatno)  # pri tebi zdaj 30
+    # 1) najprej "nova" varianta -> SLUG, brez končnice
+    base30 = naredi_slug_iz_opisa(opis, dodatno, max_words=MAX_IMAGE_WORDS)
 
-    # 2) fallback: staro obnašanje 15 besed (če imaš ogromno slik narejeninaredi_slug_iz_opisah po starem)
-    #    -> najlažje: začasno naredimo lokalno 15-besedno verzijo kar tukaj
+    # 2) fallback: staro obnašanje 15 besed
     def base15_local(opis: str, dodatno: str = "") -> str:
         import unicodedata, re
+
+        opis = _strip_known_image_ext(opis)
+        dodatno = _strip_known_image_ext(dodatno)
+
         text = " ".join(part for part in [(opis or "").strip(), (dodatno or "").strip()] if part).strip()
         if not text:
             return "slika"
@@ -257,7 +279,6 @@ def find_existing_image_filename(opis: str, dodatno: str = "", max_dupes: int = 
                     return p.name
 
     return None
-
 
 # ===== Helpers ===============================================================
 
@@ -1433,12 +1454,13 @@ def preveri_slika():
 def api_preveri_sliko():
     """
     Bulletproof:
-    - generira slug iz (opis + dodatno)
-    - poišče realen filename v static/Images (tudi (1), (2) …)
-    - fallback: če dodatno ne najde, proba še samo opis
-    - vrne URL direkt na /static/Images/<filename> (brez /images route)
+    - naredi slug iz (opis + dodatno) in iz (opis)
+    - poišče realno obstoječo sliko v static/Images (tudi (1), (2) …)
+    - vrne preview_url, ki kaže na NAJDENO datoteko (prava končnica!)
+    - vrne filename, ki je predlagano ime za upload/input (lahko .jpg)
     """
     import os, sys, pprint
+    from flask import request, jsonify
 
     data = request.get_json(silent=True) or {}
     print("api_preveri_sliko data =", pprint.pformat(data), file=sys.stderr)
@@ -1446,40 +1468,27 @@ def api_preveri_sliko():
     opis    = (data.get("opis") or "").strip()
     dodatno = (data.get("dodatno_ime") or data.get("dodatno") or "").strip()
 
-    # 1) generiraj "osnovo" (slug) iz tvoje funkcije
-    # make_image_filename_from_opis vrne npr. "nekaj.jpg" -> mi rabimo slug brez končnice
+    # make_image_filename_from_opis vrne npr. "nekaj.jpg"
     fname_full = make_image_filename_from_opis(opis, dodatno)
     fname_base = make_image_filename_from_opis(opis, "")
 
     slug_full = os.path.splitext(fname_full)[0] if fname_full else ""
     slug_base = os.path.splitext(fname_base)[0] if fname_base else ""
 
-    # ✅ debug šele zdaj, ko spremenljivke obstajajo
-    try:
-        print("DEBUG MAX_IMAGE_WORDS =", MAX_IMAGE_WORDS, file=sys.stderr)
-    except Exception:
-        print("DEBUG MAX_IMAGE_WORDS = (ni definiran?)", file=sys.stderr)
-
-    print("DEBUG fname_full =", fname_full, file=sys.stderr)
-    print("DEBUG fname_base =", fname_base, file=sys.stderr)
-    print("DEBUG slug_full  =", slug_full, file=sys.stderr)
-    print("DEBUG slug_base  =", slug_base, file=sys.stderr)
-
     images_dir = os.path.join(app.static_folder, "Images")  # velik I
     exts = [".jpg", ".jpeg", ".png", ".webp"]
 
     def find_existing_for_slug(slug: str):
-        """Vrne found_filename ali None. Podpira tudi ' (1)' duplikate."""
         if not slug:
             return None
 
-        # 1) direkt: slug + ext
+        # 1) direkt slug.ext
         for ext in exts:
             cand = slug + ext
             if os.path.exists(os.path.join(images_dir, cand)):
                 return cand
 
-        # 2) duplikati: slug (1).ext ... slug (20).ext
+        # 2) duplikati slug (1).ext ... (20)
         for i in range(1, 21):
             for ext in exts:
                 cand = f"{slug} ({i}){ext}"
@@ -1488,43 +1497,40 @@ def api_preveri_sliko():
 
         return None
 
-    found = None
-
-    # 2) najprej poskusi (opis + dodatno) če dodatno obstaja
-    if dodatno:
-        found = find_existing_for_slug(slug_full)
-
-    # 3) fallback: samo opis
-    if not found:
-        found = find_existing_for_slug(slug_base)
-
+    # ✅ vedno probaj oba (brez if dodatno), ker nič ne stane
+    found = find_existing_for_slug(slug_full) or find_existing_for_slug(slug_base)
     exists = bool(found)
 
-    # predogled URL – direkt v static/Images
-    url = f"/static/Images/{found}" if exists else None
+    # ✅ to je edini URL, ki ga sme frontend dat v <img src=...>
+    preview_url = f"/static/Images/{found}" if exists else None
 
-    # predlagano ime (za UI) – vedno NEW (30 besed)
+    # ✅ predlagano ime za upload/input (lahko ostane .jpg, ker je “predlog”)
     suggested_slug = slug_full if dodatno else slug_base
     suggested_filename = (suggested_slug + ".jpg") if suggested_slug else ""
+
+    # debug (če boš še lovil)
+    print("DEBUG images_dir =", images_dir, file=sys.stderr)
+    print("DEBUG slug_full  =", slug_full, file=sys.stderr)
+    print("DEBUG slug_base  =", slug_base, file=sys.stderr)
+    print("DEBUG found      =", found, file=sys.stderr)
+    print("DEBUG preview_url=", preview_url, file=sys.stderr)
 
     return jsonify({
         "ok": True,
         "exists": exists,
 
-        # ✅ predogled naj uporablja NAJDENO sliko (kar dejansko obstaja)
-        "url": url,
+        # 👇 za PRIKAZ SLIKE (to uporabi frontend za <img>)
+        "preview_url": preview_url,
         "found_filename": found,
 
-        # ✅ UI/input naj vedno kaže 30-besedno predlagano ime
+        # 👇 za UI/input (ime, ki ga pokažeš uporabniku)
         "suggested_filename": suggested_filename,
 
-        # ✅ NAJ POMEMBNEJŠE: front-end uporablja data.filename za input
-        # zato mora biti suggested, ne found
+        # 👇 če tvoj frontend že uporablja data.filename za input, naj ostane to
         "filename": suggested_filename,
 
         "slug": suggested_slug,
     })
-
 
 @app.post("/api/upload_sliko")
 def api_upload_sliko():
@@ -1539,28 +1545,26 @@ def api_upload_sliko():
     if not filename:
         return jsonify({"ok": False, "error": "Manjka ime datoteke."})
 
-    # če ni končnice, jo dodamo iz originalnega imena datoteke
+    # če ni končnice, jo dodamo iz originalnega imena
     if "." not in filename:
         ext = os.path.splitext(file.filename)[1].lower()
         if ext:
             filename = filename + ext
 
-    # 1) shrani v static/Images  (folder z veliko I – tako kot imaš na disku)
     save_dir = os.path.join(app.static_folder, "Images")
     os.makedirs(save_dir, exist_ok=True)
 
     save_path = os.path.join(save_dir, filename)
     file.save(save_path)
 
-    # 2) URL, ki ga front-end uporablja za <img src="...">
-    url = f"/static/Images/{filename}"
-
+    preview_url = f"/static/Images/{filename}"
 
     return jsonify({
         "ok": True,
         "filename": filename,
-        "url": url
+        "preview_url": preview_url
     })
+
 
 
 # ===== Run ====================================================================
