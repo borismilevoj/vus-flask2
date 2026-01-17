@@ -1,5 +1,6 @@
 ﻿# uvozi-cc-all.ps1
 # Uvoz CC CSV → MASTER VUS.db (Documents\VUS\VUS.db) - ALL mode
+# PS 5.1 compatible (brez ArgumentList)
 
 [CmdletBinding()]
 param(
@@ -23,32 +24,19 @@ if ($dir -and -not (Test-Path -LiteralPath $dir)) {
     Write-Host "✓ Ustvarjena mapa za DB: $dir"
 }
 
-# uporabi python iz trenutnega okolja (bolj ziher kot "python")
 $python = (Get-Command python -ErrorAction Stop).Source
-
-$arguments = @(
-    ".\uvozi_cc_delta_v_sqlite.py",
-    $CsvPath,
-    $DbPath,
-    "--all",
-    "--verbose"
-)
 
 Write-Host ""
 Write-Host "Kličem:" -ForegroundColor Cyan
-Write-Host "$python $($arguments -join ' ')" -ForegroundColor Cyan
+Write-Host "$python .\uvozi_cc_delta_v_sqlite.py `"$CsvPath`" `"$DbPath`" --all --verbose" -ForegroundColor Cyan
 Write-Host ""
 
-# PowerShell 5.1 safe logging (da dobiš tudi stderr v log)
 $logPath = Join-Path $PSScriptRoot "uvoz-all.log"
 
+# ProcessStartInfo (PS 5.1): uporablja .Arguments (string)
 $psi = New-Object System.Diagnostics.ProcessStartInfo
 $psi.FileName = $python
-$psi.ArgumentList.Add(".\uvozi_cc_delta_v_sqlite.py")
-$psi.ArgumentList.Add($CsvPath)
-$psi.ArgumentList.Add($DbPath)
-$psi.ArgumentList.Add("--all")
-$psi.ArgumentList.Add("--verbose")
+$psi.Arguments = ".\uvozi_cc_delta_v_sqlite.py `"$CsvPath`" `"$DbPath`" --all --verbose"
 $psi.RedirectStandardOutput = $true
 $psi.RedirectStandardError  = $true
 $psi.UseShellExecute = $false
@@ -58,25 +46,40 @@ $p = New-Object System.Diagnostics.Process
 $p.StartInfo = $psi
 [void]$p.Start()
 
-$stdout = $p.StandardOutput.ReadToEnd()
-$stderr = $p.StandardError.ReadToEnd()
-$p.WaitForExit()
+$sw = [System.IO.StreamWriter]::new($logPath, $false, [System.Text.Encoding]::UTF8)
 
-$stdout + $stderr | Set-Content -Encoding UTF8 $logPath
-Get-Content $logPath -Tail 80
+try {
+    while (-not $p.HasExited) {
+        while (-not $p.StandardOutput.EndOfStream) {
+            $line = $p.StandardOutput.ReadLine()
+            if ($null -ne $line) { Write-Host $line; $sw.WriteLine($line) }
+        }
+        while (-not $p.StandardError.EndOfStream) {
+            $eline = $p.StandardError.ReadLine()
+            if ($null -ne $eline) { Write-Host $eline -ForegroundColor Red; $sw.WriteLine($eline) }
+        }
+        Start-Sleep -Milliseconds 200
+    }
+
+    while (-not $p.StandardOutput.EndOfStream) {
+        $line = $p.StandardOutput.ReadLine()
+        if ($null -ne $line) { Write-Host $line; $sw.WriteLine($line) }
+    }
+    while (-not $p.StandardError.EndOfStream) {
+        $eline = $p.StandardError.ReadLine()
+        if ($null -ne $eline) { Write-Host $eline -ForegroundColor Red; $sw.WriteLine($eline) }
+    }
+}
+finally {
+    $sw.Flush()
+    $sw.Close()
+}
 
 if ($p.ExitCode -ne 0) {
     throw "Uvoz ni uspel (exit $($p.ExitCode)). Poglej log: $logPath"
 }
 
-
 Write-Host ""
 Write-Host "✓ Uvoz (ALL) zaključen. Log: $logPath" -ForegroundColor Green
 
-# sanity-check (ker uvoznik piše v 'slovar')
-sqlite3 $DbPath "SELECT 'slovar_total', COUNT(*) FROM slovar;
-                 SELECT 'slovar_sortiran_total', COUNT(*) FROM slovar_sortiran;"
-
-if ($Pause) {
-    Read-Host "Končano. Pritisni Enter za izhod..."
-}
+if ($Pause) { Read-Host "Končano. Pritisni Enter za izhod..." }
