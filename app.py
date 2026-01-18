@@ -309,16 +309,10 @@ def favicon():
     return ("", 204)
 
 
-
-
-
 # ===== ISKANJE PO VZORCU =====================================================
 @app.get("/isci-vzorec", endpoint="isci_vzorec")
 def isci_vzorec_page():
     return render_template("isci_vzorec.html")
-
-
-
 
 @app.post("/isci_vzorec", endpoint="isci_vzorec_api")
 def isci_vzorec_api():
@@ -326,7 +320,6 @@ def isci_vzorec_api():
     API za iskanje po vzorcu.
     Pričakuje JSON: { vzorec, dolzina, dodatno }
     Vrne seznam: [{ GESLO: ..., OPIS: ... }, ...]
-    Stolpce (GESLO/geslo, OPIS/Opis/razlaga...) zazna dinamično iz PRAGMA.
     """
     import sys, traceback, sqlite3
 
@@ -348,27 +341,26 @@ def isci_vzorec_api():
 
         con = get_conn(readonly=True)
         cur = con.cursor()
+
         table = "slovar_sortiran"
 
-        db_list = cur.execute("PRAGMA database_list;").fetchall()
-        print("DB LIST (isci_vzorec):", db_list, file=sys.stderr, flush=True)
+        # (po želji) debug: katera DB je odprta
+        try:
+            db_list = cur.execute("PRAGMA database_list;").fetchall()
+            print("DB LIST (isci_vzorec):", db_list, file=sys.stderr, flush=True)
+        except Exception:
+            pass
 
-        # še en “marker”, da 100% vidiš, da je del kode šel čez
-        print("MARK: after PRAGMA database_list", file=sys.stderr, flush=True)
-
-        # PRAGMA: preberi imena stolpcev v 'slovar'
+        # preberi stolpce
         cols_raw = list(cur.execute(f"PRAGMA table_info({table});"))
         name_map = {(row[1] or "").lower(): row[1] for row in cols_raw}
 
-        # stolpec za geslo (GESLO / geslo / word ...)
+        # stolpec za geslo
         geslo_col = None
         for cand in ("geslo", "word", "beseda"):
             if cand in name_map:
                 geslo_col = name_map[cand]
                 break
-        if not geslo_col and cols_raw:
-            # fallback: vzamemo drugi stolpec (po navadi je to GESLO)
-            geslo_col = cols_raw[1][1]
 
         # stolpec za opis
         desc_col = None
@@ -385,72 +377,73 @@ def isci_vzorec_api():
                 "results": []
             }), 200
 
-        # izraz, kjer ignoriramo presledke in delamo z UPPER(geslo)
+        # če slučajno ni desc_col, daj prazen string (ampak pri tebi je 'opis')
+        if not desc_col:
+            desc_col = "''"
+
+        # ignoriramo presledke v geslu + primerjamo case-insensitive prek UPPER
         norm_geslo = f"REPLACE(UPPER({geslo_col}), ' ', '')"
 
-        # Sestavimo SQL
-        if desc_col:
-            sql = f"""
-                SELECT {geslo_col}, {desc_col}
-                FROM {table}
-                WHERE {norm_geslo} LIKE ?
-            """
-
-        else:
-            sql = f"""
-                SELECT {geslo_col}, ''
-                FROM slovar_sortiran
-
-                WHERE {norm_geslo} LIKE ?
-            """
-
+        # --- SQL sestavimo iz nule ---
+        sql = f"""
+            SELECT {geslo_col}, {desc_col}
+            FROM {table}
+            WHERE {norm_geslo} LIKE ?
+        """
         params = [like]
 
-        # filter po dolžini – štejejo samo črke (brez presledkov)
+        # filter po dolžini (brez presledkov)
         if dolzina > 0:
             sql += f" AND LENGTH({norm_geslo}) = ?"
             params.append(dolzina)
 
-        # dodatni filter po opisu ali geslu (klasičen LIKE, tu presledkov ne ignoriramo)
+        # dodatni filter (v praksi po opisu)
         if dodatno:
-            if desc_col:
+            # če imamo pravi stolpec za opis, filtriraj po njem
+            if desc_col != "''":
                 sql += f" AND {desc_col} LIKE ? COLLATE NOCASE"
             else:
                 sql += f" AND {geslo_col} LIKE ? COLLATE NOCASE"
             params.append(f"%{dodatno}%")
 
-        if desc_col:
+        # --- SORT: za isto geslo razvrsti PO IMENU ZA ' - ' ---
+        # 1) has_dash: najprej tisti, ki imajo " - "
+        # 2) name_key: del ZA " - ", brez letnic "(...)" (da dobiš Allan/Angus/Candace...)
+        if desc_col != "''":
             has_dash = f"CASE WHEN instr({desc_col}, ' - ') > 0 THEN 0 ELSE 1 END"
 
-            after_dash = f"""
-            CASE
-              WHEN instr({desc_col}, ' - ') > 0
-              THEN substr({desc_col}, instr({desc_col}, ' - ') + 3)
-              ELSE {desc_col}
-            END
-            """
+            # del ZA " - "
+            after_dash = f"substr({desc_col}, instr({desc_col}, ' - ') + 3)"
 
+            # odreži pri "(" če obstaja (da ignoriramo letnice)
             name_key = f"""
-            CASE
-              WHEN instr({after_dash}, '(') > 0
-              THEN trim(substr({after_dash}, 1, instr({after_dash}, '(') - 1))
-              ELSE trim({after_dash})
-            END
+                trim(
+                    CASE
+                        WHEN instr({desc_col}, ' - ') > 0 THEN
+                            CASE
+                                WHEN instr({after_dash}, '(') > 0
+                                THEN substr({after_dash}, 1, instr({after_dash}, '(') - 1)
+                                ELSE {after_dash}
+                            END
+                        ELSE {desc_col}
+                    END
+                )
             """
 
             sql += f"""
-              ORDER BY
-                {has_dash},                             -- najprej tisti z ' - '
-                {name_key} COLLATE NOCASE,              -- potem po imenu
-                {desc_col} COLLATE NOCASE,              -- stabilnost
-                {geslo_col} COLLATE NOCASE
-              LIMIT 500;
+                ORDER BY
+                    {geslo_col} COLLATE NOCASE,   -- primarno po geslu (da so CAMERON skupaj)
+                    {has_dash},                   -- potem " - " prednost
+                    {name_key} COLLATE NOCASE,    -- potem Allan, Angus, Candace...
+                    {desc_col} COLLATE NOCASE     -- stabilnost
+                LIMIT 500
             """
         else:
-            sql += f" ORDER BY {geslo_col} COLLATE NOCASE LIMIT 500;"
+            # fallback če ni opisa
+            sql += f" ORDER BY {geslo_col} COLLATE NOCASE LIMIT 500"
 
-        # debug: izpiši SQL in parametre
-        print("isci_vzorec_api SQL:", sql, "params:", params, file=sys.stderr)
+        # debug (po želji)
+        # print("isci_vzorec_api SQL:", sql, "params:", params, file=sys.stderr, flush=True)
 
         try:
             rows = cur.execute(sql, params).fetchall()
@@ -469,7 +462,6 @@ def isci_vzorec_api():
         print("isci_vzorec_api ERROR:", e, file=sys.stderr)
         traceback.print_exc()
         return jsonify({"ok": False, "error": str(e), "results": []}), 200
-
 
 @app.get("/arhiv-krizanke", endpoint="arhiv_krizanke_legacy_redirect")
 def _arhiv_krizanke_legacy_redirect():
@@ -568,6 +560,8 @@ def api_stevec():
 def preveri_geslo():
     if request.method == "POST":
         data = request.get_json(silent=True) or {}
+        sql = ""
+        params = []
         q = data.get("geslo") or request.form.get("geslo") or ""
     else:
         q = request.args.get("geslo") or request.args.get("q") or ""
@@ -630,8 +624,8 @@ def api_gesla_admin():
     q_norm = q.replace("\u00A0", " ")
     q_norm = " ".join(q_norm.split())
 
-    # kompakt brez presledkov (ZA SQL primerjavo brez lower())
-    q_compact = q_norm.replace(" ", "")
+    # ključ: brez presledkov + lower (za case-insensitive primerjavo)
+    q_key = q_norm.replace(" ", "").lower()
 
     con = get_conn(readonly=True)
     cur = con.cursor()
@@ -651,26 +645,25 @@ def api_gesla_admin():
         sql = f"""
             SELECT id, geslo, {desc_col}
             FROM slovar
-            WHERE replace(geslo, ' ', '') = ?
+            WHERE replace(lower(geslo), ' ', '') = ?
             ORDER BY id;
         """
-        rows = cur.execute(sql, (q_compact,)).fetchall()
+        rows = cur.execute(sql, (q_key,)).fetchall()
         for rid, g, desc in rows:
             results.append({"id": rid, "geslo": g, "razlaga": desc or ""})
     else:
         sql = """
             SELECT id, geslo
             FROM slovar
-            WHERE replace(geslo, ' ', '') = ?
+            WHERE replace(lower(geslo), ' ', '') = ?
             ORDER BY id;
         """
-        rows = cur.execute(sql, (q_compact,)).fetchall()
+        rows = cur.execute(sql, (q_key,)).fetchall()
         for rid, g in rows:
             results.append({"id": rid, "geslo": g, "razlaga": ""})
 
     con.close()
     return jsonify(ok=True, results=results)
-
 
 
 @app.route("/api/preveri", methods=["GET", "POST"], endpoint="api_preveri_legacy")
@@ -680,6 +673,7 @@ def api_preveri_legacy():
     Interno samo kliče preveri_geslo().
     """
     return preveri_geslo()
+
 
 
 # ===== Admin: render (front kliče /api/stevec) ===============================
@@ -868,7 +862,6 @@ def krizanka():
 
     # prejšnja / naslednja
     prev_url = url_for("krizanka", d=(d - timedelta(days=1)).strftime("%Y-%m-%d"))
-    next_url = url_for("krizanka", d=(d + timedelta(days=1)).strftime("%Y-%m-%d"))
     back_url = url_for("krizanka", d=d.strftime("%Y-%m-%d"))
 
     session["krizanka_d"] = d.strftime("%Y-%m-%d")
@@ -880,7 +873,6 @@ def krizanka():
         xml_url=xml_url,
         cc=cc,
         prev_url=prev_url,
-        next_url=next_url,
         back_url=back_url,
     )
 
