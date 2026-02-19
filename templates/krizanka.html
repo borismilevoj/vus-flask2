@@ -9,10 +9,17 @@
     <small class="text-muted"> · opisov: {{ (cc.gesla_opisi|length) if cc else 0 }}</small>
   </h1>
 
-  <nav class="mb-3" style="display:flex; gap:1rem; align-items:center;">
+  <nav class="mb-3" style="display:flex; gap:1rem; align-items:center; flex-wrap:wrap;">
   <a href="{{ prev_url }}">&laquo; Prejšnja</a>
   <a href="{{ back_url }}">Nazaj na to križanko</a>
+
+  <a class="btn btn-warning btn-sm"
+     href="{{ url_for('isci_vzorec') }}"
+     target="_blank" rel="noopener">
+     🔎 Išči po vzorcu
+  </a>
 </nav>
+
 
 
   <!-- okvir + mreža -->
@@ -60,6 +67,67 @@ window.addEventListener('DOMContentLoaded', function () {
 
   if (!isFinite(width)  || width  <= 0) width  = 5;
   if (!isFinite(height) || height <= 0) height = 5;
+
+    // ===== AUTOSAVE KRIŽANKE (localStorage) =====
+var SAVE_KEY = "krizanka_" + "{{ datum.strftime('%Y-%m-%d') }}";
+
+// najprej samo PREBEREMO shranjeno (ne kličemo setLetterAt še!)
+var _savedPending = null;
+try {
+  var raw = localStorage.getItem(SAVE_KEY);
+  _savedPending = raw ? JSON.parse(raw) : null;
+} catch (e) {
+  console.log("Autosave read/parse error:", e);
+  _savedPending = null;
+}
+
+var _saveTimer = null;
+
+function saveGridNow() {
+  if (!window.cellRefs || !window.cellRefs.length) return;
+
+  var data = {};
+  for (var y = 0; y < height; y++) {
+    for (var x = 0; x < width; x++) {
+      var cell = (cellRefs[y] || [])[x];
+      if (cell && cell.dataset && cell.dataset.letter) {
+        data[x + "," + y] = cell.dataset.letter;
+      }
+    }
+  }
+
+  try {
+    localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+  } catch (e) {
+    console.log("Autosave write error:", e);
+  }
+}
+
+function scheduleSaveGrid() {
+  clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(saveGridNow, 200); // debounce
+}
+
+// to funkcijo pokličemo ŠELE KO setLetterAt že obstaja
+function applySavedGrid() {
+  if (!_savedPending) return;
+  var data = _savedPending;
+  _savedPending = null;
+
+  try {
+    Object.keys(data).forEach(function (key) {
+      var parts = key.split(",");
+      var x = parseInt(parts[0], 10);
+      var y = parseInt(parts[1], 10);
+      if (!isNaN(x) && !isNaN(y)) {
+        setLetterAt(x, y, data[key]); // to bo repaintalo + obarvalo
+      }
+    });
+  } catch (e) {
+    console.log("Autosave apply error:", e);
+  }
+}
+
 
   // ===== 1) NORMALIZACIJA =====
   function toInt(v){
@@ -507,26 +575,32 @@ imgEl.src = url;
     updateFrameBorder();
   }
 
-  function setLetterAt(x,y,ch){
+    function setLetterAt(x, y, ch, silent){
     var cell = cellRefs[y][x];
     if (!cell || cell.classList.contains('black')) return;
 
-    // odstrani obstoječi tekst
+    // odstrani obstoječi TEXT node
     var toRemove = [];
-    for (var n=0;n<cell.childNodes.length;n++){
+    for (var n=0; n<cell.childNodes.length; n++){
       var nd = cell.childNodes[n];
-      if (nd.nodeType===Node.TEXT_NODE) toRemove.push(nd);
+      if (nd.nodeType === Node.TEXT_NODE) toRemove.push(nd);
     }
-    for (n=0;n<toRemove.length;n++) cell.removeChild(toRemove[n]);
+    for (n=0; n<toRemove.length; n++) cell.removeChild(toRemove[n]);
 
-    if (ch && String(ch).trim()!==''){
+    if (ch && String(ch).trim() !== ''){
       cell.dataset.letter = String(ch).toUpperCase();
       cell.appendChild(document.createTextNode(cell.dataset.letter));
     } else {
       delete cell.dataset.letter;
     }
-    repaintCell(x,y);
+
+    repaintCell(x, y);
+    scheduleSaveGrid();
+
+    // autosave (ne med loadom)
+    if (!silent) saveGridDebounced();
   }
+
 
   function moveWithinWord(forward, onlyEmpty){
     if (forward == null) forward = true;
@@ -626,7 +700,7 @@ imgEl.src = url;
     });
   }
 
-  // ===== 7) AUTO-OPEN =====
+    // ===== 7) AUTO-OPEN =====
   (function () {
     if (!gesla_opisi || !gesla_opisi.length) return;
 
@@ -642,6 +716,12 @@ imgEl.src = url;
     focusWordHere();
     if (grid) grid.focus();
   })();
+
+  // ===== 8) LOAD SAVED (po tem ko je vse narisano) =====
+  applySavedGrid();
+
+  // osveži highlight + kartico (čisto za ziher)
+  if (window.cursor) focusWordHere();
 
 });
 </script>

@@ -30,6 +30,9 @@ from flask import (
 from werkzeug.utils import secure_filename
 from PIL import Image
 
+print("APP FILE:", __file__)
+
+
 # --- Lokalni moduli
 from krizanka import pridobi_podatke_iz_xml
 "from uvoz_cc_csv_vus import run as uvoz_cc_run"
