@@ -56,6 +56,11 @@
 <script>
 window.addEventListener('DOMContentLoaded', function () {
 
+  // --- AIRBAG: da skripta ne crkne, če teh funkcij ni ---
+  console.log("KRIZANKA START");
+if (typeof window.show !== 'function') window.show = function(){};
+if (typeof window.saveGridDebounced !== 'function') window.saveGridDebounced = function(){};
+
   // ===== 0) PODATKI IZ BACKENDA =====
   var CC = {{ (cc or {'width':0,'height':0,'crna_polja':[],'gesla_opisi':[],'sol_by_xy':{},'numbers_xy':{}}) | tojson }};
   var width  = Number((CC && (CC.width  != null ? CC.width  : CC.sirina)) || 0);
@@ -68,66 +73,65 @@ window.addEventListener('DOMContentLoaded', function () {
   if (!isFinite(width)  || width  <= 0) width  = 5;
   if (!isFinite(height) || height <= 0) height = 5;
 
-    // ===== AUTOSAVE KRIŽANKE (localStorage) =====
-var SAVE_KEY = "krizanka_" + "{{ datum.strftime('%Y-%m-%d') }}";
+  // ===== AUTOSAVE KRIŽANKE (localStorage) =====
+  var SAVE_KEY = "krizanka_" + "{{ datum.strftime('%Y-%m-%d') }}";
 
-// najprej samo PREBEREMO shranjeno (ne kličemo setLetterAt še!)
-var _savedPending = null;
-try {
-  var raw = localStorage.getItem(SAVE_KEY);
-  _savedPending = raw ? JSON.parse(raw) : null;
-} catch (e) {
-  console.log("Autosave read/parse error:", e);
-  _savedPending = null;
-}
+  // najprej samo PREBEREMO shranjeno (ne kličemo setLetterAt še!)
+  var _savedPending = null;
+  try {
+    var raw = localStorage.getItem(SAVE_KEY);
+    _savedPending = raw ? JSON.parse(raw) : null;
+  } catch (e) {
+    console.log("Autosave read/parse error:", e);
+    _savedPending = null;
+  }
 
-var _saveTimer = null;
+  var _saveTimer = null;
 
-function saveGridNow() {
-  if (!window.cellRefs || !window.cellRefs.length) return;
+  function saveGridNow() {
+    if (!window.cellRefs || !window.cellRefs.length) return;
 
-  var data = {};
-  for (var y = 0; y < height; y++) {
-    for (var x = 0; x < width; x++) {
-      var cell = (cellRefs[y] || [])[x];
-      if (cell && cell.dataset && cell.dataset.letter) {
-        data[x + "," + y] = cell.dataset.letter;
+    var data = {};
+    for (var y = 0; y < height; y++) {
+      for (var x = 0; x < width; x++) {
+        var cell = (cellRefs[y] || [])[x];
+        if (cell && cell.dataset && cell.dataset.letter) {
+          data[x + "," + y] = cell.dataset.letter;
+        }
       }
+    }
+
+    try {
+      localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+    } catch (e) {
+      console.log("Autosave write error:", e);
     }
   }
 
-  try {
-    localStorage.setItem(SAVE_KEY, JSON.stringify(data));
-  } catch (e) {
-    console.log("Autosave write error:", e);
+  function scheduleSaveGrid() {
+    clearTimeout(_saveTimer);
+    _saveTimer = setTimeout(saveGridNow, 200); // debounce
   }
-}
 
-function scheduleSaveGrid() {
-  clearTimeout(_saveTimer);
-  _saveTimer = setTimeout(saveGridNow, 200); // debounce
-}
+  // to funkcijo pokličemo ŠELE KO setLetterAt že obstaja
+  function applySavedGrid() {
+    if (!_savedPending) return;
+    var data = _savedPending;
+    _savedPending = null;
 
-// to funkcijo pokličemo ŠELE KO setLetterAt že obstaja
-function applySavedGrid() {
-  if (!_savedPending) return;
-  var data = _savedPending;
-  _savedPending = null;
-
-  try {
-    Object.keys(data).forEach(function (key) {
-      var parts = key.split(",");
-      var x = parseInt(parts[0], 10);
-      var y = parseInt(parts[1], 10);
-      if (!isNaN(x) && !isNaN(y)) {
-        setLetterAt(x, y, data[key]); // to bo repaintalo + obarvalo
-      }
-    });
-  } catch (e) {
-    console.log("Autosave apply error:", e);
+    try {
+      Object.keys(data).forEach(function (key) {
+        var parts = key.split(",");
+        var x = parseInt(parts[0], 10);
+        var y = parseInt(parts[1], 10);
+        if (!isNaN(x) && !isNaN(y)) {
+          setLetterAt(x, y, data[key], true); // silent=true, da ne spamamo autosave
+        }
+      });
+    } catch (e) {
+      console.log("Autosave apply error:", e);
+    }
   }
-}
-
 
   // ===== 1) NORMALIZACIJA =====
   function toInt(v){
@@ -269,10 +273,10 @@ function applySavedGrid() {
     cellBorder:  '#cfcfcf',
 
     blockBg:       '#003700',
-    blockBorder:   '#000000',   // <-- vrni na črno (rdeča je bila samo debug)
+    blockBorder:   '#000000',
     blockBorderW:  3,
-    blockGapW:     2,           // 1–3
-    blockGapColor: '#ffffff',   // barva gapa
+    blockGapW:     2,
+    blockGapColor: '#ffffff',
 
     numColor: '#555'
   };
@@ -298,13 +302,11 @@ function applySavedGrid() {
     cell.style.borderStyle = 'solid';
     cell.style.borderWidth = UI.blockGapW + 'px';
 
-    // notranje (med črnimi) = gap, zunanje = blockBorder
     cell.style.borderTopColor    = nb.up    ? UI.blockGapColor : UI.blockBorder;
     cell.style.borderBottomColor = nb.down  ? UI.blockGapColor : UI.blockBorder;
     cell.style.borderLeftColor   = nb.left  ? UI.blockGapColor : UI.blockBorder;
     cell.style.borderRightColor  = nb.right ? UI.blockGapColor : UI.blockBorder;
 
-    // tile obris notri
     var base = 'inset 0 0 0 ' + UI.blockBorderW + 'px ' + UI.blockBorder;
     cell.dataset.baseShadow = base;
     cell.style.boxShadow = base;
@@ -317,7 +319,6 @@ function applySavedGrid() {
     cell.style.borderStyle = 'solid';
     cell.style.borderWidth = '1px';
 
-    // bela ob črni = črn rob (da obris bloka ne izgine)
     cell.style.borderTopColor    = nb.up    ? UI.blockBorder : UI.cellBorder;
     cell.style.borderBottomColor = nb.down  ? UI.blockBorder : UI.cellBorder;
     cell.style.borderLeftColor   = nb.left  ? UI.blockBorder : UI.cellBorder;
@@ -386,7 +387,7 @@ function applySavedGrid() {
   }
 
   // ===== 4) FUNKCIJE =====
-  var dir = 'across';
+    var dir = 'across';
   window.cursor = null;
 
   function updateFrameBorder() {
@@ -396,8 +397,8 @@ function applySavedGrid() {
 
   function isBlackXY(x,y){ return !!blackSet[x + "," + y]; }
   function hasLetter(x,y){
-    var c = cellRefs[y][x];
-    return !!(c && c.dataset && c.dataset.letter);
+    var c = (cellRefs[y] || [])[x];
+    return !!(c && c.dataset && (c.dataset.letter || '').trim());
   }
 
   function clampWord(x,y,d){
@@ -416,7 +417,7 @@ function applySavedGrid() {
   function repaintCell(x, y) {
     var cell = (cellRefs[y] || [])[x];
     if (!cell) return;
-    if (cell.classList.contains('black')) return; // pusti italian
+    if (cell.classList.contains('black')) return;
 
     var letter = (cell.dataset.letter || '').toUpperCase();
     var sol    = (cell.dataset.correct || '').toUpperCase();
@@ -458,14 +459,16 @@ function applySavedGrid() {
 
     for (var j = 0; j < cells.length; j++) {
       var xy = cells[j];
-      var c = cellRefs[xy[1]][xy[0]];
+      var c = (cellRefs[xy[1]] || [])[xy[0]];
+      if (!c) continue;
       c.classList.add('active');
       c.style.outline = '2px solid ' + col;
       setHighlightShadow(c, shadow);
       repaintCell(xy[0], xy[1]);
     }
 
-    var curCell = cellRefs[cur.y][cur.x];
+    var curCell = (cellRefs[cur.y] || [])[cur.x];
+    if (!curCell) return;
     curCell.classList.add('cursor');
     curCell.style.outline = '2px solid #ff8800';
     setHighlightShadow(curCell, 'inset 0 0 0 2px rgba(255,136,0,.25)');
@@ -476,82 +479,72 @@ function applySavedGrid() {
   var title = document.getElementById('clueTitle');
   var body  = document.getElementById('clueBody');
 
- function makeSlug(text, maxWords){
-  var s = (text || '').trim();
-  if (!s) return 'slika';
+  function makeSlug(text, maxWords){
+    var s = (text || '').trim();
+    if (!s) return 'slika';
 
-  // maxWords (če je podan)
-  if (maxWords && maxWords > 0) {
-    s = s.split(/\s+/).slice(0, maxWords).join(' ');
+    if (maxWords && maxWords > 0) {
+      s = s.split(/\s+/).slice(0, maxWords).join(' ');
+    }
+
+    if (s.normalize) s = s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    s = s.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'');
+    return s || 'slika';
   }
-
-  if (s.normalize) s = s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-  s = s.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'');
-  return s || 'slika';
-}
 
   function showClueAtHead(x, y, d) {
-  var key = x + "," + y;
-  var meta = (clueAtHead.get(key + "," + d)) || null;
+    var key = x + "," + y;
+    var meta = (clueAtHead.get(key + "," + d)) || null;
 
-  if (!meta) {
-    for (var ii = 0; ii < gesla_opisi.length; ii++) {
-      var it = gesla_opisi[ii];
-      if (it.x === x && it.y === y && (it.smer || 'across') === d) { meta = it; break; }
+    if (!meta) {
+      for (var ii = 0; ii < gesla_opisi.length; ii++) {
+        var it = gesla_opisi[ii];
+        if (it.x === x && it.y === y && (it.smer || 'across') === d) { meta = it; break; }
+      }
+      if (!meta) meta = {};
     }
-    if (!meta) meta = {};
+
+    var num  = numberAt.get(key) || meta.stevilka || '—';
+    var opis = (meta.opis || '').trim();
+
+    if (badge) badge.textContent = num;
+    if (title) title.textContent = (d === 'down' ? 'Navpično' : 'Vodoravno');
+    if (body)  body.textContent  = opis;
+
+    // slika
+    var imgEl = document.getElementById('clueImg');
+    if (!imgEl) return;
+
+    var url = (meta && meta.slika) ? String(meta.slika).trim() : '';
+
+    if (!url && opis) {
+      url = '/static/Images/' + makeSlug(opis, 30) + '.jpg';
+    }
+
+    if (url && !/^https?:\/\//i.test(url) && !url.startsWith('/')) {
+      url = '/' + url;
+    }
+
+    if (!url) {
+      imgEl.removeAttribute('src');
+      imgEl.style.display = 'none';
+      imgEl.classList.add('hidden');
+      return;
+    }
+
+    imgEl.onload = function () {
+      imgEl.style.display = 'block';
+      imgEl.classList.remove('hidden');
+    };
+
+    imgEl.onerror = function () {
+      imgEl.removeAttribute('src');
+      imgEl.style.display = 'none';
+      imgEl.classList.add('hidden');
+    };
+
+    imgEl.src = url;
   }
-
-  var num  = numberAt.get(key) || meta.stevilka || '—';
-  var opis = (meta.opis || '').trim();
-
-  if (badge) badge.textContent = num;
-  if (title) title.textContent = (d === 'down' ? 'Navpično' : 'Vodoravno');
-  if (body)  body.textContent  = opis;
-
-  // slika
-// slika
-var imgEl = document.getElementById('clueImg');
-if (!imgEl) return;
-
-// 1) backend URL (idealno: "/static/Images/xxx.jpg" ali full https://...)
-var url = (meta && meta.slika) ? String(meta.slika).trim() : '';
-
-// 2) fallback: če backend ni poslal nič, poskusi iz opisa (30 besed)
-if (!url && opis) {
-  url = '/static/Images/' + makeSlug(opis, 30) + '.jpg';
-}
-
-// normalizacija relativnih poti
-if (url && !/^https?:\/\//i.test(url) && !url.startsWith('/')) {
-  url = '/' + url;
-}
-
-if (!url) {
-  imgEl.removeAttribute('src');
-  imgEl.style.display = 'none';
-  imgEl.classList.add('hidden');
-  return;
-}
-
-imgEl.onload = function () {
-  imgEl.style.display = 'block';
-  imgEl.classList.remove('hidden');
-};
-
-imgEl.onerror = function () {
-  imgEl.removeAttribute('src');
-  imgEl.style.display = 'none';
-  imgEl.classList.add('hidden');
-};
-
-imgEl.src = url;
-
-
-
-  show(url + bust, false, false);
-}
-
 
   function focusWordHere(){
     if (!window.cursor) return;
@@ -575,17 +568,16 @@ imgEl.src = url;
     updateFrameBorder();
   }
 
-    function setLetterAt(x, y, ch, silent){
-    var cell = cellRefs[y][x];
+  function setLetterAt(x, y, ch, silent){
+    var cell = (cellRefs[y] || [])[x];
     if (!cell || cell.classList.contains('black')) return;
 
-    // odstrani obstoječi TEXT node
     var toRemove = [];
     for (var n=0; n<cell.childNodes.length; n++){
       var nd = cell.childNodes[n];
       if (nd.nodeType === Node.TEXT_NODE) toRemove.push(nd);
     }
-    for (n=0; n<toRemove.length; n++) cell.removeChild(toRemove[n]);
+    for (var i=0; i<toRemove.length; i++) cell.removeChild(toRemove[i]);
 
     if (ch && String(ch).trim() !== ''){
       cell.dataset.letter = String(ch).toUpperCase();
@@ -597,24 +589,30 @@ imgEl.src = url;
     repaintCell(x, y);
     scheduleSaveGrid();
 
-    // autosave (ne med loadom)
-    if (!silent) saveGridDebounced();
-  }
+        if (!silent && typeof saveGridDebounced === 'function') {
+      saveGridDebounced();
+    }
+  }  // <-- KONEC setLetterAt()
 
-
-  function moveWithinWord(forward, onlyEmpty){
+  function moveWithinWord(forward, onlyEmpty) {
     if (forward == null) forward = true;
     if (onlyEmpty == null) onlyEmpty = false;
     if (!window.cursor) return false;
 
     var c = clampWord(window.cursor.x, window.cursor.y, dir);
+
     var i0 = -1;
-    for (var i1=0; i1<c.cells.length; i1++) {
-      if (c.cells[i1][0]===window.cursor.x && c.cells[i1][1]===window.cursor.y){ i0=i1; break; }
+    for (var i1 = 0; i1 < c.cells.length; i1++) {
+      if (c.cells[i1][0] === window.cursor.x && c.cells[i1][1] === window.cursor.y) {
+        i0 = i1;
+        break;
+      }
     }
+    if (i0 < 0) return false;
+
     var step = forward ? 1 : -1;
 
-    for (var i2=i0+step; i2>=0 && i2<c.cells.length; i2+=step){
+    for (var i2 = i0 + step; i2 >= 0 && i2 < c.cells.length; i2 += step) {
       var nx = c.cells[i2][0], ny = c.cells[i2][1];
       var cell = (cellRefs[ny] || [])[nx];
       if (!cell || cell.classList.contains('black')) continue;
@@ -624,17 +622,17 @@ imgEl.src = url;
         if (letter) continue;
       }
 
-      window.cursor = {x:nx, y:ny};
-      highlight(c.cells, window.cursor);
+      window.cursor = { x: nx, y: ny };
       return true;
     }
+
     return false;
   }
 
   // ===== 5) NAPOLNI data-correct IN PREBARVAJ =====
   for (var yy=0; yy<height; yy++) {
     for (var xx=0; xx<width; xx++) {
-      var cellX = cellRefs[yy][xx];
+      var cellX = (cellRefs[yy] || [])[xx];
       if (!cellX || cellX.classList.contains('black')) continue;
       var keyC = xx + "," + yy;
       var solC = String((window.sol_by_xy && window.sol_by_xy[keyC]) || '').toUpperCase();
@@ -647,41 +645,66 @@ imgEl.src = url;
   grid.addEventListener('click', function(e){
     var t = e.target.closest ? e.target.closest('.cell') : e.target;
     if (!t || !t.classList || t.classList.contains('black')) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
     window.cursor = {x:+t.dataset.x, y:+t.dataset.y};
     focusWordHere();
-    grid.focus();
+
+    grid.setAttribute('tabindex','0');
+    grid.focus({ preventScroll: true });
   });
 
-  window.addEventListener('keydown', function(e){
+  document.addEventListener('keydown', function(e){
     var tag=(document.activeElement&&document.activeElement.tagName)||'';
     if (tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT') return;
     if (!window.cursor) return;
 
-    var k=e.key;
-    if (k && k.length===1 && /\S/.test(k)){
-      setLetterAt(window.cursor.x,window.cursor.y,k);
-      moveWithinWord(true,true);
-      e.preventDefault();
-      return;
-    }
+    var k = e.key;
+
+    if (k && k.length === 1 && /\S/.test(k)) {
+  console.log("TYPE:", k, "cursor BEFORE:", window.cursor, "dir:", dir);
+
+  setLetterAt(window.cursor.x, window.cursor.y, k, false);
+
+  var movedEmpty = moveWithinWord(true, true);
+  console.log("movedEmpty:", movedEmpty, "cursor AFTER:", window.cursor);
+
+  // test: ali se sploh zna premikat naprej (tudi čez vpisane)
+  if (!movedEmpty) {
+    var movedAny = moveWithinWord(true, false);
+    console.log("movedAny:", movedAny, "cursor AFTER-any:", window.cursor);
+  }
+
+  focusWordHere();
+  e.preventDefault();
+  return;
+}
+
     if (k==='Backspace'){
       if (hasLetter(window.cursor.x,window.cursor.y))
-        setLetterAt(window.cursor.x,window.cursor.y,'');
+        setLetterAt(window.cursor.x,window.cursor.y,'', false);
       else if (moveWithinWord(false,false))
-        setLetterAt(window.cursor.x,window.cursor.y,'');
+        setLetterAt(window.cursor.x,window.cursor.y,'', false);
+      focusWordHere();
       e.preventDefault();
       return;
     }
+
     if (k==='Delete'){
-      setLetterAt(window.cursor.x,window.cursor.y,'');
+      setLetterAt(window.cursor.x,window.cursor.y,'', false);
       moveWithinWord(true,true);
+      focusWordHere();
       e.preventDefault();
       return;
     }
-    if (k==='ArrowRight'){ dir='across'; moveWithinWord(true,true);  e.preventDefault(); return; }
-    if (k==='ArrowLeft'){  dir='across'; moveWithinWord(false,true); e.preventDefault(); return; }
-    if (k==='ArrowDown'){  dir='down';   moveWithinWord(true,true);  e.preventDefault(); return; }
-    if (k==='ArrowUp'){    dir='down';   moveWithinWord(false,true); e.preventDefault(); return; }
+
+    if (k==='ArrowRight'){ dir='across'; moveWithinWord(true,true);  focusWordHere(); e.preventDefault(); return; }
+    if (k==='ArrowLeft'){  dir='across'; moveWithinWord(false,true); focusWordHere(); e.preventDefault(); return; }
+    if (k==='ArrowDown'){  dir='down';   moveWithinWord(true,true);  focusWordHere(); e.preventDefault(); return; }
+    if (k==='ArrowUp'){    dir='down';   moveWithinWord(false,true); focusWordHere(); e.preventDefault(); return; }
+
     if (k==='Enter'){
       dir = (dir==='across') ? 'down' : 'across';
       focusWordHere();
@@ -700,7 +723,7 @@ imgEl.src = url;
     });
   }
 
-    // ===== 7) AUTO-OPEN =====
+  // ===== 7) AUTO-OPEN =====
   (function () {
     if (!gesla_opisi || !gesla_opisi.length) return;
 
@@ -720,7 +743,6 @@ imgEl.src = url;
   // ===== 8) LOAD SAVED (po tem ko je vse narisano) =====
   applySavedGrid();
 
-  // osveži highlight + kartico (čisto za ziher)
   if (window.cursor) focusWordHere();
 
 });
