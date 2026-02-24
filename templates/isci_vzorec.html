@@ -3,143 +3,183 @@
 {% block title %}Iskanje po vzorcu | VUS{% endblock %}
 
 {% block styles %}
-  <style>
-    .search-container {
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 20px;
-      background-color: #ffffff;
-      border-radius: 8px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    }
+<style>
+  .search-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  .search-container h2 { text-align: center; margin-bottom: 20px; }
 
-    .search-container h2 {
-      text-align: center;
-      margin-bottom: 20px;
-    }
+  #steviloCrk { max-width: 100px; margin: 0 auto; text-align: center; }
 
-    #steviloCrk {
-      max-width: 100px;
-      margin: 0 auto;
-      text-align: center;
-    }
+  .navodila {
+    font-size: 1rem;
+    margin-bottom: 15px;
+    padding: 10px;
+    background-color: #f9f9f9;
+    border-left: 5px solid #ffc107;
+    border-radius: 4px;
+  }
 
-    .navodila {
-      font-size: 1rem;
-      margin-bottom: 15px;
-      padding: 10px;
-      background-color: #f9f9f9;
-      border-left: 5px solid #ffc107;
-      border-radius: 4px;
-    }
+  .search-inputs {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+  }
 
-    .search-inputs {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 10px;
-    }
+  .search-inputs input[type='text'] {
+    width: 45px;
+    height: 45px;
+    text-align: center;
+    font-size: 1.5rem;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+  }
 
-    .search-inputs input[type='text'] {
-      width: 45px;
-      height: 45px;
-      text-align: center;
-      font-size: 1.5rem;
-      border-radius: 4px;
-      border: 1px solid #ccc;
-    }
+  .btn-group { margin-top: 20px; text-align: center; }
 
-    .btn-group {
-      margin-top: 20px;
-      text-align: center;
-    }
-
-    .result-container {
-      margin-top: 20px;
-    }
-
-    .navigation-links {
-      margin-top: 20px;
-      text-align: center;
-    }
-
-    .navigation-links a {
-      margin: 5px;
-    }
-  </style>
+  .result-container { margin-top: 20px; }
+</style>
 {% endblock %}
 
 {% block content %}
-  <div class="search-container">
-    <h2>Iskanje po vzorcu</h2>
+<div class="search-container">
+  <h2>Iskanje po vzorcu</h2>
 
-    <div class="d-flex flex-wrap justify-content-center">
-  <a class="btn btn-custom active" href="{{ url_for('isci_vzorec') }}">Išči po vzorcu</a>
-  <a class="btn btn-custom" href="{{ url_for('prikazi_krizanko') }}">Križanke</a>
-  <a class="btn btn-custom" href="{{ url_for('osnovni_sudoku_default') }}">Današnji sudoku</a>
-  <a class="btn btn-custom" href="{{ url_for('arhiv_sudoku_pregled', tezavnost='medium') }}">Arhiv sudoku</a>
-</div>
-    <div class="navodila">
-      Vnesi število črk v geslu in nato vpiši črke, ki jih že poznaš. Če črke ne poznaš, pusti polje
-      prazno. Rezultate lahko dodatno zožiš z vpisom letnice, poklica, imena ipd.
-    </div>
-
-    <div class="form-group text-center">
-      <label for="steviloCrk">Število črk v geslu:</label>
-      <input type="number" id="steviloCrk" class="form-control" min="1" max="20" value="5" />
-    </div>
-
-    <div class="search-inputs" id="inputsContainer">
-      <!-- polja se generirajo dinamično -->
-    </div>
-
-    <div class="btn-group">
-      <button id="btn-iscI" type="button" class="btn btn-success" onclick="isciVzorec()">
-        IŠČI
-      </button>
-      <button id="btn-ponastavi" type="button" class="btn btn-warning" onclick="ponastaviIskanje()">
-        PONASTAVI
-      </button>
-    </div>
-
-    <div class="form-group mt-3">
-      <input
-        type="text"
-        id="dodatno"
-        class="form-control"
-        placeholder="Zoži rezultate (letnica, poklic, ime...)"
-      />
-    </div>
-
-    <div class="result-container" id="rezultati"></div>
-
-    <div style="display: flex; justify-content: flex-end; gap: 18px; margin-top: 26px;">
-      <a href="{{ url_for('home') }}" class="btn btn-secondary">Domov</a>
-      <a href="{{ url_for('prispevaj_geslo') }}" class="btn btn-secondary">Prispevaj geslo</a>
-    </div>
+  <div class="d-flex flex-wrap justify-content-center">
+    <a class="btn btn-custom active" href="{{ url_for('isci_vzorec') }}">Išči po vzorcu</a>
+    <a class="btn btn-custom" href="{{ url_for('prikazi_krizanko') }}">Križanke</a>
+    <a class="btn btn-custom" href="{{ url_for('osnovni_sudoku_default') }}">Današnji sudoku</a>
+    <a class="btn btn-custom" href="{{ url_for('arhiv_sudoku_pregled', tezavnost='medium') }}">Arhiv sudoku</a>
   </div>
+
+  <div class="navodila">
+    Vnesi število črk v geslu in nato vpiši črke, ki jih že poznaš.
+    Če črke ne poznaš, pusti polje prazno. Rezultate lahko dodatno zožiš z vpisom letnice,
+    poklica, imena ipd.
+  </div>
+
+  <div class="form-group text-center">
+    <label for="steviloCrk">Število črk v geslu:</label>
+    <input type="number" id="steviloCrk" class="form-control" min="1" max="20" value="5" />
+  </div>
+
+  <div class="search-inputs" id="inputsContainer">
+    <!-- polja se generirajo dinamično -->
+  </div>
+
+  <div class="btn-group">
+    <button id="btn-isci" type="button" class="btn btn-success" onclick="isciVzorec()">IŠČI</button>
+    <button id="btn-ponastavi" type="button" class="btn btn-warning" onclick="ponastaviIskanje()">PONASTAVI</button>
+  </div>
+
+  <div class="form-group mt-3">
+    <input type="text" id="dodatno" class="form-control"
+           placeholder="Zoži rezultate (letnica, poklic, ime...)" />
+  </div>
+
+  <div class="result-container" id="rezultati"></div>
+
+  <div style="display:flex; justify-content:flex-end; gap:18px; margin-top:26px;">
+    <a href="{{ url_for('home') }}" class="btn btn-secondary">Domov</a>
+    <a href="{{ url_for('prispevaj_geslo') }}" class="btn btn-secondary">Prispevaj geslo</a>
+  </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-  // ---------- generiranje polj ----------
-  function generirajPolja() {
-    console.log("generirajPolja()");
-    const container = document.getElementById('inputsContainer');
-    const steviloInput = document.getElementById('steviloCrk');
+(function () {
+  // ---------- helpers ----------
+  function $(sel, root) { return (root || document).querySelector(sel); }
+  function $all(sel, root) { return Array.from((root || document).querySelectorAll(sel)); }
 
-    if (!container || !steviloInput) {
-      console.error("Manjka #inputsContainer ali #steviloCrk");
-      return;
+  function normalizePat(pat) {
+    pat = String(pat || '').trim();
+    if (!pat) return '';
+    // podpremo: _ . ? kot "neznano"
+    pat = pat.replace(/[.\?]/g, '_');
+    pat = pat.toUpperCase();
+    // dovolimo A-Z + ČŠŽ + _
+    pat = pat.replace(/[^A-ZČŠŽ_]/g, '_');
+    return pat;
+  }
+
+  function readURLPrefill() {
+    var usp = new URLSearchParams(location.search);
+    var len = parseInt(usp.get('len') || '', 10);
+    var pat = normalizePat(usp.get('pat') || '');
+    var q   = (usp.get('q') || '').trim();
+    return { len: isFinite(len) ? len : 0, pat: pat, q: q };
+  }
+
+  function focusFirstEmpty() {
+    var inputs = $all('#inputsContainer input');
+    for (var i = 0; i < inputs.length; i++) {
+      if (!inputs[i].value) { inputs[i].focus(); return; }
+    }
+    if (inputs.length) inputs[inputs.length - 1].focus();
+  }
+
+  function getStevilo() {
+    var el = $('#steviloCrk');
+    return el ? (parseInt(el.value, 10) || 0) : 0;
+  }
+
+  function setStevilo(n) {
+    var el = $('#steviloCrk');
+    if (el) el.value = String(n);
+  }
+
+  function getPatternFromInputs() {
+    var stevilo = getStevilo();
+    var chars = $all('#inputsContainer input').map(function (inp) {
+      var v = (inp.value || '').trim().toUpperCase();
+      return v ? v : '_';
+    }).join('');
+
+    if (stevilo > 0) {
+      if (chars.length < stevilo) chars = chars.padEnd(stevilo, '_');
+      if (chars.length > stevilo) chars = chars.slice(0, stevilo);
+    }
+    return chars;
+  }
+
+  function setInputsFromPattern(pat) {
+    pat = normalizePat(pat);
+    var inputs = $all('#inputsContainer input');
+    for (var i = 0; i < inputs.length; i++) {
+      var ch = pat[i] || '_';
+      inputs[i].value = (ch === '_') ? '' : ch;
+    }
+    focusFirstEmpty();
+  }
+
+  // ---------- generiranje polj ----------
+  function generirajPolja(keepExisting) {
+    var container = $('#inputsContainer');
+    var steviloInput = $('#steviloCrk');
+    if (!container || !steviloInput) return;
+
+    var old = [];
+    if (keepExisting) {
+      old = $all('#inputsContainer input').map(function (inp) {
+        return (inp.value || '').toUpperCase();
+      });
     }
 
     container.innerHTML = '';
+    var stevilo = parseInt(steviloInput.value, 10) || 0;
 
-    const stevilo = parseInt(steviloInput.value, 10) || 0;
-    console.log("stevilo crk =", stevilo);
-
-    for (let i = 0; i < stevilo; i++) {
-      const input = document.createElement('input');
+    for (var i = 0; i < stevilo; i++) {
+      var input = document.createElement('input');
       input.type = 'text';
       input.maxLength = 1;
       input.className = 'vzorec-polje';
@@ -149,33 +189,42 @@
       input.style.fontSize = '1.5rem';
       input.style.margin = '5px';
 
-      // vedno v velike črke + skok naprej
-      input.addEventListener('input', () => {
-        if (input.value) input.value = input.value.toUpperCase();
-        if (input.value.length === 1) {
-          const next = input.nextElementSibling;
+      if (keepExisting && old[i]) input.value = old[i].slice(0, 1);
+
+      input.addEventListener('input', function (e) {
+        var v = (e.target.value || '').toUpperCase();
+        e.target.value = v.slice(0, 1);
+
+        if (e.target.value.length === 1) {
+          var next = e.target.nextElementSibling;
           if (next && next.tagName === 'INPUT') next.focus();
         }
       });
 
-      // backspace ←, Enter/Tab → (na zadnjem Enter sproži iskanje)
-      input.addEventListener('keydown', (e) => {
-        if (e.key === 'Backspace' && !input.value) {
-          const prev = input.previousElementSibling;
-          if (prev && prev.tagName === 'INPUT') {
-            prev.focus();
+      input.addEventListener('keydown', function (e) {
+        var cur = e.target;
+
+        if (e.key === 'Backspace') {
+          if (!cur.value) {
+            var prev = cur.previousElementSibling;
+            if (prev && prev.tagName === 'INPUT') prev.focus();
             e.preventDefault();
           }
+          return;
         }
+
         if (e.key === 'Enter' || e.key === 'Tab') {
           e.preventDefault();
           if (e.shiftKey) {
-            const prev = input.previousElementSibling;
-            if (prev && prev.tagName === 'INPUT') prev.focus();
+            var prev2 = cur.previousElementSibling;
+            if (prev2 && prev2.tagName === 'INPUT') prev2.focus();
           } else {
-            const next = input.nextElementSibling;
-            if (next && next.tagName === 'INPUT') next.focus();
-            if (!next) window.isciVzorec();
+            var next2 = cur.nextElementSibling;
+            if (next2 && next2.tagName === 'INPUT') {
+              next2.focus();
+            } else {
+              window.isciVzorec();
+            }
           }
         }
       });
@@ -183,139 +232,144 @@
       container.appendChild(input);
     }
 
-    const prva = container.querySelector('input');
-    if (prva) prva.focus();
+    focusFirstEmpty();
   }
 
-  // ---------- init strani ----------
-  function initIsciVzorecPage() {
-    console.log("initIsciVzorecPage()");
-    const steviloInput = document.getElementById('steviloCrk');
-    const container = document.getElementById('inputsContainer');
+  // ---------- render rezultatov ----------
+  function esc(s) {
+    return String(s || '')
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+      .replace(/'/g,'&#39;');
+  }
 
-    if (!steviloInput || !container) {
-      console.error("Init fail: manjka #steviloCrk ali #inputsContainer");
+  function renderResults(rows) {
+    var container = $('#rezultati');
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    if (!rows || !rows.length) {
+      container.innerHTML = '<div class="alert alert-warning">Ni najdenih rezultatov.</div>';
       return;
     }
 
-    generirajPolja();
+    container.innerHTML = '<div class="alert alert-info">Najdeno: ' + rows.length + ' zadetkov</div>';
 
-    // ob spremembi števila črk ponovno zgradi polja in počisti rezultate
-    steviloInput.addEventListener('input', () => {
-      generirajPolja();
-      const rez = document.getElementById('rezultati');
-      if (rez) rez.innerHTML = '';
+    var html = '<table class="table table-bordered">' +
+      '<thead><tr><th>Geslo</th><th>Opis</th></tr></thead><tbody>';
+
+    rows.forEach(function (r) {
+      var geslo = r.GESLO || r.geslo || r.word || '';
+      var opis  = r.OPIS || r.opis || r.razlaga || r.clue || '';
+
+      html += '<tr>' +
+        '<td>' +
+          '<button type="button" class="btn btn-link p-0 geslo-pick" data-geslo="' + esc(geslo) + '" style="text-decoration:none;">' +
+            '<strong>' + esc(geslo) + '</strong>' +
+          '</button>' +
+        '</td>' +
+        '<td>' + esc(opis) + '</td>' +
+      '</tr>';
     });
 
-    // Enter v poljih: brez reload; na zadnjem polju sproži iskanje
-    container.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        const next = e.target && e.target.nextElementSibling;
-        if (!(next && next.tagName === 'INPUT')) {
-          window.isciVzorec();
-        }
-      }
-    });
+    html += '</tbody></table>';
+    container.innerHTML += html;
   }
-
-  document.addEventListener('DOMContentLoaded', initIsciVzorecPage);
 
   // ---------- ISKANJE ----------
   window.isciVzorec = function () {
-    const stevilo = parseInt(document.getElementById('steviloCrk').value, 10) || 0;
-
-    let vzorec = Array.from(document.querySelectorAll('#inputsContainer input'))
-      .map((inp) => (inp.value || '_').toUpperCase())
-      .join('');
-
-    if (stevilo > 0) {
-      if (vzorec.length < stevilo) vzorec = vzorec.padEnd(stevilo, '_');
-      else if (vzorec.length > stevilo) vzorec = vzorec.slice(0, stevilo);
-    }
-
-    const dodatno = (document.getElementById('dodatno').value || '').trim();
+    var stevilo = getStevilo();
+    var vzorec = getPatternFromInputs();
+    var dodatno = ($('#dodatno') ? ($('#dodatno').value || '').trim() : '');
 
     fetch('/isci_vzorec', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ vzorec, dolzina: stevilo, dodatno }),
+      body: JSON.stringify({ vzorec: vzorec, dolzina: stevilo, dodatno: dodatno }),
       cache: 'no-store',
     })
-      .then((response) => {
-        if (!response.ok) throw new Error('Napaka ' + response.status);
-        return response.json();
-      })
-      .then((data) => {
-        console.log('isci_vzorec API odgovor:', data);
-
-        if (data && data.ok === false) {
-          const container = document.getElementById('rezultati');
-          container.innerHTML =
-            `<div class="alert alert-danger">Napaka v iskanju: ${data.error || 'neznana napaka'}</div>`;
-          return;
-        }
-
-        let rows = [];
-        if (Array.isArray(data)) {
-          rows = data;
-        } else if (data && Array.isArray(data.results)) {
-          rows = data.results;
-        }
-
-        try {
-          const hits = rows.length;
-          if (typeof window.gtagEvent === 'function') {
-            gtagEvent('pattern_search', { letters: stevilo, pattern: vzorec, hits });
-          } else if (typeof window.gtag === 'function') {
-            gtag('event', 'pattern_search', { letters: stevilo, pattern: vzorec, hits });
-          }
-        } catch (_) {}
-
-        const container = document.getElementById('rezultati');
-        container.innerHTML = '';
-
-        if (rows.length > 0) {
-          container.innerHTML =
-            `<div class="alert alert-info">Najdeno: ${rows.length} zadetkov</div>`;
-
-          let tabela = `<table class="table table-bordered">
-              <thead><tr><th>Geslo</th><th>Opis</th></tr></thead><tbody>`;
-
-          rows.forEach((r) => {
-            const geslo = r.GESLO || r.geslo || r.word || '';
-            const opis  = r.OPIS || r.opis || r.razlaga || r.clue || '';
-            tabela += `<tr><td>${geslo}</td><td>${opis}</td></tr>`;
-          });
-
-          tabela += '</tbody></table>';
-          container.innerHTML += tabela;
-        } else {
-          container.innerHTML =
-            '<div class="alert alert-warning">Ni najdenih rezultatov.</div>';
-        }
-      })
-      .catch((err) => {
-        console.error('NAPAKA PRI FETCHU:', err);
-        alert('Napaka: ' + err.message);
-      });
+    .then(function (response) {
+      if (!response.ok) throw new Error('Napaka ' + response.status);
+      return response.json();
+    })
+    .then(function (data) {
+      var rows = [];
+      if (Array.isArray(data)) rows = data;
+      else if (data && Array.isArray(data.results)) rows = data.results;
+      else if (data && data.ok === false) {
+        var container = $('#rezultati');
+        if (container) container.innerHTML =
+          '<div class="alert alert-danger">Napaka v iskanju: ' + esc(data.error || 'neznana napaka') + '</div>';
+        return;
+      }
+      renderResults(rows);
+    })
+    .catch(function (err) {
+      console.error('NAPAKA PRI FETCHU:', err);
+      alert('Napaka: ' + err.message);
+    });
   };
 
   window.ponastaviIskanje = function () {
-    document.getElementById('dodatno').value = '';
-    generirajPolja();
-    const rez = document.getElementById('rezultati');
+    if ($('#dodatno')) $('#dodatno').value = '';
+    generirajPolja(false);
+    var rez = $('#rezultati');
     if (rez) rez.innerHTML = '';
   };
-</script>
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-  document.addEventListener("click", function (e) {
-    if (e.target.closest && e.target.closest("#btn-isci")) {
-      console.log("[DBG] click on IŠČI detected");
+
+  // ---------- init ----------
+  function initIsciVzorecPage() {
+    // 1) vedno najprej nariši polja
+    generirajPolja(false);
+
+    // 2) prefill iz URL (če je)
+    var pre = readURLPrefill();
+    if (pre.len) setStevilo(pre.len);
+    if (pre.len) generirajPolja(false);
+    if (pre.pat) setInputsFromPattern(pre.pat);
+    if (pre.q && $('#dodatno')) $('#dodatno').value = pre.q;
+
+    // sprememba števila črk -> regeneracija, ohrani čimveč že vpisanih
+    var steviloInput = $('#steviloCrk');
+    if (steviloInput) {
+      steviloInput.addEventListener('input', function () {
+        generirajPolja(true);
+        var rez = $('#rezultati');
+        if (rez) rez.innerHTML = '';
+      });
     }
-  });
-});
+
+    // klik na rezultat (geslo) -> napolni polja + išči
+    var rez = $('#rezultati');
+    if (rez) {
+      rez.addEventListener('click', function (e) {
+        var btn = e.target && (e.target.closest ? e.target.closest('.geslo-pick') : null);
+        if (!btn) return;
+
+        var word = (btn.getAttribute('data-geslo') || '').trim().toUpperCase();
+        if (!word) return;
+
+        // odstranimo presledke/apostrofe (da pattern štima)
+        var pure = word.replace(/[\s']/g, '');
+        setStevilo(pure.length);
+        generirajPolja(false);
+        setInputsFromPattern(pure);
+
+        // pro UX: takoj išči
+        window.isciVzorec();
+      });
+    }
+
+    // gumb IŠČI (podpremo oba id-ja)
+    var btn1 = $('#btn-isci') || $('#btn-iscI');
+    if (btn1) btn1.addEventListener('click', function(){ window.isciVzorec(); });
+
+    var btn2 = $('#btn-ponastavi');
+    if (btn2) btn2.addEventListener('click', function(){ window.ponastaviIskanje(); });
+  }
+
+  document.addEventListener('DOMContentLoaded', initIsciVzorecPage);
+})();
 </script>
 {% endblock %}
-

@@ -2,6 +2,74 @@
 
 {% block title %}Današnja križanka{% endblock %}
 
+{% block styles %}
+<style>
+  .vus-wrap { display:inline-block; }
+  .vus-grid { outline: none; }
+
+  /* Clue card */
+  #clueCard{
+    position: sticky;
+    top: 90px;
+    max-width: 520px;
+    border-radius: 14px;
+    box-shadow: 0 10px 25px rgba(0,0,0,.08);
+    background: #fff;
+    padding: 14px;
+  }
+  #clueHead{
+    display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+    margin-bottom: 8px;
+  }
+  #clueBadge{
+    display:inline-flex; align-items:center; justify-content:center;
+    min-width: 34px; height: 34px;
+    border-radius: 10px;
+    background:#0f172a; color:#fff;
+    font-weight:700;
+    padding: 0 10px;
+  }
+  #clueTitle{ font-weight:700; margin:0; }
+  #clueBody{ margin: 6px 0 0 0; }
+  #clueImg{
+    margin-top:10px;
+    width:100%;
+    border-radius: 12px;
+    display:none;
+  }
+  #clueImg.hidden{ display:none; }
+
+  /* Floating toggle button */
+  #toggleDir{
+    position: fixed;
+    left: 14px;
+    bottom: 14px;
+    width: 54px;
+    height: 54px;
+    border-radius: 16px;
+    border: 0;
+    box-shadow: 0 10px 25px rgba(0,0,0,.2);
+    background: #111827;
+    color: #fff;
+    font-size: 24px;
+    z-index: 9999;
+    display:flex; align-items:center; justify-content:center;
+  }
+
+  /* Layout */
+  .kz-layout{
+    display:grid;
+    grid-template-columns: 1fr minmax(280px,520px);
+    gap: 16px;
+    align-items:start;
+  }
+  @media (max-width: 992px){
+    .kz-layout{ grid-template-columns: 1fr; }
+    #clueCard{ position: relative; top: 0; }
+  }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container py-3">
   <h1 class="h4 mb-2">
@@ -10,45 +78,38 @@
   </h1>
 
   <nav class="mb-3" style="display:flex; gap:1rem; align-items:center; flex-wrap:wrap;">
-  <a href="{{ prev_url }}">&laquo; Prejšnja</a>
-  <a href="{{ back_url }}">Nazaj na to križanko</a>
+    <a href="{{ prev_url }}">&laquo; Prejšnja</a>
+    <a href="{{ back_url }}">Nazaj na to križanko</a>
 
-  <a class="btn btn-warning btn-sm"
-     href="{{ url_for('isci_vzorec') }}"
-     target="_blank" rel="noopener">
-     🔎 Išči po vzorcu
-  </a>
-</nav>
+    <!-- PRO gumb (JS ga prestreže in odpre s prefillom) -->
+    <a id="btnIsciVzorec" class="btn btn-warning btn-sm"
+       href="{{ url_for('isci_vzorec') }}"
+       target="_blank" rel="noopener">
+      🔎 Išči po vzorcu
+    </a>
+  </nav>
 
-
-
-  <!-- okvir + mreža -->
-  <div id="gridFrame" class="vus-wrap">
-    <div id="grid" class="vus-grid" aria-label="Mreža križanke"></div>
-  </div>
-
-  <!-- plavajoča kartica -->
-  <div id="clueCard" class="clue-card hidden"
-       style="position:fixed; right:20px; top:96px; z-index:9999; width:min(340px, calc(100vw - 32px));">
-    <div class="clue-header"
-         style="padding:10px 12px 10px; color:#0b3d91; background:#e7f1ff; border:1px solid #c8defd; border-radius:12px; box-shadow:0 10px 25px rgba(0,0,0,.20);">
-      <div style="display:flex; align-items:baseline; gap:8px;">
-        <span id="clueBadge" class="badge"
-              style="color:#111; font-weight:700; font-size:14px; padding:0 6px;">—</span>
-        <span id="clueTitle" style="font-weight:700; font-size:18px;">Vodoravno</span>
+  <div class="kz-layout">
+    <!-- LEFT: grid -->
+    <div>
+      <div id="gridFrame" class="vus-wrap">
+        <div id="grid" class="vus-grid" aria-label="Mreža križanke"></div>
       </div>
-
-      <div id="clueBody" style="white-space:pre-wrap; line-height:1.35; margin-top:6px;">—</div>
-
-      <img id="clueImg" class="clue-img hidden" alt=""
-           style="display:none; max-width:100%; height:auto; margin-top:10px; border-radius:8px;" />
     </div>
+
+    <!-- RIGHT: clue card -->
+    <aside id="clueCard">
+      <div id="clueHead">
+        <span id="clueBadge">—</span>
+        <h2 id="clueTitle" class="h6 m-0">Vodoravno</h2>
+      </div>
+      <p id="clueBody" class="text-muted mb-0">Klikni v mrežo…</p>
+      <img id="clueImg" class="hidden" alt="Slika namiga">
+    </aside>
   </div>
 
-  <!-- plavajoč gumb -->
-  <button id="toggleDir" class="toggle-dir"
-          style="position:fixed; right:20px; bottom:24px; z-index:10000; width:56px; height:56px; border-radius:50%; border:none; background:#198754; color:#fff; font-size:22px; box-shadow:0 8px 20px rgba(0,0,0,.25); cursor:pointer;"
-          title="Zamenjaj smer (Enter)">↔︎</button>
+  <!-- floating direction toggle -->
+  <button id="toggleDir" type="button" aria-pressed="false">↔︎</button>
 </div>
 {% endblock %}
 
@@ -57,9 +118,8 @@
 window.addEventListener('DOMContentLoaded', function () {
 
   // --- AIRBAG: da skripta ne crkne, če teh funkcij ni ---
-  console.log("KRIZANKA START");
-if (typeof window.show !== 'function') window.show = function(){};
-if (typeof window.saveGridDebounced !== 'function') window.saveGridDebounced = function(){};
+  if (typeof window.show !== 'function') window.show = function(){};
+  if (typeof window.saveGridDebounced !== 'function') window.saveGridDebounced = function(){};
 
   // ===== 0) PODATKI IZ BACKENDA =====
   var CC = {{ (cc or {'width':0,'height':0,'crna_polja':[],'gesla_opisi':[],'sol_by_xy':{},'numbers_xy':{}}) | tojson }};
@@ -76,13 +136,11 @@ if (typeof window.saveGridDebounced !== 'function') window.saveGridDebounced = f
   // ===== AUTOSAVE KRIŽANKE (localStorage) =====
   var SAVE_KEY = "krizanka_" + "{{ datum.strftime('%Y-%m-%d') }}";
 
-  // najprej samo PREBEREMO shranjeno (ne kličemo setLetterAt še!)
   var _savedPending = null;
   try {
     var raw = localStorage.getItem(SAVE_KEY);
     _savedPending = raw ? JSON.parse(raw) : null;
   } catch (e) {
-    console.log("Autosave read/parse error:", e);
     _savedPending = null;
   }
 
@@ -100,20 +158,14 @@ if (typeof window.saveGridDebounced !== 'function') window.saveGridDebounced = f
         }
       }
     }
-
-    try {
-      localStorage.setItem(SAVE_KEY, JSON.stringify(data));
-    } catch (e) {
-      console.log("Autosave write error:", e);
-    }
+    try { localStorage.setItem(SAVE_KEY, JSON.stringify(data)); } catch (e) {}
   }
 
   function scheduleSaveGrid() {
     clearTimeout(_saveTimer);
-    _saveTimer = setTimeout(saveGridNow, 200); // debounce
+    _saveTimer = setTimeout(saveGridNow, 200);
   }
 
-  // to funkcijo pokličemo ŠELE KO setLetterAt že obstaja
   function applySavedGrid() {
     if (!_savedPending) return;
     var data = _savedPending;
@@ -124,13 +176,9 @@ if (typeof window.saveGridDebounced !== 'function') window.saveGridDebounced = f
         var parts = key.split(",");
         var x = parseInt(parts[0], 10);
         var y = parseInt(parts[1], 10);
-        if (!isNaN(x) && !isNaN(y)) {
-          setLetterAt(x, y, data[key], true); // silent=true, da ne spamamo autosave
-        }
+        if (!isNaN(x) && !isNaN(y)) setLetterAt(x, y, data[key], true);
       });
-    } catch (e) {
-      console.log("Autosave apply error:", e);
-    }
+    } catch (e) {}
   }
 
   // ===== 1) NORMALIZACIJA =====
@@ -228,8 +276,6 @@ if (typeof window.saveGridDebounced !== 'function') window.saveGridDebounced = f
 
     sol_by_xy = norm;
     window.sol_by_xy = norm;
-    console.log('[KRIZANKA] solutions:', Object.keys(norm).length,
-                'oneBased→zeroBased:', !!maybeOneBased);
   })();
 
   // ===== 2) INDEKSI =====
@@ -266,18 +312,15 @@ if (typeof window.saveGridDebounced !== 'function') window.saveGridDebounced = f
 
   var UI = {
     cellSize: 40,
-
     frameBorder: '#0f172a',
     frameBg:     '#fafafa',
     cellBg:      '#ffffff',
     cellBorder:  '#cfcfcf',
-
     blockBg:       '#003700',
     blockBorder:   '#000000',
     blockBorderW:  3,
     blockGapW:     2,
     blockGapColor: '#ffffff',
-
     numColor: '#555'
   };
 
@@ -387,7 +430,7 @@ if (typeof window.saveGridDebounced !== 'function') window.saveGridDebounced = f
   }
 
   // ===== 4) FUNKCIJE =====
-    var dir = 'across';
+  var dir = 'across';
   window.cursor = null;
 
   function updateFrameBorder() {
@@ -413,6 +456,17 @@ if (typeof window.saveGridDebounced !== 'function') window.saveGridDebounced = f
     }
     return {sx:sx,sy:sy,cells:cells};
   }
+  function buildPatternFromCells(cells){
+  // cells = [[x,y], ...] v pravi smeri
+  var pat = '';
+  for (var i=0; i<cells.length; i++){
+    var x = cells[i][0], y = cells[i][1];
+    var cell = (cellRefs[y] || [])[x];
+    var ch = (cell && cell.dataset && cell.dataset.letter) ? String(cell.dataset.letter).trim() : '';
+    pat += ch ? ch.toUpperCase() : '_';
+  }
+  return pat;
+}
 
   function repaintCell(x, y) {
     var cell = (cellRefs[y] || [])[x];
@@ -422,16 +476,11 @@ if (typeof window.saveGridDebounced !== 'function') window.saveGridDebounced = f
     var letter = (cell.dataset.letter || '').toUpperCase();
     var sol    = (cell.dataset.correct || '').toUpperCase();
 
-    if (!letter || !sol) {
-      cell.style.background = UI.cellBg;
-      return;
-    }
+    if (!letter || !sol) { cell.style.background = UI.cellBg; return; }
     cell.style.background = (letter === sol) ? '#d4edda' : '#f8d7da';
   }
 
-  function restoreShadow(el){
-    el.style.boxShadow = el.dataset.baseShadow || '';
-  }
+  function restoreShadow(el){ el.style.boxShadow = el.dataset.baseShadow || ''; }
 
   function clearActive(){
     var active = grid.querySelectorAll('.active,.cursor');
@@ -482,11 +531,7 @@ if (typeof window.saveGridDebounced !== 'function') window.saveGridDebounced = f
   function makeSlug(text, maxWords){
     var s = (text || '').trim();
     if (!s) return 'slika';
-
-    if (maxWords && maxWords > 0) {
-      s = s.split(/\s+/).slice(0, maxWords).join(' ');
-    }
-
+    if (maxWords && maxWords > 0) s = s.split(/\s+/).slice(0, maxWords).join(' ');
     if (s.normalize) s = s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     s = s.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'');
     return s || 'slika';
@@ -496,13 +541,7 @@ if (typeof window.saveGridDebounced !== 'function') window.saveGridDebounced = f
     var key = x + "," + y;
     var meta = (clueAtHead.get(key + "," + d)) || null;
 
-    if (!meta) {
-      for (var ii = 0; ii < gesla_opisi.length; ii++) {
-        var it = gesla_opisi[ii];
-        if (it.x === x && it.y === y && (it.smer || 'across') === d) { meta = it; break; }
-      }
-      if (!meta) meta = {};
-    }
+    if (!meta) meta = {};
 
     var num  = numberAt.get(key) || meta.stevilka || '—';
     var opis = (meta.opis || '').trim();
@@ -511,19 +550,13 @@ if (typeof window.saveGridDebounced !== 'function') window.saveGridDebounced = f
     if (title) title.textContent = (d === 'down' ? 'Navpično' : 'Vodoravno');
     if (body)  body.textContent  = opis;
 
-    // slika
     var imgEl = document.getElementById('clueImg');
     if (!imgEl) return;
 
     var url = (meta && meta.slika) ? String(meta.slika).trim() : '';
+    if (!url && opis) url = '/static/Images/' + makeSlug(opis, 30) + '.jpg';
 
-    if (!url && opis) {
-      url = '/static/Images/' + makeSlug(opis, 30) + '.jpg';
-    }
-
-    if (url && !/^https?:\/\//i.test(url) && !url.startsWith('/')) {
-      url = '/' + url;
-    }
+    if (url && !/^https?:\/\//i.test(url) && !url.startsWith('/')) url = '/' + url;
 
     if (!url) {
       imgEl.removeAttribute('src');
@@ -532,17 +565,8 @@ if (typeof window.saveGridDebounced !== 'function') window.saveGridDebounced = f
       return;
     }
 
-    imgEl.onload = function () {
-      imgEl.style.display = 'block';
-      imgEl.classList.remove('hidden');
-    };
-
-    imgEl.onerror = function () {
-      imgEl.removeAttribute('src');
-      imgEl.style.display = 'none';
-      imgEl.classList.add('hidden');
-    };
-
+    imgEl.onload = function () { imgEl.style.display = 'block'; imgEl.classList.remove('hidden'); };
+    imgEl.onerror = function () { imgEl.removeAttribute('src'); imgEl.style.display = 'none'; imgEl.classList.add('hidden'); };
     imgEl.src = url;
   }
 
@@ -589,10 +613,8 @@ if (typeof window.saveGridDebounced !== 'function') window.saveGridDebounced = f
     repaintCell(x, y);
     scheduleSaveGrid();
 
-        if (!silent && typeof saveGridDebounced === 'function') {
-      saveGridDebounced();
-    }
-  }  // <-- KONEC setLetterAt()
+    if (!silent && typeof saveGridDebounced === 'function') saveGridDebounced();
+  }
 
   function moveWithinWord(forward, onlyEmpty) {
     if (forward == null) forward = true;
@@ -625,8 +647,49 @@ if (typeof window.saveGridDebounced !== 'function') window.saveGridDebounced = f
       window.cursor = { x: nx, y: ny };
       return true;
     }
-
     return false;
+  }
+
+  // ===== PRO: build pattern + open isci_vzorec =====
+  function buildPatternFromCells(cells){
+    var pat = '';
+    for (var i=0;i<cells.length;i++){
+      var x = cells[i][0], y = cells[i][1];
+      var cell = (cellRefs[y] || [])[x];
+      if (!cell || cell.classList.contains('black')) { pat += '_'; continue; }
+      var v = (cell.dataset.letter || '').trim().toUpperCase();
+      pat += v ? v.slice(0,1) : '_';
+    }
+    return pat;
+  }
+
+  function openIsciVzorecForCurrentWord(){
+    if (!window.cursor) return;
+
+    var c = clampWord(window.cursor.x, window.cursor.y, dir);
+    var pat = buildPatternFromCells(c.cells);
+    var len = c.cells.length;
+
+    var headKey = c.sx + "," + c.sy;
+    var meta = clueAtHead.get(headKey + "," + dir) || null;
+    var q = (meta && meta.opis) ? String(meta.opis).trim() : '';
+
+    var url =
+      "{{ url_for('isci_vzorec') }}" +
+      "?len=" + encodeURIComponent(len) +
+      "&pat=" + encodeURIComponent(pat) +
+      "&q=" + encodeURIComponent(q);
+
+    window.open(url, "_blank", "noopener");
+  }
+
+  function flipDir(){
+    dir = (dir === 'across') ? 'down' : 'across';
+    if (btn) {
+      btn.textContent = (dir === 'across') ? '↔︎' : '↕︎';
+      btn.setAttribute('aria-pressed', dir === 'down' ? 'true' : 'false');
+    }
+    updateFrameBorder();
   }
 
   // ===== 5) NAPOLNI data-correct IN PREBARVAJ =====
@@ -656,6 +719,52 @@ if (typeof window.saveGridDebounced !== 'function') window.saveGridDebounced = f
     grid.focus({ preventScroll: true });
   });
 
+  // DOUBLE CLICK: odpre isci_vzorec s prefillom (BREZ flip smeri)
+grid.addEventListener('dblclick', function(e){
+  var t = e.target.closest ? e.target.closest('.cell') : e.target;
+  if (!t || !t.classList || t.classList.contains('black')) return;
+
+  e.preventDefault();
+  e.stopPropagation();
+
+  // nastavi cursor na kliknjeno celico
+  window.cursor = { x:+t.dataset.x, y:+t.dataset.y };
+
+  // fokusiraj trenutno besedo (v trenutni smeri!)
+  focusWordHere();
+
+  // vzemi celo besedo v trenutni smeri
+  var c = clampWord(window.cursor.x, window.cursor.y, dir);
+
+  // zgradi pattern iz vseh celic te besede
+  var pat = '';
+  for (var i=0; i<c.cells.length; i++){
+    var x = c.cells[i][0], y = c.cells[i][1];
+    var cell = (cellRefs[y] || [])[x];
+    var ch = (cell && cell.dataset && cell.dataset.letter) ? cell.dataset.letter : '';
+    pat += ch ? ch.toUpperCase() : '_';
+  }
+
+  var len = c.cells.length;
+
+  var url =
+    "{{ url_for('isci_vzorec') }}" +
+    "?len=" + encodeURIComponent(len) +
+    "&pat=" + encodeURIComponent(pat);
+
+  window.open(url, "_blank", "noopener");
+});
+
+
+// gumb "Išči po vzorcu" v nav: odpre s prefillom (brez flip)
+var btnIsci = document.getElementById('btnIsciVzorec');
+if (btnIsci) {
+  btnIsci.addEventListener('click', function(e){
+    e.preventDefault();
+    openIsciVzorecForCurrentWord();
+  });
+}
+
   document.addEventListener('keydown', function(e){
     var tag=(document.activeElement&&document.activeElement.tagName)||'';
     if (tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT') return;
@@ -664,23 +773,17 @@ if (typeof window.saveGridDebounced !== 'function') window.saveGridDebounced = f
     var k = e.key;
 
     if (k && k.length === 1 && /\S/.test(k)) {
-  console.log("TYPE:", k, "cursor BEFORE:", window.cursor, "dir:", dir);
+      setLetterAt(window.cursor.x, window.cursor.y, k, false);
 
-  setLetterAt(window.cursor.x, window.cursor.y, k, false);
+      // preskoči že vpisane (prazno naslednje)
+      moveWithinWord(true, true);
 
-  var movedEmpty = moveWithinWord(true, true);
-  console.log("movedEmpty:", movedEmpty, "cursor AFTER:", window.cursor);
+      // sync UI
+      focusWordHere();
 
-  // test: ali se sploh zna premikat naprej (tudi čez vpisane)
-  if (!movedEmpty) {
-    var movedAny = moveWithinWord(true, false);
-    console.log("movedAny:", movedAny, "cursor AFTER-any:", window.cursor);
-  }
-
-  focusWordHere();
-  e.preventDefault();
-  return;
-}
+      e.preventDefault();
+      return;
+    }
 
     if (k==='Backspace'){
       if (hasLetter(window.cursor.x,window.cursor.y))
@@ -706,7 +809,7 @@ if (typeof window.saveGridDebounced !== 'function') window.saveGridDebounced = f
     if (k==='ArrowUp'){    dir='down';   moveWithinWord(false,true); focusWordHere(); e.preventDefault(); return; }
 
     if (k==='Enter'){
-      dir = (dir==='across') ? 'down' : 'across';
+      flipDir();
       focusWordHere();
       e.preventDefault();
       return;
@@ -716,9 +819,7 @@ if (typeof window.saveGridDebounced !== 'function') window.saveGridDebounced = f
   if (btn) {
     if (btn.parentElement !== document.body) document.body.appendChild(btn);
     btn.addEventListener('click', function(){
-      dir = (dir==='across') ? 'down' : 'across';
-      btn.textContent = (dir==='across') ? '↔︎' : '↕︎';
-      btn.setAttribute('aria-pressed', dir==='down' ? 'true' : 'false');
+      flipDir();
       focusWordHere();
     });
   }
@@ -740,9 +841,8 @@ if (typeof window.saveGridDebounced !== 'function') window.saveGridDebounced = f
     if (grid) grid.focus();
   })();
 
-  // ===== 8) LOAD SAVED (po tem ko je vse narisano) =====
+  // ===== 8) LOAD SAVED =====
   applySavedGrid();
-
   if (window.cursor) focusWordHere();
 
 });
