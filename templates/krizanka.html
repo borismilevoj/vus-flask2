@@ -32,11 +32,19 @@
   #clueTitle{ font-weight:700; margin:0; }
   #clueBody{ margin: 6px 0 0 0; }
   #clueImg{
-    margin-top:10px;
-    width:100%;
-    border-radius: 12px;
-    display:none;
-  }
+  margin-top:12px;
+  max-width: 320px;      /* tukaj reguliraš velikost */
+  width:100%;
+  height:auto;
+  display:block;
+  margin-left:auto;
+  margin-right:auto;
+
+  border-radius:14px;
+  box-shadow: 0 8px 20px rgba(0,0,0,.15);
+
+  object-fit:cover;
+}
   #clueImg.hidden{ display:none; }
 
   /* Floating toggle button */

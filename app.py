@@ -1636,4 +1636,4 @@ if __name__ == "__main__":
     # Na Windows/PyCharm včasih pomaga izklop reloaderja
     os.environ.pop("WERKZEUG_SERVER_FD", None)
     os.environ.pop("WERKZEUG_RUN_MAIN", None)
-    app.run(host="127.0.0.1", port=5050, debug=False, use_reloader=False)
+    app.run(host="127.0.0.1", port=5000, debug=False, use_reloader=False)
