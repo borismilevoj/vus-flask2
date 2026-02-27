@@ -441,6 +441,39 @@ window.addEventListener('DOMContentLoaded', function () {
   var dir = 'across';
   window.cursor = null;
 
+  // ===== TOGGLE SMERI (ENKRAT, PROFI) =====
+function updateToggleButton(){
+  var b = document.getElementById('toggleDir');
+  if (!b) return;
+  b.textContent = (dir === 'across') ? '↔︎' : '↕︎';
+  b.setAttribute('aria-pressed', dir === 'down' ? 'true' : 'false');
+}
+
+function flipDir(){               // <-- pomembno: IME flipDir(), ne window.flipDir
+  dir = (dir === 'across') ? 'down' : 'across';
+  updateFrameBorder();
+  updateToggleButton();
+  console.log('[toggleDir] dir ->', dir);
+}
+
+// klik samo na gumb (delegation – robustno)
+document.addEventListener('click', function(e){
+  var el = e.target;
+  var b = (el && el.id === 'toggleDir') ? el
+        : (el && el.closest ? el.closest('#toggleDir') : null);
+  if (!b) return;
+
+  e.preventDefault();
+  e.stopPropagation();
+
+  flipDir();
+  focusWordHere();
+  if (grid) grid.focus({ preventScroll: true });
+}, true);
+
+// začetni prikaz
+updateToggleButton();
+
   function updateFrameBorder() {
     if (!frame) return;
     frame.style.borderColor = (dir === 'across') ? '#2563eb' : '#16a34a';
@@ -691,16 +724,7 @@ window.addEventListener('DOMContentLoaded', function () {
     window.open(url, "_blank", "noopener");
   }
 
-  function flipDir(){
-    dir = (dir === 'across') ? 'down' : 'across';
-    if (btn) {
-      btn.textContent = (dir === 'across') ? '↔︎' : '↕︎';
-      btn.setAttribute('aria-pressed', dir === 'down' ? 'true' : 'false');
-    }
-    updateFrameBorder();
-  }
-
-  // ===== 5) NAPOLNI data-correct IN PREBARVAJ =====
+    // ===== 5) NAPOLNI data-correct IN PREBARVAJ =====
   for (var yy=0; yy<height; yy++) {
     for (var xx=0; xx<width; xx++) {
       var cellX = (cellRefs[yy] || [])[xx];
@@ -713,21 +737,22 @@ window.addEventListener('DOMContentLoaded', function () {
   }
 
   // ===== 6) INTERAKCIJE =====
-  grid.addEventListener('click', function(e){
-    var t = e.target.closest ? e.target.closest('.cell') : e.target;
-    if (!t || !t.classList || t.classList.contains('black')) return;
+grid.addEventListener('click', function(e){
+  var t = e.target.closest ? e.target.closest('.cell') : e.target;
+  if (!t || !t.classList || t.classList.contains('black')) return;
 
-    e.preventDefault();
-    e.stopPropagation();
+  e.preventDefault();
+  e.stopPropagation();
 
-    window.cursor = {x:+t.dataset.x, y:+t.dataset.y};
-    focusWordHere();
+  window.cursor = { x:+t.dataset.x, y:+t.dataset.y };
+  focusWordHere();
 
-    grid.setAttribute('tabindex','0');
-    grid.focus({ preventScroll: true });
-  });
+  grid.setAttribute('tabindex','0');
+  grid.focus({ preventScroll: true });
+});
 
-  // DOUBLE CLICK: odpre isci_vzorec s prefillom (BREZ flip smeri)
+
+// DOUBLE CLICK: odpre isci_vzorec s prefillom (brez flip smeri)
 grid.addEventListener('dblclick', function(e){
   var t = e.target.closest ? e.target.closest('.cell') : e.target;
   if (!t || !t.classList || t.classList.contains('black')) return;
@@ -735,16 +760,11 @@ grid.addEventListener('dblclick', function(e){
   e.preventDefault();
   e.stopPropagation();
 
-  // nastavi cursor na kliknjeno celico
   window.cursor = { x:+t.dataset.x, y:+t.dataset.y };
-
-  // fokusiraj trenutno besedo (v trenutni smeri!)
   focusWordHere();
 
-  // vzemi celo besedo v trenutni smeri
   var c = clampWord(window.cursor.x, window.cursor.y, dir);
 
-  // zgradi pattern iz vseh celic te besede
   var pat = '';
   for (var i=0; i<c.cells.length; i++){
     var x = c.cells[i][0], y = c.cells[i][1];
@@ -763,8 +783,7 @@ grid.addEventListener('dblclick', function(e){
   window.open(url, "_blank", "noopener");
 });
 
-
-// gumb "Išči po vzorcu" v nav: odpre s prefillom (brez flip)
+// Gumb "Išči po vzorcu" v nav
 var btnIsci = document.getElementById('btnIsciVzorec');
 if (btnIsci) {
   btnIsci.addEventListener('click', function(e){
@@ -773,86 +792,78 @@ if (btnIsci) {
   });
 }
 
-  document.addEventListener('keydown', function(e){
-    var tag=(document.activeElement&&document.activeElement.tagName)||'';
-    if (tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT') return;
-    if (!window.cursor) return;
+// KEYBOARD
+document.addEventListener('keydown', function(e){
+  var tag = (document.activeElement && document.activeElement.tagName) || '';
+  if (tag==='INPUT' || tag==='TEXTAREA' || tag==='SELECT') return;
+  if (!window.cursor) return;
 
-    var k = e.key;
+  var k = e.key;
 
-    if (k && k.length === 1 && /\S/.test(k)) {
-      setLetterAt(window.cursor.x, window.cursor.y, k, false);
-
-      // preskoči že vpisane (prazno naslednje)
-      moveWithinWord(true, true);
-
-      // sync UI
-      focusWordHere();
-
-      e.preventDefault();
-      return;
-    }
-
-    if (k==='Backspace'){
-      if (hasLetter(window.cursor.x,window.cursor.y))
-        setLetterAt(window.cursor.x,window.cursor.y,'', false);
-      else if (moveWithinWord(false,false))
-        setLetterAt(window.cursor.x,window.cursor.y,'', false);
-      focusWordHere();
-      e.preventDefault();
-      return;
-    }
-
-    if (k==='Delete'){
-      setLetterAt(window.cursor.x,window.cursor.y,'', false);
-      moveWithinWord(true,true);
-      focusWordHere();
-      e.preventDefault();
-      return;
-    }
-
-    if (k==='ArrowRight'){ dir='across'; moveWithinWord(true,true);  focusWordHere(); e.preventDefault(); return; }
-    if (k==='ArrowLeft'){  dir='across'; moveWithinWord(false,true); focusWordHere(); e.preventDefault(); return; }
-    if (k==='ArrowDown'){  dir='down';   moveWithinWord(true,true);  focusWordHere(); e.preventDefault(); return; }
-    if (k==='ArrowUp'){    dir='down';   moveWithinWord(false,true); focusWordHere(); e.preventDefault(); return; }
-
-    if (k==='Enter'){
-      flipDir();
-      focusWordHere();
-      e.preventDefault();
-      return;
-    }
-  }, true);
-
-  if (btn) {
-    if (btn.parentElement !== document.body) document.body.appendChild(btn);
-    btn.addEventListener('click', function(){
-      flipDir();
-      focusWordHere();
-    });
+  if (k && k.length === 1 && /\S/.test(k)) {
+    setLetterAt(window.cursor.x, window.cursor.y, k, false);
+    moveWithinWord(true, true);
+    focusWordHere();
+    e.preventDefault();
+    return;
   }
 
-  // ===== 7) AUTO-OPEN =====
-  (function () {
-    if (!gesla_opisi || !gesla_opisi.length) return;
+  if (k==='Backspace'){
+    if (hasLetter(window.cursor.x,window.cursor.y))
+      setLetterAt(window.cursor.x,window.cursor.y,'', false);
+    else if (moveWithinWord(false,false))
+      setLetterAt(window.cursor.x,window.cursor.y,'', false);
 
-    var first = null;
-    for (var i = 0; i < gesla_opisi.length; i++) {
-      var g = gesla_opisi[i];
-      if ((g.smer || "").toLowerCase() === "across") { first = g; break; }
-    }
-    if (!first) first = gesla_opisi[0];
-
-    window.cursor = { x: first.x, y: first.y };
-    dir = first.smer || "across";
     focusWordHere();
-    if (grid) grid.focus();
-  })();
+    e.preventDefault();
+    return;
+  }
 
-  // ===== 8) LOAD SAVED =====
-  applySavedGrid();
-  if (window.cursor) focusWordHere();
+  if (k==='Delete'){
+    setLetterAt(window.cursor.x,window.cursor.y,'', false);
+    moveWithinWord(true,true);
+    focusWordHere();
+    e.preventDefault();
+    return;
+  }
 
-});
+  if (k==='ArrowRight'){ dir='across'; moveWithinWord(true,true);  focusWordHere(); e.preventDefault(); return; }
+  if (k==='ArrowLeft'){  dir='across'; moveWithinWord(false,true); focusWordHere(); e.preventDefault(); return; }
+  if (k==='ArrowDown'){  dir='down';   moveWithinWord(true,true);  focusWordHere(); e.preventDefault(); return; }
+  if (k==='ArrowUp'){    dir='down';   moveWithinWord(false,true); focusWordHere(); e.preventDefault(); return; }
+
+  if (k==='Enter'){
+    flipDir();
+    focusWordHere();
+    e.preventDefault();
+    return;
+  }
+}, true);
+
+
+// ===== 7) AUTO-OPEN =====
+(function () {
+  if (!gesla_opisi || !gesla_opisi.length) return;
+
+  var first = null;
+  for (var i = 0; i < gesla_opisi.length; i++) {
+    var g = gesla_opisi[i];
+    if ((g.smer || "").toLowerCase() === "across") { first = g; break; }
+  }
+  if (!first) first = gesla_opisi[0];
+
+  window.cursor = { x: first.x, y: first.y };
+  dir = first.smer || "across";
+  focusWordHere();
+  if (grid) grid.focus();
+})();
+
+
+// ===== 8) LOAD SAVED =====
+applySavedGrid();
+if (window.cursor) focusWordHere();
+
+}); // <-- MANJKA: konec DOMContentLoaded handlerja
+
 </script>
 {% endblock %}
