@@ -311,6 +311,25 @@ def favicon():
     # Začasno brez favicon (204)
     return ("", 204)
 
+from datetime import date
+
+@app.route("/debug/krizanka")
+def debug_krizanka():
+    danes = date.today().strftime("%Y-%m-%d")
+
+    base = Path("static/Krizanke/CrosswordCompilerApp")
+    mapa = base / danes[:7]
+
+    xml = mapa / f"{danes}.xml"
+    js = mapa / f"{danes}.js"
+
+    return jsonify({
+        "datum": danes,
+        "xml_obstaja": xml.exists(),
+        "js_obstaja": js.exists(),
+        "pot_xml": str(xml),
+        "pot_js": str(js)
+    })
 
 # ===== ISKANJE PO VZORCU =====================================================
 @app.get("/isci-vzorec", endpoint="isci_vzorec")
