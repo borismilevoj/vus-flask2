@@ -330,6 +330,51 @@ def debug_krizanka():
         "pot_xml": str(xml),
         "pot_js": str(js)
     })
+from datetime import date
+from pathlib import Path
+from calendar import monthrange
+from flask import jsonify, request
+
+@app.route("/debug/krizanke")
+def debug_krizanke():
+    mesec_param = request.args.get("mesec")
+
+    if mesec_param:
+        try:
+            leto, mesec = map(int, mesec_param.split("-"))
+        except ValueError:
+            return jsonify({
+                "napaka": "Uporabi format meseca YYYY-MM, npr. 2026-05"
+            }), 400
+    else:
+        danes = date.today()
+        leto = danes.year
+        mesec = danes.month
+
+    base = Path("static/Krizanke/CrosswordCompilerApp")
+    mapa_meseca = base / f"{leto}-{mesec:02d}"
+
+    st_dni = monthrange(leto, mesec)[1]
+    rezultat = []
+
+    for dan in range(1, st_dni + 1):
+        datum = f"{leto}-{mesec:02d}-{dan:02d}"
+        xml = mapa_meseca / f"{datum}.xml"
+        js = mapa_meseca / f"{datum}.js"
+
+        rezultat.append({
+            "datum": datum,
+            "xml_obstaja": xml.exists(),
+            "js_obstaja": js.exists(),
+            "oba_obstajata": xml.exists() and js.exists()
+        })
+
+    return jsonify({
+        "mesec": f"{leto}-{mesec:02d}",
+        "mapa": str(mapa_meseca),
+        "krizanke": rezultat
+    })
+
 
 # ===== ISKANJE PO VZORCU =====================================================
 @app.get("/isci-vzorec", endpoint="isci_vzorec")
